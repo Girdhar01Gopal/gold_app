@@ -1,4 +1,9 @@
+// infrastructure/routes/admin_routes.dart
 import 'package:get/get.dart';
+import 'package:gold_app/bindings/mathscreenbinding.dart';
+import 'package:gold_app/bindings/physicsbinding.dart';
+import 'package:gold_app/screens/mathscreen.dart';
+import 'package:gold_app/screens/physicsscreen.dart';
 import '../../bindings/Loading_Binding.dart';
 import '../../bindings/MainScreenBinding.dart';
 import '../../bindings/bindings.dart';
@@ -21,6 +26,10 @@ class AdminRoutes {
   static const MAIN_SCREEN = '/mainScreen';
   static const CONTINUE_SCREEN = '/continue';
   static const usageScreen = '/usageScreen';
+    static const mathscreen = '/mathscreen';
+        static const physics = '/physics';
+
+
 
   // ========
   // Route Definitions
@@ -32,6 +41,17 @@ class AdminRoutes {
       page: () => AdminSplashScreen(),
       transition: Transition.fadeIn,
       transitionDuration: Duration(milliseconds: 400),
+    ),
+
+    GetPage(
+      name: mathscreen,
+      page: () => Mathscreen(),
+       binding: Mathscreenbinding(),
+    ),
+    GetPage(
+      name: physics,
+      page: () => Physicsscreen(),
+       binding: Physicsbinding(),
     ),
 
     // Loading Screen

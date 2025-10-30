@@ -1,7 +1,7 @@
-// controllers/ContinueScreenController.dart
+// controllers/physicscontroller.dart
 import 'package:get/get.dart';
 
-class ContinueScreenController extends GetxController {
+class Physicscontroller extends GetxController {
   // Use .obs to make variables reactive
   RxString currentGPA = '0.14'.obs;
   final RxString selectedPhase = 'PHASE I'.obs;

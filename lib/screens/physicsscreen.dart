@@ -1,28 +1,39 @@
-// screens/ContinueScreen.dart
+// screens/physicsscreen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../controllers/ContinueScreenController.dart';
+import 'package:gold_app/controllers/physicscontroller.dart';
 import '../infrastructure/app_drawer/admin_drawer2.dart';
 
-class ContinueScreen extends GetView<ContinueScreenController> {
-  const ContinueScreen({super.key});
+class Physicsscreen extends GetView<Physicscontroller> {
+  const Physicsscreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final RxString selectedExam = 'Board'.obs;
     final List<String> exams = ['Board', 'JEE Main', 'JEE Advanced'];
 
+    // ⚛️ Physics data
     final Map<String, List<Map<String, dynamic>>> data = {
-      'ATOMIC STRUCTURE': [
-        {'topic': 'Atomic Models', 'scores': [8.0, null, null, 8.0, null, null]},
-        {'topic': 'Quantum Mechanics', 'scores': [null, null, null, 8.0, null, null]},
+      'PHYSICAL WORLD & UNITS': [
+        {'topic': 'Physical Quantities & Units', 'scores': [8.0, 7.5, 8.3, 8.1, 7.8, null]},
+        {'topic': 'Measurement & Errors', 'scores': [7.5, 8.0, 7.8, null, 7.9, 8.0]},
       ],
-      'BCC': [
-        {'topic': 'Mole Concept', 'scores': [8.3, null, 7.0, 8.0, null, null]},
+      'KINEMATICS': [
+        {'topic': 'Motion in a Straight Line', 'scores': [8.5, 8.3, 8.0, 7.5, 8.8, null]},
+        {'topic': 'Motion in a Plane', 'scores': [7.8, 8.0, null, 7.0, 6.9, null]},
       ],
-      'PERIODIC PROPERTIES': [
-        {'topic': 'Periodic Properties', 'scores': [null, null, null, 8.0, null, null]},
+      'LAWS OF MOTION': [
+        {'topic': 'Newton’s Laws', 'scores': [8.4, 8.0, 7.5, 8.8, 7.6, null]},
+        {'topic': 'Friction & Circular Motion', 'scores': [null, 7.0, 7.5, null, 8.0, null]},
+      ],
+      'WORK, ENERGY & POWER': [
+        {'topic': 'Work & Kinetic Energy', 'scores': [7.8, 8.2, 8.0, 7.6, null, null]},
+        {'topic': 'Potential Energy & Power', 'scores': [8.3, 8.5, 7.9, 8.0, 7.8, null]},
+      ],
+      'THERMODYNAMICS': [
+        {'topic': 'Zeroth & First Law', 'scores': [8.1, 8.2, 8.3, 8.0, 7.9, null]},
+        {'topic': 'Heat Engines & Entropy', 'scores': [7.5, 7.8, null, 8.0, 7.6, null]},
       ],
     };
 
@@ -38,7 +49,7 @@ class ContinueScreen extends GetView<ContinueScreenController> {
 
     return WillPopScope(
       onWillPop: () async {
-        bool? exitApp = await Get.dialog<bool>(
+        bool? exit = await Get.dialog<bool>(
           AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             title: const Text('Exit Confirmation'),
@@ -49,16 +60,16 @@ class ContinueScreen extends GetView<ContinueScreenController> {
                 child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
-                onPressed: () => Get.back(result: true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF682D91),
                 ),
+                onPressed: () => Get.back(result: true),
                 child: const Text('Yes', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
         );
-        return exitApp ?? false;
+        return exit ?? false;
       },
 
       child: Scaffold(
@@ -66,7 +77,7 @@ class ContinueScreen extends GetView<ContinueScreenController> {
         drawer: AdminDrawer2(),
         backgroundColor: Colors.grey.shade100,
 
-        // ============= APP BAR =============
+        // ========= APP BAR =========
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(270.h),
           child: AppBar(
@@ -87,7 +98,7 @@ class ContinueScreen extends GetView<ContinueScreenController> {
                         ),
                         Expanded(
                           child: Text(
-                            'Chemistry | Class 11',
+                            'Physics | Class 11',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.sp,
@@ -145,7 +156,7 @@ class ContinueScreen extends GetView<ContinueScreenController> {
           ),
         ),
 
-        // ============= BODY =============
+        // ========= BODY =========
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -212,7 +223,7 @@ class ContinueScreen extends GetView<ContinueScreenController> {
                                           vertical: 8.h, horizontal: 4.w),
                                       child: Row(
                                         children: [
-                                          // LEFT column (30%)
+                                          // LEFT: Topic
                                           SizedBox(
                                             width: 0.30.sw,
                                             child: Text(
@@ -231,7 +242,8 @@ class ContinueScreen extends GetView<ContinueScreenController> {
                                             child: Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.spaceBetween,
-                                              children: List.generate(6, (i) {
+                                              children:
+                                                  List.generate(6, (i) {
                                                 final val = scores[i];
                                                 final hasScore = val != null;
                                                 return Container(
