@@ -16,7 +16,8 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.red, // AppBar background color set to red
+        backgroundColor: Color.fromARGB(255, 110, 15, 15)
+, // AppBar background color set to red
         elevation: 0,
         automaticallyImplyLeading: false,
         titleSpacing: 0, // Removes default padding from AppBar
@@ -39,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                     _showResetDialog(context); // Show reset dialog on button press
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // Red background for the button
+                    backgroundColor: Color(0xFF4a4a4a), // Red background for the button
                     side: BorderSide(color: Colors.white), // White border
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20), // Circular border
@@ -58,10 +59,21 @@ class HomeScreen extends StatelessWidget {
                 // Button 2 - Change Academic Year
                 ElevatedButton(
                   onPressed: () {
-                    _showYearDropdownDialog(context); // Show Year Dropdown on button press
+                    showYearDropdownDialog(
+                      context: context,
+                      selectedYear: selectedYear ?? '2025',
+                      onYearSelected: (String year) {
+                        // Handle the selected year; here we show a simple notification.
+                        Get.snackbar(
+                          'Academic Year Changed',
+                          'Selected $year',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
+                    ); // Show Year Dropdown on button press
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // Red background for the button
+                    backgroundColor: Color(0xFF4a4a4a), // Red background for the button
                     side: BorderSide(color: Colors.white), // White border
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20), // Circular border
@@ -87,22 +99,38 @@ class HomeScreen extends StatelessWidget {
           // Left side - Blue section
           Container(
             width: 150.w, // Adjust width based on screen size
-            color: Colors.blue, // Left side background color
+            //color:Color(0xFF9B1313), 
+            decoration: BoxDecoration(
+              color: Color(0xFF9B1313), // Left side background color
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(20.r),
+                bottomRight: Radius.circular(20.r),
+              ),
+            ),
+            // Left side background color
             child: Column(
               children: [
                 // Header with dark blue background
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                  color: Colors.blue[900], // Dark blue background for the header
-                  child: Text(
-                    'Assignment',  // Text with a prefix "Assign"
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    //color: Color(0xFF4a4a4a),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF4a4a4a),
+                      borderRadius: BorderRadius.all(Radius.circular(25.r)
+              ),
+                    ), // Dark blue background for the header
+                    child: Text(
+                      'Assignment',  // Text with a prefix "Assign"
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
                 // Left section content below header
@@ -153,7 +181,7 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.blue[900]),
+                                  Icon(Icons.check_circle, color: Color(0xFF9B1313)),
                                   SizedBox(width: 10.w),
                                   Text(
                                     'Chemistry' ,
@@ -170,7 +198,7 @@ class HomeScreen extends StatelessWidget {
                                   // Add Continue functionality here
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[900], // Red background for the button
+                                  backgroundColor: Color(0xFF4a4a4a), // Red background for the button
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20), // Circular border
                                   ),
@@ -203,7 +231,7 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.blue[900]),
+                                  Icon(Icons.check_circle, color: Color(0xFF9B1313)),
                                   SizedBox(width: 10.w),
                                   Text(
                                     'Maths',
@@ -219,7 +247,7 @@ class HomeScreen extends StatelessWidget {
                                   Get.offAllNamed(AdminRoutes.mathscreen);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[900], // Red background for the button
+                                  backgroundColor: Color(0xFF4a4a4a), // Red background for the button
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20), // Circular border
                                   ),
@@ -252,7 +280,7 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.blue[900]),
+                                  Icon(Icons.check_circle, color: Color(0xFF9B1313)),
                                   SizedBox(width: 10.w),
                                   Text(
                                     'Physics',
@@ -269,7 +297,7 @@ class HomeScreen extends StatelessWidget {
                                   Get.offAllNamed(AdminRoutes.physics);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[900], // Red background for the button
+                                  backgroundColor: Color(0xFF4a4a4a), // Red background for the button
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20), // Circular border
                                   ),
@@ -370,63 +398,123 @@ void _showResetDialog(BuildContext context) {
   );
 }
 
-// Function to show the Change Academic Year Dropdown
-void _showYearDropdownDialog(BuildContext context) {
-  showDialog(
+
+Future<void> showYearDropdownDialog({
+  required BuildContext context,
+  required String selectedYear,
+  required Function(String) onYearSelected,
+}) async {
+  String tempSelectedYear = selectedYear;
+
+  await showDialog(
     context: context,
-    barrierDismissible: false, // Prevent dismissing by tapping outside
+    barrierDismissible: false, // Prevent closing by tapping outside
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(
-          'Select Academic Year',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14.sp,
-          ),
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
         ),
-        content: SizedBox(
-          width: 200.w, // Adjust width for dropdown box
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              DropdownButton<String>(
-                value: selectedYear,
-                isExpanded: true, // Makes dropdown take full width
-                onChanged: (String? newValue) {
-                  selectedYear = newValue;
-                  Navigator.of(context).pop(); // Close dialog after selection
-                },
-                items: <String>['2025', '2026']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      child: Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          color: Colors.black,
-                        ),
+              // ---------- Title ----------
+              Text(
+                'Select Academic Year',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // ---------- Dropdown ----------
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8.r),
+                  color: Colors.grey.shade100,
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: tempSelectedYear,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.black87,
+                    ),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        tempSelectedYear = newValue;
+                      }
+                    },
+                    items: ['2025', '2026']
+                        .map((year) => DropdownMenuItem<String>(
+                              value: year,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                                child: Text(
+                                  year,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 24.h),
+
+              // ---------- Action Buttons ----------
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey.shade700,
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                  SizedBox(width: 8.w),
+                  ElevatedButton(
+                    onPressed: () {
+                      onYearSelected(tempSelectedYear);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF9B1313),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 10.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Confirm',
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog on Cancel
-            },
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.blue, fontSize: 12.sp),
-            ),
-          ),
-        ],
       );
     },
   );

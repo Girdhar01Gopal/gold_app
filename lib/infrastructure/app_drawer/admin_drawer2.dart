@@ -26,11 +26,11 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
           children: [
             /// ==== Drawer Header ====
             Container(
-              height: 390.h,
-              width: double.infinity,
+              height: 340.h,
+              width: 150.w,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+                  colors: [Color(0xFF9B1313), Color(0xFF4a4a4a)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -61,7 +61,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                           ],
                         ),
                         child: const CircleAvatar(
-                          radius: 30,
+                          radius: 25,
                           backgroundImage: AssetImage('assets/images/avatar.png'),
                           backgroundColor: Colors.white,
                         ),
@@ -71,7 +71,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                         "GIRDHAR",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 17.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.3,
                         ),
@@ -80,7 +80,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                         "ENO: 12345678909",
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
-                          fontSize: 11.sp,
+                          fontSize: 7.sp,
                         ),
                       ),
                     ],
@@ -227,7 +227,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     icon: Icons.settings_backup_restore,
                     route: AdminRoutes.LOADING_SCREEN,
                     currentRoute: currentRoute,
-                    color: Colors.orange.shade700,
+                    color: Color(0xFF4a4a4a),
                   ),
                 ],
               ),
@@ -301,7 +301,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                   ? AppColor.APP_Color_Indigo
                   : color ?? Colors.black,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 13.sp,
+              fontSize: 9.sp,
             ),
           ),
           onTap: () {
@@ -328,7 +328,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
       child: Text(
         title.toUpperCase(),
         style: TextStyle(
-          fontSize: 11.sp,
+          fontSize: 10.sp,
           fontWeight: FontWeight.w600,
           color: Colors.grey.shade600,
           letterSpacing: 1.2,

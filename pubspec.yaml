@@ -50,7 +50,9 @@ dependencies:
   pdf:
   printing:
   http:
+  fl_chart:
   qr_flutter:
+  awesome_dialog:
   firebase_core:
   firebase_messaging:
   geolocator:

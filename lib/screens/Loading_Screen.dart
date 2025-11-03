@@ -1,3 +1,4 @@
+// screens/Loading_Screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -21,14 +22,14 @@ class LoadingScreen extends StatelessWidget {
               // Left Section (Purple background and loading text/logo)
               Container(
                 width: 150.w, // Adjust based on your design
-                color: Colors.blue, // Adjust to your color
+                color: Color(0xFF9B1313), // Adjust to your color
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
                         'assets/images/FIITJEE_Logo.png', // Correct image path
-                        height: 100.h, // Adjust image size
+                        height: 300.h, // Adjust image size
                       ),
                       SizedBox(height: 10.h),
                       Text(
@@ -47,7 +48,7 @@ class LoadingScreen extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: CircularProgressIndicator(
-                    color: Colors.blue, // Adjust color as needed
+                    color: Color(0xFF9B1313), // Adjust color as needed
                   ),
                 ),
               ),

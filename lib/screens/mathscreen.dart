@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:gold_app/controllers/mathscreencontroller.dart';
+import 'package:gold_app/infrastructure/routes/admin_routes.dart';
+import '../controllers/ContinueScreenController.dart';
 import '../infrastructure/app_drawer/admin_drawer2.dart';
 
 class Mathscreen extends GetView<Mathscreencontroller> {
@@ -13,14 +15,13 @@ class Mathscreen extends GetView<Mathscreencontroller> {
     final RxString selectedExam = 'Board'.obs;
     final List<String> exams = ['Board', 'JEE Main', 'JEE Advanced'];
 
-    // 📘 Math data
-    final Map<String, List<Map<String, dynamic>>> data = {
+     final Map<String, List<Map<String, dynamic>>> data = {
       'SETS, RELATIONS & FUNCTIONS': [
-        {'topic': 'Sets & Subsets', 'scores': [8.0, 7.5, null, 8.2, 7.8, null]},
-        {'topic': 'Relations & Functions', 'scores': [7.5, 8.0, 8.2, null, 7.9, 8.0]},
+        {'topic': 'Sets & Subsets', 'scores': [3.0, 7.5, null, 8.2, 7.8, null]},
+        {'topic': 'Relations & Functions', 'scores': [1.5, 8.0, 8.2, null, 7.9, 8.0]},
       ],
       'TRIGONOMETRY': [
-        {'topic': 'Trigonometric Ratios', 'scores': [8.5, 8.3, 8.0, 7.5, 8.8, null]},
+        {'topic': 'Trigonometric Ratios', 'scores': [5.5, 8.3, 8.0, 7.5, 8.8, null]},
         {'topic': 'Trigonometric Equations', 'scores': [7.8, 8.0, null, 7.0, 6.9, null]},
       ],
       'ALGEBRA': [
@@ -35,17 +36,30 @@ class Mathscreen extends GetView<Mathscreencontroller> {
 
     final List<String> phases = ['PHASE I', 'PHASE II', 'PHASE III', 'PHASE IV'];
 
-    Color _scoreColor(double score) {
-      if (score >= 8) return Colors.green.shade700;
-      if (score >= 6) return Colors.lightGreen.shade700;
-      return Colors.orange.shade700;
-    }
+   Color _scoreColor(double score) {
+  if (score >= 10) {
+    return Colors.green.shade900; // Dark green for perfect score
+  } else if (score >= 9) {
+    return Colors.green.shade700; // Deep green (excellent)
+  } else if (score >= 7) {
+    return Colors.lightGreen.shade700; // Light green (good)
+  } else if (score >= 5) {
+    return Colors.yellow.shade700; // Yellow (average)
+  } else if (score >= 3) {
+    return Colors.orange.shade700; // Orange (below average)
+  } else if (score >= 2) {
+    return Colors.deepOrange.shade400; // Light orange (poor)
+  } else {
+    return Colors.red.shade700; // Red (critical / fail)
+  }
+}
+
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
     return WillPopScope(
       onWillPop: () async {
-        bool? exit = await Get.dialog<bool>(
+        bool? exitApp = await Get.dialog<bool>(
           AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             title: const Text('Exit Confirmation'),
@@ -56,16 +70,16 @@ class Mathscreen extends GetView<Mathscreencontroller> {
                 child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF682D91),
-                ),
                 onPressed: () => Get.back(result: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4a4a4a),
+                ),
                 child: const Text('Yes', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
         );
-        return exit ?? false;
+        return exitApp ?? false;
       },
 
       child: Scaffold(
@@ -73,11 +87,11 @@ class Mathscreen extends GetView<Mathscreencontroller> {
         drawer: AdminDrawer2(),
         backgroundColor: Colors.grey.shade100,
 
-        // ========= APP BAR =========
+        // ============= APP BAR =============
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(270.h),
+          preferredSize: Size.fromHeight(280.h),
           child: AppBar(
-            backgroundColor: const Color(0xFF682D91),
+            backgroundColor: const Color(0xFF4a4a4a),
             elevation: 0,
             automaticallyImplyLeading: false,
             flexibleSpace: SafeArea(
@@ -94,7 +108,7 @@ class Mathscreen extends GetView<Mathscreencontroller> {
                         ),
                         Expanded(
                           child: Text(
-                            'Mathematics | Class 11',
+                            'Maths | Class 11',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.sp,
@@ -152,7 +166,7 @@ class Mathscreen extends GetView<Mathscreencontroller> {
           ),
         ),
 
-        // ========= BODY =========
+        // ============= BODY =============
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -219,7 +233,7 @@ class Mathscreen extends GetView<Mathscreencontroller> {
                                           vertical: 8.h, horizontal: 4.w),
                                       child: Row(
                                         children: [
-                                          // LEFT: Topic
+                                          // LEFT column (30%)
                                           SizedBox(
                                             width: 0.30.sw,
                                             child: Text(
@@ -238,32 +252,82 @@ class Mathscreen extends GetView<Mathscreencontroller> {
                                             child: Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.spaceBetween,
-                                              children:
-                                                  List.generate(6, (i) {
+                                              children: List.generate(6, (i) {
                                                 final val = scores[i];
                                                 final hasScore = val != null;
-                                                return Container(
-                                                  height: 20.w,
-                                                  width: 20.w,
-                                                  alignment: Alignment.center,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: hasScore
-                                                        ? _scoreColor(val)
-                                                        : Colors.grey.shade300,
-                                                  ),
-                                                  child: hasScore
-                                                      ? Text(
-                                                          val.toString(),
-                                                          style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 8.sp,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        )
-                                                      : null,
-                                                );
+                                                return GestureDetector(
+  onTap: () async {
+    if (!hasScore) {
+      // Step 1: show confirmation dialog
+      bool? confirm = await Get.dialog<bool>(
+        AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('Open Test'),
+          content: const Text('Are you sure you want to open this test?'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () => Get.back(result: true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4a4a4a),
+              ),
+              child: const Text('Yes', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        // Step 2: show circular loader dialog for 3–5 sec
+        Get.dialog(
+          const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF4a4a4a),
+              strokeWidth: 4,
+            ),
+          ),
+          barrierDismissible: false,
+        );
+
+        // Simulate loading delay
+        await Future.delayed(const Duration(seconds: 4));
+
+        // Close loader
+        Get.back();
+
+        // Step 3: navigate to test screen
+        Get.offAllNamed(AdminRoutes.testscreen);
+      }
+    }
+  },
+  child: Container(
+    height: 20.w,
+    width: 20.w,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: hasScore ? _scoreColor(val) : Colors.grey.shade300,
+      border: Border.all(
+        color: hasScore ? Colors.transparent : Colors.deepPurple.shade100,
+        width: hasScore ? 0 : 1.5,
+      ),
+    ),
+    child: hasScore
+        ? Text(
+            val.toString(),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 8.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          )
+        : Icon(Icons.add, size: 10.sp, color: Colors.black54),
+  ),
+);
+
                                               }),
                                             ),
                                           ),

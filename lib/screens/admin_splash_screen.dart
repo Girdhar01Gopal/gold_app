@@ -1,13 +1,14 @@
+// screens/admin_splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/admin_splash_controller.dart';
 
-class AdminSplashScreen extends StatelessWidget {
+class AdminSplashScreen extends GetView<AdminSplashController> {
   const AdminSplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Initialize the controller
+    // Initialize the controller (if not already)
     final AdminSplashController controller = Get.put(AdminSplashController());
 
     return Scaffold(
@@ -22,7 +23,7 @@ class AdminSplashScreen extends StatelessWidget {
                 children: [
                   // FIITJEE Logo Text
                   Text(
-                    'FIITJEE',
+                    'MGEPL',
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
@@ -41,46 +42,33 @@ class AdminSplashScreen extends StatelessWidget {
                       color: Colors.black54,
                     ),
                   ),
-
                   const SizedBox(height: 40),
 
-                  // Letter C
-                  const Text(
-                    'C',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Version text from controller (using Obx for reactivity)
+                  // Version text (reactive)
                   Obx(() => Text(
-                    "Version ${controller.version.value}",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  )),
+                        "Version ${controller.version.value}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      )),
                 ],
               ),
             ),
 
             // Clear data and cache button
-            Positioned(
-              bottom: 20,
-              left: 20,
-              child: TextButton(
-                onPressed: controller.clearDataAndCache,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey[700],
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-                child: const Text('Clear data and cache'),
-              ),
-            ),
+            // Positioned(
+            //   bottom: 20,
+            //   left: 20,
+            //   child: TextButton(
+            //     onPressed: controller.clearDataAndCache,
+            //     style: TextButton.styleFrom(
+            //       foregroundColor: Colors.grey[700],
+            //       textStyle: const TextStyle(fontSize: 12),
+            //     ),
+            //     child: const Text('Clear data and cache'),
+            //   ),
+            // ),
           ],
         ),
       ),
