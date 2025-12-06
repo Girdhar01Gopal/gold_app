@@ -1,125 +1,149 @@
-// controllers/testscreencontroller.dart
+import 'dart:convert';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:gold_app/screens/submitscreenview.dart';
+import 'package:gold_app/Model/exammodel.dart';
+import 'package:gold_app/appurl/adminurl.dart';
+import 'package:gold_app/screens/submitscreenview%20copy.dart';
+import 'package:http/http.dart' as http;
+
 
 class Testscreencontroller extends GetxController {
-  // 🔹 Subjects
-  final subjects = ['Physics', 'Chemistry', 'Mathematics'].obs;
-  final selectedSubject = 'Physics'.obs;
+  // 🔹 Reactive variables
+  final subjects = <String>[].obs;
+  final selectedSubject = ''.obs;
 
-  // 🔹 Current Question Index
+  var schoolId = ''.obs;
+  var courseId = ''.obs;
+  var testId = ''.obs;
+  var passcode = ''.obs;
+
   final currentIndex = 0.obs;
-
-  // 🔹 Answer Tracking
-  // Supports both single and multiple answers
-  final selectedAnswers = <int, dynamic>{}.obs;
-
-  // 🔹 Question States
+  final selectedAnswers = <int, List<String>>{}.obs;
   final markedForReview = <int>{}.obs;
   final visitedQuestions = <int>{}.obs;
-
-  // 🔹 All Questions Data
   final allQuestions = <String, List<Map<String, dynamic>>>{}.obs;
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    _loadDemoQuestions();
+   // courseId.value = await PrefManager().readValue(key: 'CourseId') ?? '';
+   // schoolId.value = await PrefManager().readValue(key: 'SchoolId') ?? '';
+  //  testId.value = Get.arguments['testId'] ?? '';
+    //passcode.value = Get.arguments['passcode'] ?? '';
+
+    await _loadQuestions();
   }
 
   // =======================================
-  // 🔹 DEMO QUESTIONS
+  // 🔹 Fetch Questions
   // =======================================
-  void _loadDemoQuestions() {
-    allQuestions['Physics'] = [
-      {
-        'id': 1,
-        'question': 'What is Newton’s 2nd Law?',
-        'options': ['F=ma', 'E=mc²', 'V=IR', 'P=IV'],
-      },
-      {
-        'id': 2,
-        'question': 'Select all scalar quantities:',
-        'options': ['Speed', 'Force', 'Mass', 'Momentum'],
-      },
-    ];
+  Future<void> _loadQuestions() async {
+    final url =
+        '${Adminurl.testurl}/8/69/86567583/8338525112';
 
-    allQuestions['Chemistry'] = [
-      {
-        'id': 3,
-        'question': 'Atomic number of Oxygen?',
-        'options': ['6', '7', '8', '9'],
-      },
-      {
-        'id': 4,
-        'question': 'Which of the following are diatomic molecules?',
-        'options': ['H₂', 'O₂', 'CO₂', 'N₂'],
-     
-      },
-    ];
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'MobAppQuestionKey': 'bdui93Y-HLwxe8-11fehc-AyuK63-96yjc736',
+        },
+      );
 
-    allQuestions['Mathematics'] = [
-      {
-        'id': 5,
-        'question': 'Derivative of sinx?',
-        'options': ['cosx', '-cosx', '-sinx', 'tanx'],
-      },
-      {
-        'id': 6,
-        'question': 'Which are trigonometric identities?',
-        'options': ['sin²x + cos²x = 1', 'tanx = sinx/cosx', 'a² + b² = c²', 'cotx = 1/tanx'],
-      },
-    ];
+      if (response.statusCode == 200) {
+        final parsed = exammodel.fromJson(jsonDecode(response.body));
+        allQuestions.clear();
+
+        if (parsed.data != null) {
+          for (var q in parsed.data!) {
+            final subject = q.subjectName ?? 'General';
+            allQuestions.putIfAbsent(subject, () => []);
+
+            allQuestions[subject]!.add({
+              'id': q.questionId ?? 0,
+              'question': q.questions ?? '',
+              'options': [
+                q.ansOptionA ?? '',
+                q.ansOptionB ?? '',
+                q.ansOptionC ?? '',
+                q.ansOptionD ?? '',
+              ].where((opt) => opt.isNotEmpty).toList(),
+              'correctOption': q.correctOptionText ?? '',
+            });
+          }
+
+          subjects.value = allQuestions.keys.toList();
+          selectedSubject.value = subjects.first;
+          if (currentQuestions.isNotEmpty) {
+            visitedQuestions.add(currentQuestions.first['id']);
+          }
+          allQuestions.refresh();
+        } else {
+          Get.snackbar("Error", "No questions found.");
+        }
+      } else {
+        Get.snackbar(
+          "Server Error ${response.statusCode}",
+          "Unable to fetch questions.",
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.black,
+        );
+      }
+    } catch (e) {
+      print("❌ Error fetching questions: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to load questions. Please try again later.",
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.black,
+      );
+    }
   }
 
-  List<Map<String, dynamic>> get currentQuestions =>
-      allQuestions[selectedSubject.value] ?? [];
-
-  // =======================================
-  // 🔹 ANSWER SELECTION HANDLERS
-  // =======================================
-
-  /// For single-choice questions
-  void selectAnswer(String value) {
-    final qId = currentQuestions[currentIndex.value]['id'];
-    selectedAnswers[qId] = value;
-    selectedAnswers.refresh();
-  }
-
-  /// For multiple-choice questions
   void toggleMultiSelect(int questionId, String option, bool selected) {
-    final selectedList = List<String>.from(selectedAnswers[questionId] ?? []);
-
+    final selectedList = List<String>.from(selectedAnswers[questionId] ?? <String>[]);
     if (selected) {
       if (!selectedList.contains(option)) selectedList.add(option);
     } else {
       selectedList.remove(option);
     }
-
     selectedAnswers[questionId] = selectedList;
     selectedAnswers.refresh();
   }
 
   // =======================================
-  // 🔹 NAVIGATION
+  // 🔹 Current Questions Getter
   // =======================================
-  void nextQuestion() {
-    if (currentIndex.value < currentQuestions.length - 1) {
+  List<Map<String, dynamic>> get currentQuestions =>
+      allQuestions[selectedSubject.value] ?? [];
+
+  // =======================================
+  // 🔹 Answer Handling
+  // =======================================
+  void selectAnswer(String value) {
+    final qId = currentQuestions[currentIndex.value]['id'];
+    selectedAnswers[qId] = [value];
+    selectedAnswers.refresh();
+  }
+
+  // =======================================
+  // 🔹 Navigation
+  // =======================================
+  void nextQuestion(BuildContext context) {
+    final total = currentQuestions.length;
+    final subjectIndex = subjects.indexOf(selectedSubject.value);
+
+    if (currentIndex.value < total - 1) {
       currentIndex.value++;
       visitedQuestions.add(currentQuestions[currentIndex.value]['id']);
+    } else if (subjectIndex < subjects.length - 1) {
+      final nextSubj = subjects[subjectIndex + 1];
+      selectedSubject.value = nextSubj;
+      currentIndex.value = 0;
+      Get.snackbar("Next Subject", "Moved to $nextSubj",
+          snackPosition: SnackPosition.BOTTOM);
     } else {
-      AwesomeDialog(
-        context: Get.context!,
-        dialogType: DialogType.info,
-        animType: AnimType.bottomSlide,
-        title: 'End of Questions',
-        desc:
-            'You have reached the end of the questions. Please submit your test.',
-        btnOkText: 'OK',
-        btnOkOnPress: () {},
-      ).show();
+      showSubmitDialog(context);
     }
   }
 
@@ -130,63 +154,82 @@ class Testscreencontroller extends GetxController {
     }
   }
 
+  // =======================================
+  // 🔹 Submit Test
+  // =======================================
+  void showSubmitDialog(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.info,
+      animType: AnimType.scale,
+      title: "Submit Test?",
+      desc: "Are you sure you want to submit your answers?",
+      btnOkText: "Submit",
+      btnCancelText: "Review Again",
+      btnCancelOnPress: () {},
+      btnOkOnPress: () => submitTest(context),
+    ).show();
+  }
+
+  void submitTest(BuildContext context) {
+    final total = allQuestions.values.fold<int>(0, (a, b) => a + b.length);
+    final attempted = selectedAnswers.length;
+    final reviewed = markedForReview.length;
+    final notAttempted = total - attempted;
+
+    // Build review data
+    final reviewData = <Map<String, dynamic>>[];
+    allQuestions.forEach((subject, questions) {
+      for (var q in questions) {
+        final id = q['id'];
+        final ansList = selectedAnswers[id];
+        final studentAns = (ansList != null && ansList.isNotEmpty) ? ansList.join(', ') : '—';
+        final correctAns = q['correctOption'] ?? '—';
+        reviewData.add({
+          'subject': subject,
+          'question': q['question'],
+          'studentAnswer': studentAns,
+          'correctAnswer': correctAns,
+          'isCorrect': studentAns == correctAns,
+        });
+      }
+    });
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pop(context);
+      Get.offAll(() => ResultScreen(
+            total: total,
+            attempted: attempted,
+            reviewed: reviewed,
+            notAttempted: notAttempted,
+            questionReviewData: reviewData,
+          ));
+    });
+  }
+
+  // =======================================
+  // 🔹 Mark / Report
+  // =======================================
   void toggleMarkForReview() {
     final id = currentQuestions[currentIndex.value]['id'];
-    markedForReview.contains(id)
-        ? markedForReview.remove(id)
-        : markedForReview.add(id);
+    if (markedForReview.contains(id)) {
+      markedForReview.remove(id);
+    } else {
+      markedForReview.add(id);
+    }
   }
 
-  void changeSubject(String subject) {
-    selectedSubject.value = subject;
-    currentIndex.value = 0;
-  }
 
-  // =======================================
-  // 🔹 SUBMIT TEST
-void submitTest(BuildContext context) {
-  final total = allQuestions.values.fold<int>(0, (a, b) => a + b.length);
-  final attempted = selectedAnswers.length;
-  final reviewed = markedForReview.length;
-  final notAttempted = total - attempted;
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => Center(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Colors.white),
-           
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Future.delayed(const Duration(seconds: 4), () {
-    Navigator.pop(context);
-    Get.offAll(() => ResultScreen(
-          total: total,
-          attempted: attempted,
-          reviewed: reviewed,
-          notAttempted: notAttempted,
-        ));
-  });
-}
-
-  // =======================================
-  // 🔹 REPORT QUESTION (Bottom Sheet)
-  // =======================================
-  void reportQuestion(
-      BuildContext context, String questionText, int questionId) {
+  void reportQuestion(BuildContext context, String questionText, int questionId) {
     final TextEditingController reportController = TextEditingController();
 
     Get.bottomSheet(
@@ -198,8 +241,8 @@ void submitTest(BuildContext context) {
         ),
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Center(
                 child: Container(
@@ -215,10 +258,9 @@ void submitTest(BuildContext context) {
               const Text(
                 "Report Question",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
               ),
               const SizedBox(height: 8),
               Text(
@@ -246,16 +288,14 @@ void submitTest(BuildContext context) {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.grey),
-                    ),
+                        side: const BorderSide(color: Colors.grey)),
                     child: const Text("Cancel"),
                   ),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                    label: const Text(
-                      "Submit",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    icon:
+                        const Icon(Icons.send, color: Colors.white, size: 18),
+                    label: const Text("Submit",
+                        style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
                       padding: const EdgeInsets.symmetric(
@@ -283,9 +323,6 @@ void submitTest(BuildContext context) {
                         backgroundColor: Colors.green.shade100,
                         colorText: Colors.black,
                       );
-
-                      // 🔹 Optional: Store in DB or send API
-                      // saveReport(questionId, message);
                     },
                   ),
                 ],

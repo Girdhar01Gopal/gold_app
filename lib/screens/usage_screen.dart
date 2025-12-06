@@ -1,32 +1,44 @@
-// screens/usage_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:gold_app/infrastructure/routes/admin_routes.dart';
 import '../controllers/usage_controller.dart';
 
 class UsageScreen extends StatelessWidget {
   final UsageController controller = Get.find();
 
+  // Maharishi Learn brand palette (bright gold -> soft amber -> rich bronze)
+  static const Color primary = Color.fromARGB(255, 231, 217, 20); // bright gold
+  static const Color accent = Color(0xFFEB8A2A); // soft amber
+  static const Color bronze = Color(0xFFB8860B); // rich bronze
+
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.init(context, designSize: const Size(375, 812), minTextAdapt: true);
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF682D91),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primary, accent, bronze],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: Text(
           'Usage',
           style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.w600),
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () => Get.offAllNamed(AdminRoutes.homeScreen),
             child: Text(
-              'Close',
-              style: TextStyle(color: Colors.white, fontSize: 10.sp),
+              'Home',
+              style: TextStyle(color: Colors.white, fontSize: 14.sp),
             ),
           ),
         ],
@@ -39,11 +51,11 @@ class UsageScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'FIITJEE APP USAGE GUIDE',
+                'MAHARISHI LEARN APP USAGE GUIDE',
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF682D91),
+                  color: bronze,
                 ),
               ),
               SizedBox(height: 10.h),
@@ -56,9 +68,9 @@ class UsageScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               _sectionHeader("Assignment Button Colors"),
 
-              _colorDescription("Black", "Assignment not yet opened by the teacher."),
-              _colorDescription("White", "Assignment opened — you are supposed to attempt it now."),
-              _colorDescription("Grey", "Assignment opened but you must attempt previous levels first."),
+             
+              _colorDescription("Green", "Assignment opened — you are supposed to attempt it now."),
+              _colorDescription("Grey", "Assignment Completed you did not attempt again."),
               _colorDescription("Red", "Attempted with extremely poor score."),
               _colorDescription("Light Red", "Attempted with poor but slightly better score."),
               _colorDescription("Orange", "Attempted, score is not good."),
@@ -124,7 +136,7 @@ class UsageScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF682D91),
+                        color: primary,
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -180,7 +192,7 @@ class UsageScreen extends StatelessWidget {
         style: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFF682D91),
+          color: bronze,
         ),
       ),
     );
@@ -188,8 +200,8 @@ class UsageScreen extends StatelessWidget {
 
   Widget _colorDescription(String colorName, String meaning) {
     final colorMap = {
-      'Black': Colors.black,
-      'White': Colors.white,
+      
+      'Green': Color.fromARGB(255, 76, 119, 8),
       'Grey': Colors.grey,
       'Red': Colors.red.shade800,
       'Light Red': Colors.red.shade300,

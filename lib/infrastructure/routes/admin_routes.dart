@@ -1,8 +1,10 @@
 // infrastructure/routes/admin_routes.dart
 import 'package:get/get.dart';
+import 'package:gold_app/bindings/loginbinding.dart';
 import 'package:gold_app/bindings/mathscreenbinding.dart';
 import 'package:gold_app/bindings/physicsbinding.dart';
 import 'package:gold_app/bindings/testscreenbinding.dart';
+import 'package:gold_app/screens/login.dart';
 import 'package:gold_app/screens/mathscreen.dart';
 import 'package:gold_app/screens/physicsscreen.dart';
 import 'package:gold_app/screens/testscreenview.dart';
@@ -31,6 +33,8 @@ class AdminRoutes {
     static const mathscreen = '/mathscreen';
         static const physics = '/physics';
           static const testscreen = '/testscreen';
+                    static const login = '/login';
+
 
 
 
@@ -93,6 +97,11 @@ class AdminRoutes {
       name: usageScreen,
       page: () => UsageScreen(),
       binding: UsageBinding(),
+    ),
+    GetPage(
+      name: login,
+      page: () => LoginScreen(),
+      binding: Loginbinding(),
     ),
   ];
 }

@@ -1,12 +1,15 @@
-// infrastructure/app_drawer/admin_drawer2.dart
+import 'dart:io'; // For exit(0)
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:gold_app/utils/constants/color_constants.dart';
 import '../../infrastructure/routes/admin_routes.dart';
-import '../../utils/constants/color_constants.dart';
 
 class AdminDrawer2 extends StatefulWidget {
+  const AdminDrawer2({super.key});
+
   @override
   _AdminDrawer2State createState() => _AdminDrawer2State();
 }
@@ -18,260 +21,124 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
   Widget build(BuildContext context) {
     final currentRoute = Get.currentRoute;
 
-    return SafeArea(
-      child: Drawer(
-        backgroundColor: Colors.grey.shade50,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ==== Drawer Header ====
-            Container(
-              height: 340.h,
-              width: 150.w,
+    return Drawer(
+      elevation: 4,
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          // ---------- Header Section ----------
+          CustomPaint(
+            painter: DrawerHeaderPainter(),
+            child: Container(
+              width: MediaQuery.sizeOf(context).width,
+              height: MediaQuery.sizeOf(context).height * 0.28, // Adjusted height
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: MediaQuery.sizeOf(context).width * 0.09, // Dynamic width
+                    backgroundColor: Colors.white,
+                    child: Icon(CupertinoIcons.person, size: 38.sp, color: AppColor.MAHARISHI_BRONZE),
+                  ),
+                  SizedBox(height: 14.h),
+                  Text(
+                    "Girdhar",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 17.sp,
+                    ),
+                  ),
+                  Text(
+                    "123456789009",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ---------- Drawer Items ----------
+          Expanded(
+            child: Container(
+              // 🔹 Background Image
               decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage("assets/images/FIITJEE_Logo.png"), // Your background image
+                  fit: BoxFit.cover,
+                  opacity: 0.1, // Soft visibility (adjust 0.1–0.4 as desired)
+                ),
                 gradient: LinearGradient(
-                  colors: [Color(0xFF9B1313), Color(0xFF4a4a4a)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    Color(0xFFf9f3f2),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    top: 0,
-                    right: -60,
-                    child: Opacity(
-                      opacity: 0.1,
-                      child: Icon(Icons.school, size: 200, color: Colors.white),
-                    ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: const CircleAvatar(
-                          radius: 25,
-                          backgroundImage: AssetImage('assets/images/avatar.png'),
-                          backgroundColor: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        "GIRDHAR",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      Text(
-                        "ENO: 12345678909",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 7.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
 
-            /// ==== Menu Items ====
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildSectionTitle("GENERAL"),
-                  _buildDrawerItem(
-                    title: "Usage",
-                    icon: Icons.insert_chart_outlined,
-                    route: AdminRoutes.usageScreen,
-                    currentRoute: currentRoute,
-                  ),
-                  // _buildDrawerItem(
-                  //   title: "File Manager",
-                  //   icon: Icons.folder_open_rounded,
-                  //   route: AdminRoutes.LOADING_SCREEN,
-                  //   currentRoute: currentRoute,
-                  // ),
-                  _buildDrawerItem(
-                    title: "Discussion List",
-                    icon: Icons.forum_outlined,
-                    route: AdminRoutes.LOADING_SCREEN,
-                    currentRoute: currentRoute,
-                  ),
-                  _buildSectionDivider(),
-
-                  _buildSectionTitle("ADMIN ACTIONS"),
-                  _buildDrawerItem(
-                    title: "Change Academic Year",
-                    icon: Icons.date_range_outlined,
-                    route: AdminRoutes.LOADING_SCREEN,
-                    currentRoute: currentRoute,
-                  ),
-                  _buildDrawerItem(
-                    title: "Assignment Reset",
-                    icon: Icons.restore_page_outlined,
-                    route: AdminRoutes.LOADING_SCREEN,
-                    currentRoute: currentRoute,
-                  ),
-                  _buildDrawerItem(
-                    title: "Refresh Test CGPA",
-                    icon: Icons.trending_up_rounded,
-                    route: AdminRoutes.LOADING_SCREEN,
-                    onTap: () =>Get.dialog(
-  AlertDialog(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    title: const Text('Refresh CGPA'),
-    content: const Text('Are you sure you want to refresh the Test CGPA?'),
-    actions: [
-      TextButton(
-        onPressed: () => Get.back(),
-        child: const Text(
-          'Cancel',
-          style: TextStyle(color: Colors.grey),
-        ),
-      ),
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColor.APP_Color_Indigo,
-        ),
-        onPressed: () async {
-          Get.back(); // Close confirmation dialog first
-
-          // Show loading dialog
-          Get.dialog(
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              // 🔹 Drawer Scrollable Content
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    CircularProgressIndicator(),
-                  
-                  ],
-                ),
-              ),
-            ),
-            barrierDismissible: false,
-            barrierColor: Colors.black54,
-          );
-
-          // Simulate process (replace with actual API call if needed)
-          await Future.delayed(const Duration(seconds: 2));
-
-          // Close the loading dialog
-          Get.back();
-
-          // Show success dialog
-          Get.dialog(
-            AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              title: Row(
-                children: const [
-                  Icon(Icons.check_circle, color: Colors.green),
-                  SizedBox(width: 8),
-                  Text('Success'),
-                ],
-              ),
-              content: const Text(
-                'Test CGPA has been successfully refreshed.',
-                style: TextStyle(height: 1.4),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(color: Colors.indigo),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        child: const Text(
-          'Refresh',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    ],
-  ),
-),
-
-
-                    currentRoute: currentRoute,
-                  ),
-                  _buildSectionDivider(),
-
-                  _buildDrawerItem(
-                    title: "Reset System",
-                    icon: Icons.settings_backup_restore,
-                    route: AdminRoutes.LOADING_SCREEN,
-                    currentRoute: currentRoute,
-                    color: Color(0xFF4a4a4a),
-                  ),
-                ],
-              ),
-            ),
-
-            /// ==== Logout Section ====
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                border: Border(top: BorderSide(color: Colors.grey.shade300)),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: _showLogoutDialog,
-                child: Row(
                   children: [
-                    const Icon(Icons.logout_rounded, color: Colors.red),
-                    SizedBox(width: 10.w),
-                    Text(
-                      "Logout",
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.sp,
-                      ),
+                    _drawerItem(
+                      title: "Usage",
+                      icon: Icons.insert_chart_outlined,
+                      route: AdminRoutes.usageScreen,
+                      currentRoute: currentRoute,
+                    ),
+                    _drawerItem(
+                      title: "Change Academic Year",
+                      icon: Icons.date_range_outlined,
+                      route: AdminRoutes.LOADING_SCREEN,
+                      currentRoute: currentRoute,
+                    ),
+                    _drawerItem(
+                      title: "Reset System",
+                      icon: Icons.settings_backup_restore,
+                      route: AdminRoutes.LOADING_SCREEN,
+                      currentRoute: currentRoute,
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // ---------- Footer ----------
+          Container(
+            color: AppColor.MAHARISHI_BRONZE,
+            padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+            width: double.infinity,
+            child: Center(
+              child: Text(
+                "© MGEPL",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDrawerItem({
+  Widget _drawerItem({
     required String title,
     required IconData icon,
     required String route,
     required String currentRoute,
-    VoidCallback? onTap,
-    Color? color,
+    bool isLogout = false,
+    Future<void> Function()? onTap,
   }) {
     final isSelected = currentRoute == route;
     final isHovered = hoveredRoute == route;
@@ -279,96 +146,137 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
     return MouseRegion(
       onEnter: (_) => setState(() => hoveredRoute = route),
       onExit: (_) => setState(() => hoveredRoute = null),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        color: isSelected
-            ? AppColor.grey_200
-            : isHovered
-                ? AppColor.grey_100
-                : Colors.transparent,
-        child: ListTile(
-          dense: true,
-          leading: Icon(
-            icon,
-            color: isSelected
-                ? AppColor.APP_Color_Indigo
-                : color ?? Colors.black87,
-          ),
-          title: Text(
-            title,
-            style: TextStyle(
-              color: isSelected
-                  ? AppColor.APP_Color_Indigo
-                  : color ?? Colors.black,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 9.sp,
-            ),
-          ),
-          onTap: () {
-            if (onTap != null) {
-              onTap();
-              return;
-            }
-            if (!isSelected) {
-              Get.toNamed(route);
-            } else {
-              Get.back();
-            }
-          },
-        ),
-      ),
-    );
-  }
-  }
+      child: InkWell(
+        onTap: () async {
+          // If a custom onTap is provided, execute it and skip default navigation.
+          if (onTap != null) {
+            await onTap();
+            return;
+          }
 
-  /// ==== Section Title ====
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 6.h),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade600,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  /// ==== Divider ====
-  Widget _buildSectionDivider() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Divider(color: Colors.grey.shade300, thickness: 0.8),
-    );
-  }
-
-  /// ==== Logout Dialog ====
-  void _showLogoutDialog() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Logout Confirmation'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.APP_Color_Indigo,
-            ),
-            onPressed: () {
+          if (title == "Reset") {
+            bool confirm = await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r)),
+                title: const Text(
+                  "Confirm Reset",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColor.MAHARISHI_BRONZE,
+                  ),
+                ),
+                content: const Text("Are you ready to reset the application?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("No",
+                        style: TextStyle(color: Colors.grey)),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      //await PrefManager().clearPref();
+                    },
+                    child: const Text("Yes",
+                        style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true) {
               GetStorage().erase();
               Get.offAllNamed(AdminRoutes.LOADING_SCREEN);
-            },
-            child: const Text('Logout'),
+            }
+          } else if (!isSelected) {
+            Get.offAllNamed(route);
+          } else {
+            Get.back();
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: EdgeInsets.symmetric(vertical: 4.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColor.MAHARISHI_BRONZE.withOpacity(0.08)
+                : isHovered
+                    ? Colors.grey[100]
+                    : Colors.transparent,
+            border: isSelected
+                ? Border(
+                    left: BorderSide(
+                      color: AppColor.MAHARISHI_BRONZE,
+                      width: 4.w,
+                    ),
+                  )
+                : null,
           ),
-        ],
+          child: ListTile(
+            leading: Icon(
+              icon,
+              color: isLogout
+                  ? Colors.red
+                  : isSelected
+                      ? AppColor.MAHARISHI_BRONZE
+                      : isHovered
+                          ? Colors.black87
+                          : Colors.black54,
+              size: 24.sp,
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: isLogout
+                    ? Colors.red
+                    : isSelected
+                        ? AppColor.MAHARISHI_BRONZE
+                        : Colors.black87,
+                fontWeight:
+                    isLogout || isSelected ? FontWeight.bold : FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+}
 
+class DrawerHeaderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    path.lineTo(0, size.height * 0.8);
+    path.quadraticBezierTo(
+      size.width * 0.5,
+      size.height,
+      size.width,
+      size.height * 0.7,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+
+    final gradient = LinearGradient(
+      colors: [
+        Color.fromARGB(255, 231, 217, 20), // bright gold
+        Color(0xFFEB8A2A), // soft amber
+        Color(0xFFB8860B),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    final paint = Paint()
+      ..shader =
+          gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}

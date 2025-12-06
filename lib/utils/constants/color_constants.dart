@@ -11,6 +11,10 @@ class AppColor {
   static Color grey_300 = Colors.grey.shade300;
   static const Color APP_Color_Indigo = Color(0xFF65258a);
   static const Color APP_Color_Pink = Color(0xFFe80566);
+  // Maharishi Learn brand colors
+  static const Color MAHARISHI_GOLD = Color.fromARGB(255, 231, 217, 20);
+  static const Color MAHARISHI_AMBER = Color(0xFFEB8A2A);
+  static const Color MAHARISHI_BRONZE = Color(0xFFB8860B);
   static const Color Platinum_1 = Color(0xFFcbe3f0);
   static const Color Platinum_2 = Color(0xFFf1f7fb);
   static const Color Platinum_3 = Color(0xFFDfdedc);

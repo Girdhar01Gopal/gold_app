@@ -1,7 +1,7 @@
-// screens/testscreenview.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:gold_app/utils/constants/color_constants.dart';
 import '../controllers/testscreencontroller.dart';
 
 class Testscreenview extends GetView<Testscreencontroller> {
@@ -10,28 +10,33 @@ class Testscreenview extends GetView<Testscreencontroller> {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(Testscreencontroller());
-
-    ScreenUtil.init(context,
-        designSize: const Size(375, 812), minTextAdapt: true);
+    ScreenUtil.init(context, designSize: const Size(375, 812), minTextAdapt: true);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF9B1313),
-        elevation: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 3,
         centerTitle: true,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColor.MAHARISHI_GOLD, AppColor.MAHARISHI_AMBER, AppColor.MAHARISHI_BRONZE],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: const Text(
-          'Assignment Test',
+          "Maharishi Learn Assignment",
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
           ),
         ),
       ),
-      // ===============================
-      // 🔹 MAIN TWO-PANE BODY
-      // ===============================
+
       body: SafeArea(
         child: Obx(() {
           final currentQuestions = controller.currentQuestions;
@@ -39,376 +44,363 @@ class Testscreenview extends GetView<Testscreencontroller> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final question =
-              currentQuestions[controller.currentIndex.value];
-          final currentAnswer =
-              controller.selectedAnswers[question['id']] ?? '';
+          // ✅ Safety check for index overflow
+          if (controller.currentIndex.value >= currentQuestions.length) {
+            controller.currentIndex.value = 0;
+          }
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🔹 LEFT SIDE — QUESTIONS (70%)
-              Expanded(
-                flex: 7,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Subject Tabs
-                      Obx(() => Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: controller.subjects.map((subject) {
-                              final isSelected = controller
-                                      .selectedSubject.value ==
-                                  subject;
-                              return Padding(
-                                padding:
-                                    EdgeInsets.symmetric(horizontal: 6.w),
-                                child: ChoiceChip(
-                                  checkmarkColor: Colors.white,
-                                  label: Text(subject),
-                                  selected: isSelected,
-                                  selectedColor: const Color(0xFF9B1313),
-                                  backgroundColor: Colors.grey.shade200,
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  onSelected: (_) =>
-                                      controller.changeSubject(subject),
-                                ),
-                              );
-                            }).toList(),
-                          )),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Question ${controller.currentIndex.value + 1}/${currentQuestions.length}",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const Divider(),
-                      // Question Box
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(6.w),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Text(
-                          question['question'],
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20.h),
-                    // 🔹 Multiple Choice Options
-...List.generate(question['options'].length, (index) {
-  final option = question['options'][index];
-  // Maintain a list of selected options for this question
-  final selectedList =
-      controller.selectedAnswers[question['id']] ?? <String>[];
-  final isSelected = selectedList.contains(option);
-  return Card(
-    elevation: 1,
-    margin: EdgeInsets.symmetric(vertical: 4.h),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: CheckboxListTile(
-      controlAffinity: ListTileControlAffinity.leading, // ✅ Checkbox first
-      title: Text(
-        option,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
-        ),
-      ),
-      value: isSelected,
-      activeColor: const Color(0xFF9B1313),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      onChanged: (bool? value) {
-        controller.toggleMultiSelect(
-          question['id'],
-          option,
-          value ?? false,
-        );
-      },
-    ),
-  );
-}),
- SizedBox(height: 15.h),
-SizedBox(height: 10.h),
-// 🔹 Report Button
-Align(
-  alignment: Alignment.centerRight,
-  child: ElevatedButton.icon(
-    onPressed: () => controller.reportQuestion(
-      context,
-      question['question'],
-      question['id'],
-    ),
-    icon: const Icon(Icons.report_gmailerrorred, color: Colors.white),
-    label: const Text(
-      "Report Issue",
-      style: TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.red, // Button color
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 3,
-    ),
-  ),
-),
-SizedBox(height: 20.h),
-                      // Mark for Review
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Obx(() {
-                          final currentQuestionId =
-                              question['id'];
-                          final isMarked = controller.markedForReview
-                              .contains(currentQuestionId);
+          final question = currentQuestions[controller.currentIndex.value];
 
-                          return OutlinedButton.icon(
-                            icon: Icon(
-                              isMarked
-                                  ? Icons.flag_outlined
-                                  : Icons.flag,
-                              color: isMarked
-                                  ? Colors.red
-                                  : Colors.purple,
-                            ),
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🔹 Subject Tabs
+                Center(
+                  child: Obx(() => Wrap(
+                        spacing: 8.w,
+                        runSpacing: 6.h,
+                        alignment: WrapAlignment.center,
+                        children: controller.subjects.map((subject) {
+                          final isSelected =
+                              controller.selectedSubject.value == subject;
+                          return ChoiceChip(
+                            checkmarkColor: Colors.white,
                             label: Text(
-                              isMarked
-                                  ? "Unmark Review"
-                                  : "Mark for Review",
+                              subject,
                               style: TextStyle(
-                                  color: isMarked
-                                      ? Colors.red
-                                      : Color(0xFF4a4a4a)),
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.grey.shade800,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            style: OutlinedButton.styleFrom(
+                            selected: isSelected,
+                            selectedColor: AppColor.MAHARISHI_BRONZE,
+                            backgroundColor: Colors.white,
+                            elevation: 2,
+                            pressElevation: 4,
                               side: BorderSide(
-                                  color: isMarked
-                                      ? Colors.red
-                                      : Color(0xFF4a4a4a)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                              color: isSelected
+                                  ? AppColor.MAHARISHI_BRONZE
+                                  : Colors.grey.shade300,
                             ),
-                            onPressed: controller.toggleMarkForReview,
+                            // ✅ Reset question index when subject changes
+                            onSelected: (selected) {
+                              if (selected) {
+                                controller.selectedSubject.value = subject;
+                                controller.currentIndex.value = 0;
+                              }
+                            },
                           );
-                        }),
-                      ),
-                      SizedBox(height: 20.h),
-                      // Navigation Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.arrow_back,
-                                color: Colors.white),
-                            label: const Text("Previous",
-                                style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade600,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 22.w, vertical: 10.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: controller.previousQuestion,
-                          ),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.arrow_forward,
-                                color: Colors.white),
-                            label: const Text("Next",
-                                style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF9B1313),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 22.w, vertical: 10.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: controller.nextQuestion,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 25.h),
-                      // Submit Button
-                      Center(
-                        child: SizedBox(
-                          height: 100.h,
-                          child: ElevatedButton.icon(
-                            onPressed: () =>
-                                controller.submitTest(context),
-                            icon: const Icon(Icons.check_circle_outline,
-                                color: Colors.white),
-                            label: const Text("Submit Test",
-                                style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              minimumSize: Size(200.w, 45.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                        }).toList(),
+                      )),
                 ),
-              ),
-              // 🔹 RIGHT SIDE — QUESTION PALETTE (30%)
-              Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Container(
-                    height: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      color: Colors.grey.shade100,
-                      border: Border(
-                        left: BorderSide(
-                            color: Colors.grey.shade300, width: 1),
+                SizedBox(height: 20.h),
+
+                // 🔹 Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Q${controller.currentIndex.value + 1} / ${currentQuestions.length}",
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                    child: Obx(() {
-                      final subjectQuestions = controller.currentQuestions;
-                      return Column(
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: AppColor.MAHARISHI_BRONZE,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        controller.selectedSubject.value,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Divider(color: Colors.grey.shade300),
+
+                // 🔹 Question Card
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r)),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      question['question'],
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+
+                // 🔹 Options
+                ...List.generate(question['options'].length, (index) {
+                  final option = question['options'][index];
+                  final selectedList =
+                      controller.selectedAnswers[question['id']] ?? <String>[];
+                  final isSelected = selectedList.contains(option);
+
+                  return GestureDetector(
+                    onTap: () => controller.toggleMultiSelect(
+                        question['id'], option, !isSelected),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      margin: EdgeInsets.symmetric(vertical: 6.h),
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                        decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColor.MAHARISHI_BRONZE
+                              : Colors.grey.shade300,
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          if (isSelected)
+                            const BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 3,
+                              offset: Offset(0, 2),
+                            ),
+                        ],
+                      ),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Legend (2 per row)
-                          Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _legendItem("Answered", Colors.green),
-                                  _legendItem("Marked", Colors.purple),
-                                ],
-                              ),
-                              SizedBox(height: 8.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _legendItem("Visited", Colors.orange),
-                                  _legendItem("Not Visited", Colors.grey),
-                                ],
-                              ),
-                            ],
+                          Icon(
+                            isSelected
+                                ? Icons.check_circle_rounded
+                                : Icons.circle_outlined,
+                            color: isSelected
+                                ? AppColor.MAHARISHI_BRONZE
+                                : Colors.grey,
+                            size: 20,
                           ),
-                          const Divider(),
-                          Text(
-                            "${controller.selectedSubject.value} Palette",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF8B2D28),
-                              fontSize: 10.sp,
-                            ),
-                          ),
-                          const Divider(),
-                          // Palette Grid
+                          SizedBox(width: 10.w),
                           Expanded(
-                            child: SingleChildScrollView(
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: subjectQuestions.map((q) {
-                                  final id = q['id'];
-                                  final isAnswered = controller
-                                      .selectedAnswers
-                                      .containsKey(id);
-                                  final isMarked = controller
-                                      .markedForReview
-                                      .contains(id);
-                                  final isVisited = controller
-                                      .visitedQuestions
-                                      .contains(id);
-                                  Color color;
-                                  if (isMarked) {
-                                    color = Colors.purple;
-                                  } else if (isAnswered) {
-                                    color = Colors.green;
-                                  } else if (isVisited) {
-                                    color = Colors.orange;
-                                  } else {
-                                    color = Colors.grey;
-                                  }
-                                  return GestureDetector(
-                                    onTap: () {
-                                      controller.currentIndex.value =
-                                          subjectQuestions.indexOf(q);
-                                      controller.visitedQuestions.add(id);
-                                    },
-                                    child: CircleAvatar(
-                                      backgroundColor: color,
-                                      radius: 16,
-                                      child: Text(
-                                        id.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  );
+                }),
+
+                SizedBox(height: 25.h),
+
+                // 🔹 Action Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => controller.reportQuestion(
+                        context,
+                        question['question'],
+                        question['id'],
+                      ),
+                      icon: const Icon(Icons.report_problem_outlined,
+                          color: Colors.red),
+                      label: const Text(
+                        "Report",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                    Obx(() {
+                      final marked = controller.markedForReview
+                          .contains(question['id']);
+                      return OutlinedButton.icon(
+                        icon: Icon(
+                          marked ? Icons.flag : Icons.outlined_flag,
+                          color: marked ? Colors.purple : Colors.grey.shade700,
+                        ),
+                        label: Text(
+                          marked ? "Unmark" : "Mark Review",
+                          style: TextStyle(
+                            color: marked ? Colors.purple : Colors.grey.shade800,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                              color: marked
+                                  ? Colors.purple
+                                  : Colors.grey.shade400),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        onPressed: controller.toggleMarkForReview,
                       );
                     }),
+                  ],
+                ),
+                SizedBox(height: 25.h),
+
+                // 🔹 Navigation Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          size: 18, color: Colors.white),
+                      label: const Text("Previous",
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade600,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 22.w, vertical: 10.h),
+                      ),
+                      onPressed: controller.previousQuestion,
+                    ),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.arrow_forward_ios,
+                          size: 18, color: Colors.white),
+                      label: const Text("Next",
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.MAHARISHI_BRONZE,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 22.w, vertical: 10.h),
+                      ),
+                      onPressed: () => controller.nextQuestion(context),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 25.h),
+
+                // 🔹 Submit Button
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () => controller.showSubmitDialog(context),
+                    icon: const Icon(Icons.check_circle_outline,
+                        color: Colors.white),
+                    label: const Text(
+                      "Submit Test",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      minimumSize: Size(230.w, 48.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 30.h),
+
+                // 🔹 Question Palette
+                const Divider(thickness: 1.2),
+                Text(
+                  "Question Palette",
+                  style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColor.MAHARISHI_BRONZE,
+                    ),
+                ),
+                SizedBox(height: 10.h),
+
+                Obx(() {
+                  final questions = controller.currentQuestions;
+                  return Wrap(
+                    spacing: 10.w,
+                    runSpacing: 10.h,
+                    alignment: WrapAlignment.center,
+                    children: questions.map((q) {
+                      final id = q['id'];
+                      final answered = controller.selectedAnswers.containsKey(id);
+                      final marked =
+                          controller.markedForReview.contains(id);
+                      final visited =
+                          controller.visitedQuestions.contains(id);
+
+                      Color color;
+                      if (marked) {
+                        color = Colors.purple;
+                      } else if (answered) {
+                        color = Colors.green;
+                      } else if (visited && !answered) {
+                        color = Colors.red;
+                      } else if (visited) {
+                        color = Colors.orange;
+                      } else {
+                        color = Colors.grey;
+                      }
+
+                      return GestureDetector(
+                        onTap: () {
+                          controller.currentIndex.value =
+                              questions.indexOf(q);
+                          controller.visitedQuestions.add(id);
+                        },
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: color,
+                          child: Text(
+                            id.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }),
+                SizedBox(height: 25.h),
+              ],
+            ),
           );
         }),
       ),
-    );
-  }
-  // 🔹 Legend Helper
-  Widget _legendItem(String label, Color color) {
-    return Row(
-      children: [
-        CircleAvatar(radius: 4, backgroundColor: color),
-        SizedBox(width: 3.w),
-        Text(
-          label,
-          style: TextStyle(fontSize: 7.sp, color: Colors.black87),
-        ),
-      ],
     );
   }
 }

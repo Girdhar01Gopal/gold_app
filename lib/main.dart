@@ -10,9 +10,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Lock orientation to portrait only
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
+ await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp, // only portrait mode
   ]);
 
   await GetStorage.init(); // Initialize GetStorage for local cache
@@ -25,9 +24,8 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = box.read('isLoggedIn') ?? false;
-
     return ScreenUtilInit(
-      designSize: const Size(411.42, 890.28),
+      designSize: const Size(380, 844),
       minTextAdapt: true,
       builder: (_, __) {
         return GetMaterialApp(
