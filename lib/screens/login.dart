@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:gold_app/controllers/logincontroller.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -116,7 +117,7 @@ class LoginScreen extends StatelessWidget {
 
                             /// ---------- Input ----------
                             TextField(
-                              controller: controller.enrollmentController,
+                              controller: controller.passwordController,
                               decoration: InputDecoration(
                                 hintText: "Enter Enrollment Number",
                                 prefixIcon: const Icon(
@@ -152,7 +153,7 @@ class LoginScreen extends StatelessWidget {
                               () => ElevatedButton(
                                 onPressed: controller.isLoading.value
                                     ? null
-                                    : controller.login,
+                                    : () => controller.login(enrollmentNo: controller.passwordController.text.trim()),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const  Color(0xFFEB8A2A),
                                   minimumSize: Size(double.infinity, 52.h),
@@ -162,10 +163,10 @@ class LoginScreen extends StatelessWidget {
                                   elevation: 3,
                                 ),
                                 child: controller.isLoading.value
-                                    ? const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      )
+                                    ?  LoadingAnimationWidget.fourRotatingDots(
+        color: Colors.orange,
+        size: 50,
+      )
                                     : Text(
                                         "Continue",
                                         style: TextStyle(

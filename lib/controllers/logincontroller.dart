@@ -1,58 +1,129 @@
-// controllers/logincontroller.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gold_app/Model/loginviewmodel.dart';
+import 'package:gold_app/appurl/adminurl.dart';
+import 'package:gold_app/localstorage.dart';
+import 'package:gold_app/prefconst.dart';
+import 'package:http/http.dart' as https;
+import 'package:http/http.dart' as http;
+
 import '../infrastructure/routes/admin_routes.dart';
 
 class LoginController extends GetxController {
-  final enrollmentController = TextEditingController();
   final passwordController = TextEditingController();
-
+//MG6052612610001
   var isLoading = false.obs;
   var hidePassword = true.obs;
 
-  Future<void> login() async {
-    final enrollment = enrollmentController.text.trim();
-    final password = passwordController.text.trim();
+Future<loginmodel> login({
+  required String enrollmentNo,
+}) async {
+  isLoading.value = true;
+  final url = Uri.parse(Adminurl.loginurl);
 
-    if (enrollment.isEmpty) {
-      Get.snackbar(
-        'Error',
-        'Please fill all fields',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
-      return;
-    }
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'AdmissionNo': enrollmentNo,
+      }),
+    );
 
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 2)); // simulate API
+    if (response.statusCode == 200) {
+      isLoading.value = false;
+      final data = jsonDecode(response.body);
+      print("✅ Login Response Data: $data");
 
-    if (enrollment == '0') {
-      Get.offAllNamed(AdminRoutes.LOADING_SCREEN);
-      Get.snackbar(
-        'Success',
-        'Login Successful!',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor:  Color(0xFFEB8A2A),
-        colorText: Colors.white,
-      );
+      // Optional: check for message or extract data
+      if (data['message'] == "Login succesfully" || data['message'] == "Login successfully") {
+        Get.offAllNamed(AdminRoutes.homeScreen);
+        PrefManager().writeValue(key: PrefConst.isLoggedIn, value: "yes");
+        PrefManager().writeValue(
+          key: PrefConst.EnrollmentNo,
+          value: jsonEncode(data['data']?['AdmissionNo']),
+        );
+         PrefManager().writeValue(
+          key: PrefConst.SchoolId,
+          value: jsonEncode(data['data']?['SchoolId']),
+        ); PrefManager().writeValue(
+          key: PrefConst.StudentId,
+          value: jsonEncode(data['data']?['StudentId']),
+        ); PrefManager().writeValue(
+          key: PrefConst.CourseId,
+          value: jsonEncode(data['data']?['StudentName']),
+        );
+        PrefManager().writeValue(
+          key: PrefConst.studentname,
+          value: jsonEncode(data['data']?['StudentName']),
+        );
+        PrefManager().writeValue(
+          key: PrefConst.session,
+          value: jsonEncode(data['data']?['Session']),
+        );
+         PrefManager().writeValue(
+          key: PrefConst.session,
+          value: jsonEncode(data['data']?['Session']),
+        );
+         PrefManager().writeValue(
+          key: PrefConst.className,
+          value: jsonEncode(data['data']?['CourseName']),
+        );
+        print("✅ Login successful for EnrollmentNo: ${data['data']?['AdmissionNo'] ?? ''}");
+        print("✅ Full Response Data: $data");
+        print("✅ Stored EnrollmentNo: ${await PrefManager().readValue(key: PrefConst.EnrollmentNo)}");
+        print("✅ Stored SchoolId: ${await PrefManager().readValue(key: PrefConst.SchoolId)}");
+        print("✅ Stored StudentId: ${await PrefManager().readValue(key: PrefConst.StudentId)}");
+        print("✅ Stored CourseId: ${await PrefManager().readValue(key: PrefConst.CourseId)}");
+        print("✅ Stored StudentName: ${await PrefManager().readValue(key: PrefConst.studentname)}");
+        print("✅ Stored Session: ${await PrefManager().readValue(key: PrefConst.session
+)}");
+        print("✅ Stored ClassName: ${await PrefManager().readValue(key: PrefConst.className)}");
+        Get.snackbar(
+          "Login Successful",
+          "Welcome ${data['data']?['AdmissionNo'] ?? ''}",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF8b2d28),
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          "Login Failed",
+          data['message'] ?? "Invalid credentials.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } else {
+      isLoading.value = false;
       Get.snackbar(
-        'Invalid Credentials',
-        'Please check your enrollment and password.',
+        "Error ${response.statusCode}",
+        "Invalid enrollment number or server issue.",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.8),
+        backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
-
+    return loginmodel.fromJson(jsonDecode(response.body));
+  } catch (e) {
     isLoading.value = false;
+    Get.snackbar(
+      "Error",
+      "Something went wrong. Please try again.",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+    return Future.error(e);
   }
-
+}
   @override
   void onClose() {
-    enrollmentController.dispose();
     passwordController.dispose();
     super.onClose();
   }

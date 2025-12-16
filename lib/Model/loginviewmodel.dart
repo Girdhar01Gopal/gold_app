@@ -28,7 +28,10 @@ class loginmodel {
 class Data {
   int? studentId;
   String? admissionNo;
+  String? studentName;
+  String? session;
   int? courseId;
+  String? courseName;
   int? schoolId;
   bool? isActive;
   String? createdDate;
@@ -40,7 +43,10 @@ class Data {
   Data(
       {this.studentId,
       this.admissionNo,
+      this.studentName,
+      this.session,
       this.courseId,
+      this.courseName,
       this.schoolId,
       this.isActive,
       this.createdDate,
@@ -52,7 +58,10 @@ class Data {
   Data.fromJson(Map<String, dynamic> json) {
     studentId = json['StudentId'];
     admissionNo = json['AdmissionNo'];
+    studentName = json['StudentName'];
+    session = json['Session'];
     courseId = json['CourseId'];
+    courseName = json['CourseName'];
     schoolId = json['SchoolId'];
     isActive = json['IsActive'];
     createdDate = json['CreatedDate'];
@@ -66,7 +75,10 @@ class Data {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['StudentId'] = this.studentId;
     data['AdmissionNo'] = this.admissionNo;
+    data['StudentName'] = this.studentName;
+    data['Session'] = this.session;
     data['CourseId'] = this.courseId;
+    data['CourseName'] = this.courseName;
     data['SchoolId'] = this.schoolId;
     data['IsActive'] = this.isActive;
     data['CreatedDate'] = this.createdDate;

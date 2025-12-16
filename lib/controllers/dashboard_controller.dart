@@ -1,5 +1,113 @@
+import 'dart:math';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:gold_app/infrastructure/routes/admin_routes.dart';
+import 'package:gold_app/localstorage.dart';
+import 'package:gold_app/prefconst.dart';
+
 
 class HomeController extends GetxController {
-  // Add controller logic here if needed in the future
+  TextEditingController testId = TextEditingController();
+    TextEditingController passcode = TextEditingController();
+    var enrollmentNo = ''.obs;
+  var isLoading = false.obs;
+          var hidePassword = true.obs;
+          var studentname = ''.obs;
+          var className = ''.obs;
+          var session = ''.obs;
+
+
+var isNavigating = false.obs;
+var start = false.obs;
+
+@override
+  void onInit() async{
+    // TODO: implement onInit
+    
+       enrollmentNo.value = await PrefManager().readValue(key: PrefConst.EnrollmentNo);
+      studentname.value = await PrefManager().readValue(key: PrefConst.studentname);
+      className.value = await PrefManager().readValue(key: PrefConst.className);
+      session.value = await PrefManager().readValue(key: PrefConst.session);
+   print("✅ EnrollmentNo in HomeController: ${enrollmentNo.value}");
+    super.onInit();
+  }
+
+
+
+void voidtest() async {
+  // Check if Test ID or Passcode is empty
+  if (testId.text.isEmpty || passcode.text.isEmpty) {
+    Get.snackbar(
+      "Missing Fields",
+      "Please enter both Test ID and Passcode",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
+    return;
+  }
+
+  // Check connectivity before proceeding
+  var connectivityResult = await Connectivity().checkConnectivity();
+  if (connectivityResult == ConnectivityResult.mobile ||
+      connectivityResult == ConnectivityResult.wifi || connectivityResult == ConnectivityResult.ethernet) {
+    // Show alert if no internet connection
+  
+    // Simulate some processing (e.g., API call) with a delay
+  await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+
+  // Dismiss the loader after the delay
+ 
+
+  // // Proceed to test screen after verification
+  // Get.offAllNamed(
+  //   AdminRoutes.instruction,
+  //   arguments: {
+  //     'testId': testId.text,
+  //     'passcode': passcode.text,
+  //   },
+  // ); // Exit the function if no internet
+  }
+    Get.snackbar(
+      "No Internet Connection",
+      "Please check your internet connection and try again",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
+  
+
+  // Show loader
+
+
+  
+}
+
+  void goToMainScreen() async {
+    isNavigating.value = true; // Show loader
+    await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+    Get.toNamed(AdminRoutes.MAIN_SCREEN)?.then((_) {
+      // when returning back
+      isNavigating.value = false; // revert icon
+    });
+  }
+  void onDownloadPressed() {
+    if (testId.text.isEmpty || passcode.text.isEmpty) {
+      Get.snackbar(
+        "Missing Fields",
+        "Please enter both Test ID and Passcode",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+ 
+    // ✅ Simulated success (replace with your actual download logic)
+   
+
+    print("✅ Download triggered | Test ID: ${testId.text}, Passcode: ${passcode.text}");
+  }
 }

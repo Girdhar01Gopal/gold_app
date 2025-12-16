@@ -15,7 +15,7 @@ import '../../bindings/dashboard_binding.dart';
 import '../../bindings/continue_screen_binding.dart'; // Import the new binding
 import '../../screens/ContinueScreen.dart';
 import '../../screens/Loading_Screen.dart';
-import '../../screens/MainScreen.dart';
+
 import '../../screens/admin_splash_screen.dart';
 import '../../screens/dashboard_screen.dart';
 import '../../screens/usage_screen.dart';
@@ -80,12 +80,12 @@ class AdminRoutes {
       binding: HomeBinding(),
     ),
 
-    // Main Screen
-    GetPage(
-      name: MAIN_SCREEN,
-      page: () => MainScreen(),
-      binding: MainScreenBinding(),
-    ),
+    // // Main Screen
+    // GetPage(
+    //   name: MAIN_SCREEN,
+    //   page: () => MainScreen(),
+    //   binding: MainScreenBinding(),
+    // ),
 
     // Continue Screen
     GetPage(

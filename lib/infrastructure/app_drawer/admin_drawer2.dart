@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:gold_app/localstorage.dart';
+import 'package:gold_app/prefconst.dart';
 import 'package:gold_app/utils/constants/color_constants.dart';
 import '../../infrastructure/routes/admin_routes.dart';
 
@@ -16,10 +18,29 @@ class AdminDrawer2 extends StatefulWidget {
 
 class _AdminDrawer2State extends State<AdminDrawer2> {
   String? hoveredRoute;
+  var studentname = ''.obs;
+  var className = ''.obs;
+  var session = ''.obs;
+  var enrollmentNo = ''.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    enrollmentNo.value = await PrefManager().readValue(key: PrefConst.EnrollmentNo);
+    studentname.value = await PrefManager().readValue(key: PrefConst.studentname);
+    className.value = await PrefManager().readValue(key: PrefConst.className);
+    session.value = await PrefManager().readValue(key: PrefConst.session);
+  }
 
   @override
   Widget build(BuildContext context) {
     final currentRoute = Get.currentRoute;
+
+
 
     return Drawer(
       elevation: 4,
@@ -31,34 +52,47 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
             painter: DrawerHeaderPainter(),
             child: Container(
               width: MediaQuery.sizeOf(context).width,
-              height: MediaQuery.sizeOf(context).height * 0.28, // Adjusted height
+              height: MediaQuery.sizeOf(context).height * 0.22, // Adjusted height
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
+              child: Row(children: [
+                CircleAvatar(
                     radius: MediaQuery.sizeOf(context).width * 0.09, // Dynamic width
                     backgroundColor: Colors.white,
                     child: Icon(CupertinoIcons.person, size: 38.sp, color: AppColor.MAHARISHI_BRONZE),
                   ),
-                  SizedBox(height: 14.h),
-                  Text(
-                    "Girdhar",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 17.sp,
+                  SizedBox(width: 10.w),
+                  Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  
+                  Obx(()=> Text(
+                      '${studentname.value.replaceAll('"','').trim()}',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 17.sp,
+                      ),
                     ),
                   ),
-                  Text(
-                    "123456789009",
+                        Obx(()=> Text(
+                    '${className.value.replaceAll('"','').trim()} (AY ${session.value.replaceAll('"','').replaceAll('-', ' - ').trim()})',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
+                  )),
+                      Obx(()=> Text(
+                    '${enrollmentNo.value.replaceAll('"','').trim()}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )),
+                  
                 ],
               ),
+              ],)
             ),
           ),
 
@@ -88,17 +122,23 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                 child: Column(
                   children: [
                     _drawerItem(
+                      title: "Dashboard",
+                      icon: Icons.home_outlined,
+                      route: AdminRoutes.homeScreen,
+                      currentRoute: currentRoute,
+                    ),
+                    _drawerItem(
                       title: "Usage",
                       icon: Icons.insert_chart_outlined,
                       route: AdminRoutes.usageScreen,
                       currentRoute: currentRoute,
                     ),
-                    _drawerItem(
-                      title: "Change Academic Year",
-                      icon: Icons.date_range_outlined,
-                      route: AdminRoutes.LOADING_SCREEN,
-                      currentRoute: currentRoute,
-                    ),
+                    // _drawerItem(
+                    //   title: "Change Academic Year",
+                    //   icon: Icons.date_range_outlined,
+                    //   route: AdminRoutes.LOADING_SCREEN,
+                    //   currentRoute: currentRoute,
+                    // ),
                     _drawerItem(
                       title: "Reset System",
                       icon: Icons.settings_backup_restore,

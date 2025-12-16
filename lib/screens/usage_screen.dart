@@ -60,13 +60,9 @@ class UsageScreen extends StatelessWidget {
               ),
               SizedBox(height: 10.h),
 
-              Text(
-                "When you launch the app for the first time without internet, it will not work. Once connected, the app will download your Home Screen from the server — valid for 7 days (session lifetime). You can access the app offline during this period.",
-                style: TextStyle(fontSize: 10.sp, height: 1.5),
-              ),
-
-              SizedBox(height: 20.h),
-              _sectionHeader("Assignment Button Colors"),
+            
+              // SizedBox(height: 20.h),
+              // _sectionHeader("Assignment Button Colors"),
 
              
               _colorDescription("Green", "Assignment opened — you are supposed to attempt it now."),
@@ -78,45 +74,45 @@ class UsageScreen extends StatelessWidget {
               _colorDescription("Light Green", "Attempted, score is satisfactory."),
               _colorDescription("Dark Green", "Attempted, score is good."),
 
-              SizedBox(height: 25.h),
-              _sectionHeader("Assignment Download & Validity"),
+              // SizedBox(height: 25.h),
+              // _sectionHeader("Assignment Download & Validity"),
 
-              Text(
-                "When you click any button, the app downloads the assignment (valid for the same 7-day session as the Home Screen). For example, if you downloaded the Home Screen on Day 1 and an assignment on Day 4, both expire on Day 8.",
-                style: TextStyle(fontSize: 10.sp, height: 1.5),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                "While downloading, a grey tick appears next to the button. Once downloaded, it turns green.",
-                style: TextStyle(fontSize: 10.sp, height: 1.5),
-              ),
+              // Text(
+              //   "When you click any button, the app downloads the assignment (valid for the same 7-day session as the Home Screen). For example, if you downloaded the Home Screen on Day 1 and an assignment on Day 4, both expire on Day 8.",
+              //   style: TextStyle(fontSize: 10.sp, height: 1.5),
+              // ),
+              // SizedBox(height: 10.h),
+              // Text(
+              //   "While downloading, a grey tick appears next to the button. Once downloaded, it turns green.",
+              //   style: TextStyle(fontSize: 10.sp, height: 1.5),
+              // ),
 
-              SizedBox(height: 25.h),
-              _sectionHeader("Assignment Download Limit"),
+              // SizedBox(height: 25.h),
+              // _sectionHeader("Assignment Download Limit"),
 
-              Text(
-                "You can download a maximum of 7 assignments at a time. If you try to download an 8th, the app will prompt you to delete (by uploading) one of the existing ones first. You can re-download any assignment later without restriction.",
-                style: TextStyle(fontSize: 10.sp, height: 1.5),
-              ),
+              // Text(
+              //   "You can download a maximum of 7 assignments at a time. If you try to download an 8th, the app will prompt you to delete (by uploading) one of the existing ones first. You can re-download any assignment later without restriction.",
+              //   style: TextStyle(fontSize: 10.sp, height: 1.5),
+              // ),
 
               SizedBox(height: 25.h),
               _sectionHeader("Internet Connectivity & Uploads"),
 
               Text(
-                "Stay connected to the internet as much as possible. Your attempted assignments are uploaded to the server only when online. Your CGPA improves only after the upload. If you stay offline for 7 consecutive days, the session will expire and you'll need internet to reopen the app.",
+                "Stay connected to the internet as much as possible. Your attempted assignments are uploaded to the server only when online. Your CGPA improves only after the upload. If you stay offline the session will expire and you'll need Contact to Admin to reopen the app.",
                 style: TextStyle(fontSize: 10.sp, height: 1.5),
               ),
 
               SizedBox(height: 25.h),
               _sectionHeader("Troubleshooting"),
 
+              // Text(
+              //   "If assignments remain closed despite being opened by the teacher or you face a session timeout, use the RESET option from the menu. RESET deletes and re-downloads the Home Screen automatically every 7 days.",
+              //   style: TextStyle(fontSize: 10.sp, height: 1.5),
+              // ),
+              // SizedBox(height: 10.h),
               Text(
-                "If assignments remain closed despite being opened by the teacher or you face a session timeout, use the RESET option from the menu. RESET deletes and re-downloads the Home Screen automatically every 7 days.",
-                style: TextStyle(fontSize: 10.sp, height: 1.5),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                "If scores are incorrect or assignments remain locked after RESET, use HARD RESET. This recalculates your scores from the beginning. For major issues, use TOUGH RESET, which rebuilds your entire account data.",
+                "If scores are incorrect or assignments locked  use TOUGH RESET, which rebuilds your entire account data.",
                 style: TextStyle(fontSize: 10.sp, height: 1.5),
               ),
 

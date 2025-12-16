@@ -24,12 +24,35 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Class 11 (AY 2025)',
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                Obx(
+                  () => Text(
+                    '${controller.studentname.value.replaceAll('"', '').trim()} ',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Obx(
+                  () => Text(
+                    '${controller.className.value.replaceAll('"', '').trim()} (AY ${controller.session.value.replaceAll('"', '').replaceAll('-', ' - ').trim()})',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                //  SizedBox(height: 1.h),
+                Obx(
+                  () => Text(
+                    '${controller.enrollmentNo.value.replaceAll('"', '').trim()}',
+                    style: TextStyle(
+                      fontSize: 28.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 SizedBox(height: 10.h),
@@ -62,20 +85,20 @@ class HomeScreen extends StatelessWidget {
           Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 25.h, horizontal: 25.w),
+                padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 25.w),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildActionButton('Reset', Icons.refresh, () => _showResetDialog(context)),
-                    _buildActionButton('Change Year', Icons.calendar_today, () {
-                      showYearDropdownDialog(
-                        context: context,
-                        selectedYear: selectedYear ?? '2025',
-                        onYearSelected: (String year) {
-                          Get.snackbar('Academic Year Changed', 'Selected $year', snackPosition: SnackPosition.BOTTOM);
-                        },
-                      );
-                    }),
+                    //  //   _buildActionButton('Reset', Icons.refresh, () => _showResetDialog(context)),
+                    //     _buildActionButton('Change Year', Icons.calendar_today, () {
+                    //       showYearDropdownDialog(
+                    //         context: context,
+                    //         selectedYear: selectedYear ?? '2025',
+                    //         onYearSelected: (String year) {
+                    //           Get.snackbar('Academic Year Changed', 'Selected $year', snackPosition: SnackPosition.BOTTOM);
+                    //         },
+                    //       );
+                    //     }),
                   ],
                 ),
               ),
@@ -86,15 +109,15 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       _buildSubjectCard('Chemistry', () {
                         Get.offAllNamed(AdminRoutes.CONTINUE_SCREEN);
-                      },context),
+                      }, context),
                       SizedBox(height: 20.h),
                       _buildSubjectCard('Maths', () {
                         Get.offAllNamed(AdminRoutes.mathscreen);
-                      },context),
+                      }, context),
                       SizedBox(height: 20.h),
                       _buildSubjectCard('Physics', () {
                         Get.offAllNamed(AdminRoutes.physics);
-                      },context),
+                      }, context),
                     ],
                   ),
                 ),
@@ -107,7 +130,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Action button (Reset, Change Year) widget
-  Widget _buildActionButton(String label, IconData icon, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -127,90 +154,152 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
- // Subject card widget (Chemistry, Maths, Physics)
-Widget _buildSubjectCard(String subject, VoidCallback onPressed,BuildContext context) {
-  return Card(
-    elevation: 6.0,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-    clipBehavior: Clip.antiAlias,
-    shadowColor: Colors.black26,
-    child: InkWell(
-      onTap: () {
-        _showLoadingDialog(context);
-        // Simulate a delay (5 seconds) before navigating
-        Future.delayed(Duration(seconds: 5), () {
-          Navigator.of(context).pop(); // Close the loading dialog
-          onPressed(); // Navigate to the next screen
-        });
-      },
-      borderRadius: BorderRadius.circular(20.r),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [const Color.fromARGB(255, 213, 103, 103), ColorPainter.secondaryColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  // Subject card widget (Chemistry, Maths, Physics)
+  Widget _buildSubjectCard(
+    String subject,
+    VoidCallback onPressed,
+    BuildContext context,
+  ) {
+    return Card(
+      elevation: 6.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      clipBehavior: Clip.antiAlias,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        onTap: () {
+          _showLoadingDialog(context);
+          // Simulate a delay (5 seconds) before navigating
+          Future.delayed(Duration(seconds: 3), () {
+            Navigator.of(context).pop(); // Close the loading dialog
+            onPressed(); // Navigate to the next screen
+          });
+        },
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color.fromARGB(255, 213, 103, 103),
+                ColorPainter.secondaryColor,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.r),
           ),
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        padding: EdgeInsets.all(25.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.book,
-              color: Colors.white,
-              size: 60.sp,
-            ),
-            SizedBox(height: 15.h),
-            Text(
-              subject,
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-          ],
+          padding: EdgeInsets.all(25.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.book, color: Colors.white, size: 60.sp),
+              SizedBox(height: 15.h),
+              Text(
+                subject,
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-// Show the loading dialog with circular progress bar
-void _showLoadingDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Prevent dismissing the dialog by tapping outside
-    builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r), // Rounded corners for the dialog
-        ),
-        contentPadding: EdgeInsets.all(25.w), // Add padding inside the dialog
-        backgroundColor: Colors.black.withOpacity(0.7), // Set a darker background for the dialog
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Loading animation (using InkDrop animation)
-            LoadingAnimationWidget.inkDrop(
-              color: Colors.white, // White color for the animation
-              size: 50.w, // Adjust size based on screen size
-            ),
-            SizedBox(height: 20.h), // Space between the animation and the text
-            // Message text
-            Text(
-              'Please wait...',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white, // Text color
+  // Show the loading dialog with circular progress bar
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black54,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: EdgeInsets.all(30.w),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.95),
+                  Colors.white.withOpacity(0.9),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              textAlign: TextAlign.center, // Center-align the text
+              borderRadius: BorderRadius.circular(24.r),
+              boxShadow: [
+                BoxShadow(
+                  color: ColorPainter.primaryColor.withOpacity(0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                  offset: Offset(0, 10),
+                ),
+              ],
+              border: Border.all(
+                color: ColorPainter.secondaryColor.withOpacity(0.3),
+                width: 1.5,
+              ),
             ),
-          ],
-        ),
-      );
-    },
-  );
-}
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        ColorPainter.primaryColor,
+                        ColorPainter.secondaryColor,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: ColorPainter.secondaryColor.withOpacity(0.4),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: LoadingAnimationWidget.inkDrop(
+                    color: Colors.white,
+                    size: 50.w,
+                  ),
+                ),
+                SizedBox(height: 25.h),
+                Text(
+                  'Please wait...',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: ColorPainter.primaryColor,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Loading your content',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // Function to show the Reset Confirmation Dialog
   void _showResetDialog(BuildContext context) {
     showDialog(
@@ -240,7 +329,11 @@ void _showLoadingDialog(BuildContext context) {
           ),
           content: Text(
             'If you continue, the app will reset to its initial state as if it’s being used for the first time.',
-            style: TextStyle(fontSize: 14.sp, color: Colors.black54, height: 1.4),
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.black54,
+              height: 1.4,
+            ),
           ),
           actions: [
             TextButton(
@@ -278,79 +371,292 @@ void _showLoadingDialog(BuildContext context) {
     await showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black54,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(25.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Select Academic Year',
-                  style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700),
-                ),
-                SizedBox(height: 20.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(12.r),
-                    color: Colors.grey.shade100,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: tempSelectedYear,
-                      isExpanded: true,
-                      icon: Icon(Icons.keyboard_arrow_down_rounded),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          tempSelectedYear = newValue;
-                        }
-                      },
-                      items: ['2025', '2026']
-                          .map((year) => DropdownMenuItem<String>(
-                                value: year,
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                                  child: Text(year, style: TextStyle(fontSize: 18.sp)),
-                                ),
-                              ))
-                          .toList(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24.r),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ColorPainter.secondaryColor.withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                      offset: Offset(0, 10),
                     ),
+                  ],
+                  border: Border.all(
+                    color: ColorPainter.secondaryColor.withOpacity(0.3),
+                    width: 1.5,
                   ),
                 ),
-                SizedBox(height: 25.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel', style: TextStyle(fontSize: 16.sp)),
-                    ),
-                    SizedBox(width: 12.w),
-                    ElevatedButton(
-                      onPressed: () {
-                        onYearSelected(tempSelectedYear);
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF1F2A3D),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 14.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                    // Header with gradient
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 25.h,
+                        horizontal: 25.w,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            ColorPainter.primaryColor,
+                            ColorPainter.secondaryColor,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24.r),
+                          topRight: Radius.circular(24.r),
                         ),
                       ),
-                      child: Text('Confirm', style: TextStyle(fontSize: 16.sp)),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.calendar_today_rounded,
+                              color: Colors.white,
+                              size: 28.sp,
+                            ),
+                          ),
+                          SizedBox(width: 15.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Academic Year',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 20.sp,
+                                    color: Colors.white,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  'Select your current session',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Content
+                    Padding(
+                      padding: EdgeInsets.all(25.w),
+                      child: Column(
+                        children: [
+                          // Year selection cards
+                          ...['2025', '2026'].map((year) {
+                            final isSelected = tempSelectedYear == year;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  tempSelectedYear = year;
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 200),
+                                margin: EdgeInsets.only(bottom: 12.h),
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 18.h,
+                                  horizontal: 20.w,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: isSelected
+                                      ? LinearGradient(
+                                          colors: [
+                                            ColorPainter.primaryColor
+                                                .withOpacity(0.1),
+                                            ColorPainter.secondaryColor
+                                                .withOpacity(0.1),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : null,
+                                  color: isSelected
+                                      ? null
+                                      : Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(14.r),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? ColorPainter.secondaryColor
+                                        : Colors.grey.shade300,
+                                    width: isSelected ? 2.5 : 1.5,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: ColorPainter.secondaryColor
+                                                .withOpacity(0.2),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: Duration(milliseconds: 200),
+                                      width: 24.w,
+                                      height: 24.w,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? ColorPainter.secondaryColor
+                                              : Colors.grey.shade400,
+                                          width: 2,
+                                        ),
+                                        gradient: isSelected
+                                            ? LinearGradient(
+                                                colors: [
+                                                  ColorPainter.primaryColor,
+                                                  ColorPainter.secondaryColor,
+                                                ],
+                                              )
+                                            : null,
+                                      ),
+                                      child: isSelected
+                                          ? Icon(
+                                              Icons.check,
+                                              color: Colors.white,
+                                              size: 16.sp,
+                                            )
+                                          : null,
+                                    ),
+                                    SizedBox(width: 15.w),
+                                    Text(
+                                      'Academic Year $year',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? ColorPainter.primaryColor
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          SizedBox(height: 20.h),
+                          // Action buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.grey[700],
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 14.h,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        ColorPainter.primaryColor,
+                                        ColorPainter.secondaryColor,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: ColorPainter.secondaryColor
+                                            .withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      onYearSelected(tempSelectedYear);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      foregroundColor: Colors.white,
+                                      shadowColor: Colors.transparent,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 14.h,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Confirm',
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -363,36 +669,36 @@ class ColorPainter {
   static const Color accentColor = Color(0xFF4CA1AF);
 
   static LinearGradient get gradientBackground => LinearGradient(
-        colors: [primaryColor, secondaryColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [primaryColor, secondaryColor],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static LinearGradient get buttonGradient => LinearGradient(
-        colors: [primaryColor, accentColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [primaryColor, accentColor],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static BoxDecoration get boxDecoration => BoxDecoration(
-        gradient: gradientBackground,
-        borderRadius: BorderRadius.circular(25),
-      );
+    gradient: gradientBackground,
+    borderRadius: BorderRadius.circular(25),
+  );
 
   static BoxDecoration get cardDecoration => BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            offset: Offset(0, 6),
-            blurRadius: 12,
-            color: Colors.black.withOpacity(0.15),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(20),
-      );
+    color: Colors.white,
+    boxShadow: [
+      BoxShadow(
+        offset: Offset(0, 6),
+        blurRadius: 12,
+        color: Colors.black.withOpacity(0.15),
+      ),
+    ],
+    borderRadius: BorderRadius.circular(20),
+  );
 
   static BoxDecoration get buttonBoxDecoration => BoxDecoration(
-        gradient: buttonGradient,
-        borderRadius: BorderRadius.circular(30),
-      );
+    gradient: buttonGradient,
+    borderRadius: BorderRadius.circular(30),
+  );
 }

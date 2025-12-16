@@ -65,8 +65,8 @@ class LoadingScreen extends StatelessWidget {
 
               // Circular Progress Indicator
               SizedBox(
-                height: 30.h,  // Increased size for better emphasis
-                width: 30.h,  // Increased size for better emphasis
+                height: 10.h,  // Increased size for better emphasis
+                width: 10.h,  // Increased size for better emphasis
                 child:  LoadingAnimationWidget.fourRotatingDots(
         color: Colors.white,
         size: 120,

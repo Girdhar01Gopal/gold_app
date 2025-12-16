@@ -40,7 +40,7 @@ class Testscreencontroller extends GetxController {
   // =======================================
   Future<void> _loadQuestions() async {
     final url =
-        '${Adminurl.testurl}/8/69/86567583/8338525112';
+        '${Adminurl.testurl}/8/65/86567583/8338525112';
 
     try {
       final response = await http.get(
