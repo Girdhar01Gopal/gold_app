@@ -139,12 +139,12 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                       route: AdminRoutes.homeScreen,
                       currentRoute: currentRoute,
                     ),
-                    _drawerItem(
-                      title: "Usage",
-                      icon: Icons.insert_chart_outlined_rounded,
-                      route: AdminRoutes.usageScreen,
-                      currentRoute: currentRoute,
-                    ),
+                    // _drawerItem(
+                    //   title: "Usage",
+                    //   icon: Icons.insert_chart_outlined_rounded,
+                    //   route: AdminRoutes.usageScreen,
+                    //   currentRoute: currentRoute,
+                    // ),
                     _drawerItem(
                       title: "Reset System",
                       icon: Icons.settings_backup_restore_rounded,
