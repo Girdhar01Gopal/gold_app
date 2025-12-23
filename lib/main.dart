@@ -3,13 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/services.dart'; 
-import 'package:hive/hive.dart';
 
 import 'infrastructure/routes/admin_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
- // Register the adapter for hivequestion
 
   // Lock orientation to portrait only
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

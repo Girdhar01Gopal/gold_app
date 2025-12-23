@@ -55,7 +55,7 @@ Future<loginmodel> login({
           value: jsonEncode(data['data']?['StudentId']),
         ); PrefManager().writeValue(
           key: PrefConst.CourseId,
-          value: jsonEncode(data['data']?['StudentName']),
+          value: jsonEncode(data['data']?['CourseId']),
         );
         PrefManager().writeValue(
           key: PrefConst.studentname,
@@ -87,7 +87,7 @@ Future<loginmodel> login({
           "Login Successful",
           "Welcome ${data['data']?['AdmissionNo'] ?? ''}",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF8b2d28),
+          backgroundColor:  Colors.orange,
           colorText: Colors.white,
         );
       } else {

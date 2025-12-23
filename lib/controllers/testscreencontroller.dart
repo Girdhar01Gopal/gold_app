@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gold_app/Model/exammodel.dart';
 import 'package:gold_app/appurl/adminurl.dart';
+import 'package:gold_app/localstorage.dart';
+import 'package:gold_app/prefconst.dart';
 import 'package:gold_app/screens/submitscreenview%20copy.dart';
 import 'package:http/http.dart' as http;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 
 class Testscreencontroller extends GetxController {
@@ -17,6 +20,8 @@ class Testscreencontroller extends GetxController {
   var courseId = ''.obs;
   var testId = ''.obs;
   var passcode = ''.obs;
+  var assignmenttopicid = ''.obs;
+  var assignmentchapterid = ''.obs;
 
   final currentIndex = 0.obs;
   final selectedAnswers = <int, List<String>>{}.obs;
@@ -27,11 +32,15 @@ class Testscreencontroller extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-   // courseId.value = await PrefManager().readValue(key: 'CourseId') ?? '';
-   // schoolId.value = await PrefManager().readValue(key: 'SchoolId') ?? '';
-  //  testId.value = Get.arguments['testId'] ?? '';
-    //passcode.value = Get.arguments['passcode'] ?? '';
-
+   courseId.value = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
+   schoolId.value = await PrefManager().readValue(key: 'SchoolId') ?? '';
+   testId.value = Get.arguments['testId'] ?? '';
+    passcode.value = Get.arguments['passcode'] ?? '';
+    assignmenttopicid.value = Get.arguments['assignmenttopicid'] ?? '';
+    assignmentchapterid.value = Get.arguments['assignmentchapterid'] ?? '';
+print("Testscreencontroller initialized with testId: ${testId.value}, passcode: ${passcode.value}");
+print("assignmenttopicid: ${assignmenttopicid.value}, assignmentchapterid: ${assignmentchapterid.value}");
+print("courseId: ${courseId.value}, schoolId: ${schoolId.value}");
     await _loadQuestions();
   }
 
@@ -39,14 +48,18 @@ class Testscreencontroller extends GetxController {
   // 🔹 Fetch Questions
   // =======================================
   Future<void> _loadQuestions() async {
+    // Use empty string if values are null or empty to maintain API structure
+    final topicId = assignmenttopicid.value.isEmpty ? '' : assignmenttopicid.value;
+    final chapterId = assignmentchapterid.value.isEmpty ? '' : assignmentchapterid.value;
+    
     final url =
-        '${Adminurl.testurl}/8/65/86567583/8338525112';
-
+        '${Adminurl.testurl}/${schoolId.value}/${courseId.value}/$topicId/$chapterId/${testId.value}/${passcode.value}';
+print('📡 API URL: $url');
     try {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'MobAppQuestionKey': 'bdui93Y-HLwxe8-11fehc-AyuK63-96yjc736',
+         "MobAppAssignmentKey": "bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6",
         },
       );
 
@@ -69,6 +82,7 @@ class Testscreencontroller extends GetxController {
                 q.ansOptionD ?? '',
               ].where((opt) => opt.isNotEmpty).toList(),
               'correctOption': q.correctOptionText ?? '',
+              'marks': 4, // Default marks per question
             });
           }
 
@@ -161,59 +175,131 @@ class Testscreencontroller extends GetxController {
     AwesomeDialog(
       context: context,
       dialogType: DialogType.info,
-      animType: AnimType.scale,
       title: "Submit Test?",
       desc: "Are you sure you want to submit your answers?",
       btnOkText: "Submit",
-      btnCancelText: "Review Again",
-      btnCancelOnPress: () {},
+      btnCancelText: "Review",
       btnOkOnPress: () => submitTest(context),
     ).show();
   }
 
-  void submitTest(BuildContext context) {
-    final total = allQuestions.values.fold<int>(0, (a, b) => a + b.length);
-    final attempted = selectedAnswers.length;
-    final reviewed = markedForReview.length;
-    final notAttempted = total - attempted;
+  Future<void> submitTest(BuildContext? context) async {
+    final reviewData = <Map<String, dynamic>>[]; 
+   int attempted = 0;
+int totalMarks = 0;
+int obtainedMarks = 0;
 
-    // Build review data
-    final reviewData = <Map<String, dynamic>>[];
-    allQuestions.forEach((subject, questions) {
-      for (var q in questions) {
-        final id = q['id'];
-        final ansList = selectedAnswers[id];
-        final studentAns = (ansList != null && ansList.isNotEmpty) ? ansList.join(', ') : '—';
-        final correctAns = q['correctOption'] ?? '—';
-        reviewData.add({
-          'subject': subject,
-          'question': q['question'],
-          'studentAnswer': studentAns,
-          'correctAnswer': correctAns,
-          'isCorrect': studentAns == correctAns,
-        });
-      }
+
+allQuestions.forEach((subject, list) {
+  for (var q in list) {
+    final id = q['id'] as int;
+
+    final ans = selectedAnswers[id];
+    final studentAnsRaw = (ans != null && ans.isNotEmpty) ? ans.first : "—";
+    final studentAns = studentAnsRaw;
+    final correct = q['correctOption'] ?? "—";
+
+    final int marks = (q['marks'] ?? 4) as int;
+    totalMarks += marks;
+
+    bool isCorrect = studentAns == correct;
+
+    if (studentAns != "—" && !markedForReview.contains(id)) {
+      attempted++;
+    }
+
+    if (isCorrect) {
+      obtainedMarks += marks;
+    }
+
+    reviewData.add({
+      'subject': subject,
+      'question': q['question'],
+      'studentAnswer': studentAns,
+      'correctAnswer': correct,
+      'isCorrect': isCorrect,
+      'marks': marks,
     });
+  }
+});
 
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
-    );
+
+    final total = reviewData.length;
+    final reviewed = markedForReview.length;
+    final notAttempted = total - attempted - reviewed;
+
+    // Show loading dialog
+    if (context != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Center(
+          child: LoadingAnimationWidget.newtonCradle(
+            color: Colors.red,
+            size: 80,
+          ),
+        ),
+      );
+    }
 
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context);
-      Get.offAll(() => ResultScreen(
-            total: total,
-            attempted: attempted,
-            reviewed: reviewed,
-            notAttempted: notAttempted,
-            questionReviewData: reviewData,
-          ));
+      if (context != null) Navigator.pop(context);
+
+    Get.offAll(() => ResultScreen(
+  total: total,
+  attempted: attempted,
+  reviewed: reviewed,
+  notAttempted: notAttempted,
+  totalMarks: totalMarks,
+  obtainedMarks: obtainedMarks,
+  questionReviewData: reviewData,
+));
+
     });
+  }
+
+  // ===================================================
+  // SUBMIT SINGLE QUESTION TO API
+  // ===================================================
+  Future<bool> submitquestion(
+    var StudentId,
+    var QuestionId,
+    var BatchId,
+    var ExamTestId,
+    var ChoiceOption,
+    var OptionCorrect,
+    var OptionStatus,
+    var SchoolId,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(Adminurl.submitquestion),
+        headers: {
+          'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "StudentId": StudentId,
+          "QuestionId": QuestionId,
+          "BatchId": BatchId,
+          "ExamTestId": ExamTestId,
+          "ChoiceOption": ChoiceOption,
+          "OptionCorrect": OptionCorrect,
+          "OptionStatus": OptionStatus,
+          "SchoolId": SchoolId
+        }),
+      );
+      if (response.statusCode == 200) {
+        print("✅ Saved QID $QuestionId");
+        return true;
+      } else {
+        print("❌ API Error ${response.statusCode}: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Exception submitting question: $e");
+      return false;
+    }
   }
 
   // =======================================

@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:gold_app/Model/subjectmodel.dart';
+import 'package:gold_app/appurl/adminurl.dart';
 import 'package:gold_app/infrastructure/routes/admin_routes.dart';
 import 'package:gold_app/localstorage.dart';
 import 'package:gold_app/prefconst.dart';
+import 'package:http/http.dart' as http;
 
 
 class HomeController extends GetxController {
@@ -17,7 +21,10 @@ class HomeController extends GetxController {
           var studentname = ''.obs;
           var className = ''.obs;
           var session = ''.obs;
+          var schoolid = ''.obs;
+          var studentid = ''.obs; 
 
+          var subjects = <dynamic>[].obs;
 
 var isNavigating = false.obs;
 var start = false.obs;
@@ -30,11 +37,32 @@ var start = false.obs;
       studentname.value = await PrefManager().readValue(key: PrefConst.studentname);
       className.value = await PrefManager().readValue(key: PrefConst.className);
       session.value = await PrefManager().readValue(key: PrefConst.session);
+      schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
+      studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
+
    print("✅ EnrollmentNo in HomeController: ${enrollmentNo.value}");
     super.onInit();
+    allsubject();
   }
 
-
+Future<void> allsubject() async {
+  try {
+    final response = await http.get(Uri.parse("${Adminurl.allsubject}/${schoolid.value}/${studentid.value}"));
+    print(response);
+     print("✅ allsubject Response: ${response.body}");
+    
+    if (response.statusCode == 200) {
+      final subjectModel = subjectmodel.fromJson(jsonDecode(response.body));
+      if (subjectModel.data != null && subjectModel.data!.isNotEmpty) {
+      subjects.value = subjectModel.data!;  // Update the controller's subjects
+      }
+    } else {
+      throw Exception('Failed to load subjects');
+    }
+  } catch (e) {
+    print("Error in allsubject: $e");
+  }
+}
 
 void voidtest() async {
   // Check if Test ID or Passcode is empty

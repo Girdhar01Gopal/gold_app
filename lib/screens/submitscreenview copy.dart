@@ -17,6 +17,8 @@ class ResultScreen extends StatelessWidget {
   final int attempted;
   final int reviewed;
   final int notAttempted;
+  final int totalMarks;
+  final int obtainedMarks;
   final List<Map<String, dynamic>>? questionReviewData;
 
   ResultScreen({
@@ -25,6 +27,8 @@ class ResultScreen extends StatelessWidget {
     required this.attempted,
     required this.reviewed,
     required this.notAttempted,
+    required this.totalMarks,
+    required this.obtainedMarks,
     this.questionReviewData,
   });
 
@@ -121,6 +125,101 @@ class ResultScreen extends StatelessWidget {
                     _summaryBox("❌ Wrong", wrong, Colors.red),
                     _summaryBox("➖ Skipped", skipped, Colors.grey),
                   ],
+                ),
+                SizedBox(height: 20.h),
+
+                // ---------- Marks Display
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            "Total Marks",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            totalMarks.toString(),
+                            style: TextStyle(
+                              fontSize: 24.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: 50.h,
+                        width: 1,
+                        color: Colors.grey[300],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            "Obtained Marks",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            obtainedMarks.toString(),
+                            style: TextStyle(
+                              fontSize: 24.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        height: 50.h,
+                        width: 1,
+                        color: Colors.grey[300],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            "Percentage",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            "${totalMarks > 0 ? ((obtainedMarks / totalMarks) * 100).toStringAsFixed(1) : '0.0'}%",
+                            style: TextStyle(
+                              fontSize: 24.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: 30.h),
 
