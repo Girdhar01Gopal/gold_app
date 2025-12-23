@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,11 +25,13 @@ class Testscreencontroller extends GetxController {
   var assignmenttopicid = ''.obs;
   var assignmentchapterid = ''.obs;
   var time = ''.obs;
+  var studentId = ''.obs;
   
   // Timer variables
   Timer? _timer;
   var remainingSeconds = 0.obs;
   var timerDisplay = '00:00'.obs;
+final questionTestId = ''.obs;
 
   final currentIndex = 0.obs;
   final selectedAnswers = <int, List<String>>{}.obs;
@@ -39,8 +42,11 @@ class Testscreencontroller extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+     questionTestId.value = generateQuestionTestId();
+
    courseId.value = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
    schoolId.value = await PrefManager().readValue(key: 'SchoolId') ?? '';
+   studentId.value = await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
    time.value = Get.arguments['timelimit'] ?? '';
    testId.value = Get.arguments['testId'] ?? '';
     passcode.value = Get.arguments['passcode'] ?? '';
@@ -184,15 +190,59 @@ Future<void> _loadQuestions() async {
   }
 }
 
-  void toggleMultiSelect(int questionId, String option, bool selected) {
+  void toggleMultiSelect(int questionId, String option, bool selected) async {
     if (selected) {
       // Only allow one answer - clear previous and add new
       selectedAnswers[questionId] = [option];
+      selectedAnswers.refresh();
+      
+      // Submit question immediately
+      await _submitSingleQuestion(questionId, option);
     } else {
       // Remove the option if unselecting
       selectedAnswers[questionId] = [];
+      selectedAnswers.refresh();
     }
-    selectedAnswers.refresh();
+  }
+  
+  // ===================================================
+  // SUBMIT SINGLE QUESTION IMMEDIATELY
+  // ===================================================
+  Future<void> _submitSingleQuestion(int questionId, String selectedOption) async {
+    try {
+      // Find the question data
+      Map<String, dynamic>? questionData;
+      for (var questions in allQuestions.values) {
+        questionData = questions.firstWhereOrNull((q) => q['id'] == questionId);
+        if (questionData != null) break;
+      }
+      
+      if (questionData == null) {
+        print('❌ Question not found: $questionId');
+        return;
+      }
+      
+      final correctOption = questionData['correctOption'] ?? '';
+      final isCorrect = selectedOption == correctOption;
+      
+      await submitquestion(
+        int.tryParse(studentId.value) ?? 0,
+        questionId,
+        int.tryParse(courseId.value) ?? 0, // BatchId
+        int.tryParse(testId.value) ?? 0, // ExamTestId
+        int.tryParse(assignmentchapterid.value) ?? 0, // AssigtChapterId
+        int.tryParse(assignmenttopicid.value) ?? 0, // AssigtTopicId
+        selectedOption, // ChoiceOption
+        correctOption, // OptionCorrect
+        'Attempted', // OptionStatus// QuestionTestId (using questionId)
+        int.tryParse(schoolId.value) ?? 0,
+        int.tryParse(studentId.value) ?? 0, // CreateBy
+      );
+      
+      print('✅ Question $questionId submitted: $selectedOption (Correct: $correctOption)');
+    } catch (e) {
+      print('❌ Error submitting question $questionId: $e');
+    }
   }
 
   // =======================================
@@ -328,6 +378,14 @@ allQuestions.forEach((subject, list) {
     });
   }
 
+  
+String generateQuestionTestId() {
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+  final random = Random().nextInt(9999999);
+  return "$random";
+}
+
+
   // ===================================================
   // SUBMIT SINGLE QUESTION TO API
   // ===================================================
@@ -336,16 +394,19 @@ allQuestions.forEach((subject, list) {
     var QuestionId,
     var BatchId,
     var ExamTestId,
+    var AssigtChapterId,
+    var AssigtTopicId,
     var ChoiceOption,
     var OptionCorrect,
     var OptionStatus,
     var SchoolId,
+    var CreateBy,
   ) async {
     try {
       final response = await http.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
-          'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
+          "MobAppStdAssign": "Mg97kdw-jm47r0t-lxn2mg-jdrtcs3-jk22mer",
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
@@ -353,10 +414,14 @@ allQuestions.forEach((subject, list) {
           "QuestionId": QuestionId,
           "BatchId": BatchId,
           "ExamTestId": ExamTestId,
+          "AssigtChapterId": AssigtChapterId,
+          "AssigtTopicId": AssigtTopicId,
           "ChoiceOption": ChoiceOption,
           "OptionCorrect": OptionCorrect,
           "OptionStatus": OptionStatus,
-          "SchoolId": SchoolId
+          "QuestionTestId": questionTestId.value,
+          "SchoolId": SchoolId,
+          "CreateBy": CreateBy
         }),
       );
       if (response.statusCode == 200) {

@@ -12,7 +12,7 @@ class Adminurl {
   static const String reportquestion =
       "$baseurl/MobApp/AppQuestionReports";
        static const String submitquestion =
-      "$baseurl/MobApp/AppStdExam";
+      "$baseurl/MobApp/AppStdAssignment";
       
   static const String analysis =
       "$baseurl/MobApp/AppStdResultReports/";
