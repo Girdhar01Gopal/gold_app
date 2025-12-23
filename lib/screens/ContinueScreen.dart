@@ -187,13 +187,21 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
     return Scaffold(
       key: _scaffoldKey,
       drawer: AdminDrawer2(),
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [primary, accent, bronze], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            gradient: LinearGradient(
+              colors: [primary, accent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
           ),
         ),
         leading: IconButton(
@@ -203,20 +211,50 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Assignments', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white)),
-            SizedBox(height: 2.h),
-            Text('Track progress & continue tests', style: TextStyle(fontSize: 12.sp, color: Colors.white.withOpacity(0.9))),
+            Text(
+              'Assignments',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'Select exam type below',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.white.withOpacity(0.9),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ],
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-          child: Column(
-            children: [
-              buildExamSelector(),
-              SizedBox(height: 12.h),
-              Expanded(
+        child: Column(
+          children: [
+            // Exam Selector Section
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select Exam Type',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  buildExamSelector(),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Expanded(
                 child: Obx(() {
                   final filteredAssignments = getFilteredAssignments();
                   
@@ -246,29 +284,56 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                   }
                   
                   return ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
                     itemCount: filteredAssignments.keys.length,
                     itemBuilder: (context, index) {
                       String chapterName = filteredAssignments.keys.elementAt(index);
                       AssignmentChapters chapters = filteredAssignments[chapterName]!;
-                      return Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 4,
-                        shadowColor: primary.withOpacity(0.2),
+                      return Container(
                         margin: EdgeInsets.only(bottom: 16.h),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.w),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Chapter Header
+                            Container(
+                              padding: EdgeInsets.all(16.w),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    primary.withOpacity(0.08),
+                                    accent.withOpacity(0.08),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
+                                ),
+                              ),
+                              child: Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.all(8.w),
+                                    padding: EdgeInsets.all(10.w),
                                     decoration: BoxDecoration(
-                                      color: primary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      gradient: LinearGradient(
+                                        colors: [primary, accent],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Icon(Icons.book, color: primary, size: 24),
+                                    child: Icon(Icons.library_books, color: Colors.white, size: 22),
                                   ),
                                   SizedBox(width: 12.w),
                                   Expanded(
@@ -280,15 +345,16 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                           style: TextStyle(
                                             fontSize: 16.sp,
                                             fontWeight: FontWeight.w700,
-                                            color: primary,
+                                            color: Colors.black87,
                                           ),
                                         ),
                                         SizedBox(height: 2.h),
                                         Text(
-                                          '${chapters.assignments?.length ?? 0} assignments',
+                                          '${chapters.assignments?.length ?? 0} Assignments',
                                           style: TextStyle(
                                             fontSize: 12.sp,
                                             color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
@@ -296,8 +362,11 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12.h),
-                              ListView.builder(
+                            ),
+                            // Assignments List
+                            Padding(
+                              padding: EdgeInsets.all(12.w),
+                              child: ListView.builder(
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
                                 itemCount: chapters.assignments?.length ?? 0,
@@ -417,6 +486,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                                   'passcode': "1",
                                                   'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
                                                   'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
+                                                  'timelimit': assignment.totalMinutes?.toString() ?? '',
                                                 });
                                               },
                                               style: ElevatedButton.styleFrom(
@@ -453,8 +523,8 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                   );
                                 },
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -464,8 +534,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -50,7 +50,7 @@ class LoginScreen extends StatelessWidget {
                           ],
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(10.h),
+                          padding: EdgeInsets.all(5.h),
                           child: Image.asset(
                             'assets/images/FIITJEE_Logo.png',
                             fit: BoxFit.contain,
@@ -91,7 +91,7 @@ class LoginScreen extends StatelessWidget {
                           color: Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(25.r),
                           border: Border.all(
-                            color: const Color(0xFFFFD700).withOpacity(0.4),
+                            color:  Color(0xFF0D47A1).withOpacity(0.4),
                             width: 1,
                           ),
                           boxShadow: [
@@ -110,7 +110,7 @@ class LoginScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFFB8860B),
+                                color:  Color(0xFF0D47A1),
                               ),
                             ),
                             SizedBox(height: 25.h),
@@ -133,13 +133,13 @@ class LoginScreen extends StatelessWidget {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14.r),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFD4AF37),
+                                    color:  Color(0xFF0D47A1),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14.r),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFD4AF37),
+                                    color:  Color(0xFF0D47A1),
                                     width: 1.5,
                                   ),
                                 ),
@@ -155,7 +155,7 @@ class LoginScreen extends StatelessWidget {
                                     ? null
                                     : () => controller.login(enrollmentNo: controller.passwordController.text.trim()),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const  Color(0xFFEB8A2A),
+                                  backgroundColor:  Color(0xFF0D47A1),
                                   minimumSize: Size(double.infinity, 52.h),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14.r),
@@ -164,7 +164,7 @@ class LoginScreen extends StatelessWidget {
                                 ),
                                 child: controller.isLoading.value
                                     ?  LoadingAnimationWidget.fourRotatingDots(
-        color: Colors.orange,
+        color:  Color(0xFF0D47A1),
         size: 50,
       )
                                     : Text(
@@ -230,9 +230,8 @@ class GradientCurvePainter extends CustomPainter {
     // ---------- Gradient ----------
     final gradient = const LinearGradient(
       colors: [
-        Color.fromARGB(255, 231, 217, 20), // bright gold
-        Color(0xFFEB8A2A), // soft amber
-        Color(0xFFB8860B), // rich bronze
+        Color(0xFF0D47A1), // Assignment primary color
+                  Color(0xFF4CA1AF),// rich bronze
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -257,7 +256,7 @@ class GradientCurvePainter extends CustomPainter {
           fontSize: iconSize,
           fontFamily: icon.fontFamily,
           package: icon.fontPackage,
-          color: Colors.yellow.withOpacity(0.15), // subtle opacity
+          color: Colors.white.withOpacity(0.30), // subtle opacity
         ),
       ),
       textDirection: TextDirection.ltr,

@@ -68,7 +68,7 @@ class ResultScreen extends StatelessWidget {
           ),
         ),
         title: const Text(
-          "Test Summary",
+          "Assignment Summary",
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -85,143 +85,133 @@ class ResultScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ---------- Header
+                // ---------- Main Result Card (Assignment Style)
                 Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    gradient: const LinearGradient(
-                      colors: [AppColor.MAHARISHI_GOLD, AppColor.MAHARISHI_AMBER, AppColor.MAHARISHI_BRONZE],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: const [
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(0, 3),
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
                   padding: EdgeInsets.all(20.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  child: Column(
                     children: [
-                      _headerItem("Total", total.toString(), Colors.white),
-                      _headerItem(
-                          "Attempted", attempted.toString(), Colors.greenAccent),
-                      _headerItem("Marked", reviewed.toString(), Colors.white),
-                      _headerItem("Unanswered", notAttempted.toString(),
-                          Colors.yellowAccent),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20.h),
-
-                // ---------- Quick Summary
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _summaryBox("✅ Correct", correct, Colors.green),
-                    _summaryBox("❌ Wrong", wrong, Colors.red),
-                    _summaryBox("➖ Skipped", skipped, Colors.grey),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-
-                // ---------- Marks Display
-                Container(
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
+                      // Icon and Title Row
+                      Row(
                         children: [
-                          Text(
-                            "Total Marks",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
+                          Container(
+                            width: 60.w,
+                            height: 60.h,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColor.MAHARISHI_GOLD.withOpacity(0.8),
+                                  AppColor.MAHARISHI_AMBER
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.emoji_events,
+                              color: Colors.white,
+                              size: 32,
                             ),
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            totalMarks.toString(),
-                            style: TextStyle(
-                              fontSize: 24.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[700],
+                          SizedBox(width: 16.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Assignment Completed!",
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  "Your Performance Summary",
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
+                      SizedBox(height: 20.h),
+                      
+                      // Score Display
                       Container(
-                        height: 50.h,
-                        width: 1,
-                        color: Colors.grey[300],
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColor.MAHARISHI_GOLD.withOpacity(0.1),
+                              AppColor.MAHARISHI_AMBER.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _scoreItem("Obtained", obtainedMarks.toString(), Colors.green.shade700),
+                            Container(height: 40.h, width: 1, color: Colors.grey.shade300),
+                            _scoreItem("Total", totalMarks.toString(), Colors.blue.shade700),
+                            Container(height: 40.h, width: 1, color: Colors.grey.shade300),
+                            _scoreItem("Percentage", "${totalMarks > 0 ? ((obtainedMarks / totalMarks) * 100).toStringAsFixed(1) : '0.0'}%", Colors.orange.shade700),
+                          ],
+                        ),
                       ),
-                      Column(
+                      SizedBox(height: 16.h),
+                      
+                      // Info Chips Row
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        alignment: WrapAlignment.center,
                         children: [
-                          Text(
-                            "Obtained Marks",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            obtainedMarks.toString(),
-                            style: TextStyle(
-                              fontSize: 24.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
-                            ),
-                          ),
+                          _buildInfoChip(Icons.check_circle_outline, "$correct Correct", Colors.green.shade50, Colors.green.shade700),
+                          _buildInfoChip(Icons.cancel_outlined, "$wrong Wrong", Colors.red.shade50, Colors.red.shade700),
+                          _buildInfoChip(Icons.horizontal_rule, "$skipped Skipped", Colors.grey.shade50, Colors.grey.shade700),
                         ],
                       ),
+                      SizedBox(height: 16.h),
+                      
+                      // Questions Summary
                       Container(
-                        height: 50.h,
-                        width: 1,
-                        color: Colors.grey[300],
-                      ),
-                      Column(
-                        children: [
-                          Text(
-                            "Percentage",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            "${totalMarks > 0 ? ((obtainedMarks / totalMarks) * 100).toStringAsFixed(1) : '0.0'}%",
-                            style: TextStyle(
-                              fontSize: 24.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange[700],
-                            ),
-                          ),
-                        ],
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _miniStat("Total", total.toString(), Colors.blue.shade700),
+                            _miniStat("Attempted", attempted.toString(), Colors.green.shade700),
+                            _miniStat("Marked", reviewed.toString(), Colors.purple.shade700),
+                            _miniStat("Skipped", notAttempted.toString(), Colors.orange.shade700),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 30.h),
+                SizedBox(height: 24.h),
 
                 // ---------- Pie Chart
                 Text(
@@ -583,6 +573,81 @@ Widget _statItem(String emoji, String label, dynamic value, Color color,
                   fontSize: 12.sp)),
         ],
       ),
+    );
+  }
+
+  // ---------- Info Chip (Assignment Style)
+  Widget _buildInfoChip(IconData icon, String label, Color bgColor, Color textColor) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: textColor),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Score Item
+  Widget _scoreItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------- Mini Stat
+  Widget _miniStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 

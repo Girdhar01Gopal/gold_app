@@ -12,42 +12,87 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(200.h),
+        preferredSize: Size.fromHeight(180.h),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           flexibleSpace: Container(
-            decoration: ColorPainter.boxDecoration,
-            padding: EdgeInsets.only(top: 60.h, left: 25.w, right: 25.w),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                 Color(0xFF0D47A1), // Assignment primary color
+                  Color(0xFF4CA1AF),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+            ),
+            padding: EdgeInsets.only(top: 50.h, left: 20.w, right: 20.w, bottom: 20.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Obx(
-                  () => Text(
-                    '${controller.studentname.value.replaceAll('"', '').trim()} ',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                Row(
+                  children: [
+                    Container(
+                      width: 50.w,
+                      height: 50.h,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
-                  ),
-                ),
-                Obx(
-                  () => Text(
-                    '${controller.className.value.replaceAll('"', '').trim()} (AY ${controller.session.value.replaceAll('"', '').replaceAll('-', ' - ').trim()})',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(
+                            () => Text(
+                              controller.studentname.value.replaceAll('"', '').trim(),
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Obx(
+                            () => Text(
+                              '${controller.className.value.replaceAll('"', '').trim()} • ${controller.session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.white.withOpacity(0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 12.h),
                 Text(
-                  'Choose your assignments and academic year',
+                  'Select Your Subject',
                   style: TextStyle(
-                    fontSize: 16.sp,
+                    fontSize: 14.sp,
                     color: Colors.white.withOpacity(0.85),
                     fontWeight: FontWeight.w500,
                   ),
@@ -57,48 +102,36 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.2,
-              child: Image.asset(
-                'assets/images/FIITJEE_Logo.png', // Replace with your image path
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 25.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 25.w),
-                  child: Obx(
-                    () => ListView.builder(
-                      itemCount: controller.subjects.length,
-                      itemBuilder: (context, index) {
-                        final subject = controller.subjects[index];
-                        return _buildSubjectCard(subject.subjectName ?? 'No Name', () {
-                          // Navigate to the respective screen
-                          Get.offAllNamed(AdminRoutes.CONTINUE_SCREEN,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Obx(
+          () => controller.subjects.isEmpty
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: ColorPainter.primaryColor,
+                  ),
+                )
+              : ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  itemCount: controller.subjects.length,
+                  itemBuilder: (context, index) {
+                    final subject = controller.subjects[index];
+                    return _buildSubjectCard(
+                      subject.subjectName ?? 'No Name',
+                      () {
+                        Get.offAllNamed(
+                          AdminRoutes.CONTINUE_SCREEN,
                           arguments: {
                             'subjectId': subject.subjectId.toString(),
-                          });
-                        }, context);
+                          },
+                        );
                       },
-                    ),
-                  ),
+                      context,
+                      index,
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -107,48 +140,128 @@ class HomeScreen extends StatelessWidget {
     String subject,
     VoidCallback onPressed,
     BuildContext context,
+    int index,
   ) {
-    return Card(
-      elevation: 6.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-      clipBehavior: Clip.antiAlias,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        onTap: () {
-          _showLoadingDialog(context);
-          Future.delayed(Duration(seconds: 3), () {
-            Navigator.of(context).pop(); // Close the loading dialog
-            onPressed();
-          });
-        },
-        borderRadius: BorderRadius.circular(20.r),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color.fromARGB(255, 213, 103, 103),
-                ColorPainter.secondaryColor,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20.r),
+    // Icon selection based on subject
+    IconData getSubjectIcon(String subjectName) {
+      final name = subjectName.toLowerCase();
+      if (name.contains('math')) return Icons.calculate;
+      if (name.contains('physics')) return Icons.science;
+      if (name.contains('chemistry')) return Icons.biotech;
+      if (name.contains('biology')) return Icons.local_florist;
+      if (name.contains('english')) return Icons.menu_book;
+      return Icons.school;
+    }
+
+    // Color selection based on index
+    List<Color> getGradientColors(int idx) {
+      final colorSets = [
+        [Color(0xFF0D47A1), Color(0xFF1976D2)],
+        [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
+        [Color(0xFFD84315), Color(0xFFFF6F00)],
+        [Color(0xFF2E7D32), Color(0xFF43A047)],
+        [Color(0xFFC62828), Color(0xFFE53935)],
+      ];
+      return colorSets[idx % colorSets.length];
+    }
+
+    final gradientColors = getGradientColors(index);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
-          padding: EdgeInsets.all(25.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.book, color: Colors.white, size: 60.sp),
-              SizedBox(height: 15.h),
-              Text(
-                subject,
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            _showLoadingDialog(context);
+            Future.delayed(Duration(seconds: 2), () {
+              Navigator.of(context).pop();
+              onPressed();
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Row(
+              children: [
+                // Gradient Icon Container
+                Container(
+                  width: 60.w,
+                  height: 60.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors[0].withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    getSubjectIcon(subject),
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(width: 16.w),
+                // Subject Name
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject,
+                        style: TextStyle(
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'View Assignments',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Arrow Icon
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: gradientColors[0].withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    color: gradientColors[0],
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

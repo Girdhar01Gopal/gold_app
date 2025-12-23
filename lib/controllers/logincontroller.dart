@@ -87,7 +87,8 @@ Future<loginmodel> login({
           "Login Successful",
           "Welcome ${data['data']?['AdmissionNo'] ?? ''}",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor:  Colors.orange,
+          backgroundColor:    Color(0xFF0D47A1), // Assignment primary color
+               
           colorText: Colors.white,
         );
       } else {

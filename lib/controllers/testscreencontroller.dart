@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,12 @@ class Testscreencontroller extends GetxController {
   var passcode = ''.obs;
   var assignmenttopicid = ''.obs;
   var assignmentchapterid = ''.obs;
+  var time = ''.obs;
+  
+  // Timer variables
+  Timer? _timer;
+  var remainingSeconds = 0.obs;
+  var timerDisplay = '00:00'.obs;
 
   final currentIndex = 0.obs;
   final selectedAnswers = <int, List<String>>{}.obs;
@@ -34,6 +41,7 @@ class Testscreencontroller extends GetxController {
     super.onInit();
    courseId.value = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
    schoolId.value = await PrefManager().readValue(key: 'SchoolId') ?? '';
+   time.value = Get.arguments['timelimit'] ?? '';
    testId.value = Get.arguments['testId'] ?? '';
     passcode.value = Get.arguments['passcode'] ?? '';
     assignmenttopicid.value = Get.arguments['assignmenttopicid'] ?? '';
@@ -42,86 +50,148 @@ print("Testscreencontroller initialized with testId: ${testId.value}, passcode: 
 print("assignmenttopicid: ${assignmenttopicid.value}, assignmentchapterid: ${assignmentchapterid.value}");
 print("courseId: ${courseId.value}, schoolId: ${schoolId.value}");
     await _loadQuestions();
+    _startTimer();
   }
 
-  // =======================================
-  // 🔹 Fetch Questions
-  // =======================================
-  Future<void> _loadQuestions() async {
-    // Use empty string if values are null or empty to maintain API structure
-    final topicId = assignmenttopicid.value.isEmpty ? '' : assignmenttopicid.value;
-    final chapterId = assignmentchapterid.value.isEmpty ? '' : assignmentchapterid.value;
+  void _startTimer() {
+    // Parse time from string (assuming format like "30" for 30 minutes)
+    final timeLimit = int.tryParse(time.value) ?? 30;
+    remainingSeconds.value = timeLimit * 60; // Convert minutes to seconds
     
-    final url =
-        '${Adminurl.testurl}/${schoolId.value}/${courseId.value}/$topicId/$chapterId/${testId.value}/${passcode.value}';
-print('📡 API URL: $url');
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-         "MobAppAssignmentKey": "bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final parsed = exammodel.fromJson(jsonDecode(response.body));
-        allQuestions.clear();
-
-        if (parsed.data != null) {
-          for (var q in parsed.data!) {
-            final subject = q.subjectName ?? 'General';
-            allQuestions.putIfAbsent(subject, () => []);
-
-            allQuestions[subject]!.add({
-              'id': q.questionId ?? 0,
-              'question': q.questions ?? '',
-              'options': [
-                q.ansOptionA ?? '',
-                q.ansOptionB ?? '',
-                q.ansOptionC ?? '',
-                q.ansOptionD ?? '',
-              ].where((opt) => opt.isNotEmpty).toList(),
-              'correctOption': q.correctOptionText ?? '',
-              'marks': 4, // Default marks per question
-            });
-          }
-
-          subjects.value = allQuestions.keys.toList();
-          selectedSubject.value = subjects.first;
-          if (currentQuestions.isNotEmpty) {
-            visitedQuestions.add(currentQuestions.first['id']);
-          }
-          allQuestions.refresh();
-        } else {
-          Get.snackbar("Error", "No questions found.");
-        }
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (remainingSeconds.value > 0) {
+        remainingSeconds.value--;
+        _updateTimerDisplay();
       } else {
+        _timer?.cancel();
+        // Auto submit when time is up
         Get.snackbar(
-          "Server Error ${response.statusCode}",
-          "Unable to fetch questions.",
-          backgroundColor: Colors.red.shade100,
-          colorText: Colors.black,
+          "Time's Up!",
+          "Test will be submitted automatically",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
+        Future.delayed(Duration(seconds: 2), () {
+          submitTest(Get.context);
+        });
       }
-    } catch (e) {
-      print("❌ Error fetching questions: $e");
+    });
+  }
+
+  void _updateTimerDisplay() {
+    final hours = remainingSeconds.value ~/ 3600;
+    final minutes = (remainingSeconds.value % 3600) ~/ 60;
+    final seconds = remainingSeconds.value % 60;
+    
+    if (hours > 0) {
+      timerDisplay.value = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } else {
+      timerDisplay.value = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
+  }
+
+Future<void> _loadQuestions() async {
+  final topicId = assignmenttopicid.value.isEmpty ? '' : assignmenttopicid.value;
+  final chapterId = assignmentchapterid.value.isEmpty ? '' : assignmentchapterid.value;
+
+  final url =
+      '${Adminurl.testurl}/${schoolId.value}/${courseId.value}/$topicId/$chapterId/${testId.value}/${passcode.value}';
+
+  print('📡 API URL: $url');
+
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        "MobAppAssignmentKey": "bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final parsed = exammodel.fromJson(jsonDecode(response.body));
+      allQuestions.clear();
+
+      if (parsed.data != null) {
+        int fallbackId = 1; // ✅ global fallback id counter
+
+        for (var q in parsed.data!) {
+          final subject = q.subjectName ?? 'General';
+          allQuestions.putIfAbsent(subject, () => []);
+
+          // ✅ Guarantee UNIQUE id even if API gives null/0/duplicate
+          int id = (q.questionId ?? 0);
+          if (id == 0) {
+            id = fallbackId++;
+          } else {
+            // if API repeats ids, still protect
+            while (selectedAnswers.containsKey(id) ||
+                markedForReview.contains(id) ||
+                visitedQuestions.contains(id) ||
+                allQuestions.values.any((list) => list.any((x) => x['id'] == id))) {
+              id = fallbackId++;
+            }
+          }
+
+          allQuestions[subject]!.add({
+            'id': id,
+            'question': q.questions ?? '',
+            'options': [
+              q.ansOptionA ?? '',
+              q.ansOptionB ?? '',
+              q.ansOptionC ?? '',
+              q.ansOptionD ?? '',
+            ].where((opt) => opt.isNotEmpty).toList(),
+            'correctOption': q.correctOptionText ?? '',
+            'marks': 4,
+            'rating': int.tryParse(q.questionRating ?? '0') ?? 0,
+          });
+        }
+
+        subjects.value = allQuestions.keys.toList();
+        selectedSubject.value = subjects.first;
+
+        if (currentQuestions.isNotEmpty) {
+          visitedQuestions.add(currentQuestions.first['id']);
+        }
+
+        allQuestions.refresh();
+      } else {
+        Get.snackbar("Error", "No questions found.");
+      }
+    } else {
       Get.snackbar(
-        "Error",
-        "Failed to load questions. Please try again later.",
+        "Server Error ${response.statusCode}",
+        "Unable to fetch questions.",
         backgroundColor: Colors.red.shade100,
         colorText: Colors.black,
       );
     }
+  } catch (e) {
+    print("❌ Error fetching questions: $e");
+    Get.snackbar(
+      "Error",
+      "Failed to load questions. Please try again later.",
+      backgroundColor: Colors.red.shade100,
+      colorText: Colors.black,
+    );
   }
+}
 
   void toggleMultiSelect(int questionId, String option, bool selected) {
-    final selectedList = List<String>.from(selectedAnswers[questionId] ?? <String>[]);
     if (selected) {
-      if (!selectedList.contains(option)) selectedList.add(option);
+      // Only allow one answer - clear previous and add new
+      selectedAnswers[questionId] = [option];
     } else {
-      selectedList.remove(option);
+      // Remove the option if unselecting
+      selectedAnswers[questionId] = [];
     }
-    selectedAnswers[questionId] = selectedList;
     selectedAnswers.refresh();
   }
 
@@ -312,6 +382,7 @@ allQuestions.forEach((subject, list) {
     } else {
       markedForReview.add(id);
     }
+    markedForReview.refresh();
   }
 
 

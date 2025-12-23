@@ -45,7 +45,12 @@ class Data {
   String? ansOptionD;
   String? optionCorrect;
   String? correctOptionText;
+  String? questionRating;
+  int? questionMarks;
+  int? totalMinutes;
   int? schoolId;
+  int? batchId;
+  int? examTestId;
   bool? isActive;
   String? createdDate;
   String? date;
@@ -68,7 +73,12 @@ class Data {
       this.ansOptionD,
       this.optionCorrect,
       this.correctOptionText,
+      this.questionRating,
+      this.questionMarks,
+      this.totalMinutes,
       this.schoolId,
+      this.batchId,
+      this.examTestId,
       this.isActive,
       this.createdDate,
       this.date,
@@ -91,7 +101,12 @@ class Data {
     ansOptionD = json['AnsOptionD'];
     optionCorrect = json['OptionCorrect'];
     correctOptionText = json['CorrectOptionText'];
+    questionRating = json['QuestionRating'];
+    questionMarks = json['QuestionMarks'];
+    totalMinutes = json['TotalMinutes'];
     schoolId = json['SchoolId'];
+    batchId = json['BatchId'];
+    examTestId = json['ExamTestId'];
     isActive = json['IsActive'];
     createdDate = json['CreatedDate'];
     date = json['Date'];
@@ -116,7 +131,12 @@ class Data {
     data['AnsOptionD'] = this.ansOptionD;
     data['OptionCorrect'] = this.optionCorrect;
     data['CorrectOptionText'] = this.correctOptionText;
+    data['QuestionRating'] = this.questionRating;
+    data['QuestionMarks'] = this.questionMarks;
+    data['TotalMinutes'] = this.totalMinutes;
     data['SchoolId'] = this.schoolId;
+    data['BatchId'] = this.batchId;
+    data['ExamTestId'] = this.examTestId;
     data['IsActive'] = this.isActive;
     data['CreatedDate'] = this.createdDate;
     data['Date'] = this.date;
