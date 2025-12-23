@@ -7,10 +7,30 @@ import '../controllers/testscreencontroller.dart';
 class Testscreenview extends GetView<Testscreencontroller> {
   const Testscreenview({super.key});
 
+  // ✅ Safe converters (kills the "double is not a subtype of int" crash)
+  int asInt(dynamic v, {int fallback = 0}) {
+    if (v == null) return fallback;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? fallback;
+  }
+
+  String asString(dynamic v, {String fallback = ''}) {
+    if (v == null) return fallback;
+    return v.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(Testscreencontroller());
-    ScreenUtil.init(context, designSize: const Size(375, 812), minTextAdapt: true);
+    // ✅ DO NOT create controller in build
+    final controller = Get.find<Testscreencontroller>();
+
+    ScreenUtil.init(
+      context,
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -21,7 +41,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColor.MAHARISHI_GOLD, AppColor.MAHARISHI_AMBER, AppColor.MAHARISHI_BRONZE],
+              colors: [
+                AppColor.MAHARISHI_GOLD,
+                AppColor.MAHARISHI_AMBER,
+                AppColor.MAHARISHI_BRONZE,
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -36,7 +60,6 @@ class Testscreenview extends GetView<Testscreencontroller> {
           ),
         ),
         actions: [
-          // Timer Display
           Padding(
             padding: EdgeInsets.only(right: 12.w),
             child: Obx(() {
@@ -44,20 +67,19 @@ class Testscreenview extends GetView<Testscreencontroller> {
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: isLowTime ? Colors.red.shade700 : Colors.white.withOpacity(0.2),
+                  color: isLowTime
+                      ? Colors.red.shade700
+                      : Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.timer_outlined,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    const Icon(Icons.timer_outlined,
+                        color: Colors.white, size: 18),
                     SizedBox(width: 6.w),
                     Text(
-                      controller.timerDisplay.value,
+                      controller.formattedTime,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15.sp,
@@ -72,20 +94,25 @@ class Testscreenview extends GetView<Testscreencontroller> {
           ),
         ],
       ),
-
       body: SafeArea(
         child: Obx(() {
           final currentQuestions = controller.currentQuestions;
+
           if (currentQuestions.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // ✅ Safety check for index overflow
           if (controller.currentIndex.value >= currentQuestions.length) {
             controller.currentIndex.value = 0;
           }
 
           final question = currentQuestions[controller.currentIndex.value];
+
+          // ✅ NO hard casts
+          final int qid = asInt(question['id']);
+          final String qText = asString(question['question']);
+          final int rating = asInt(question['rating']);
+          final List options = (question['options'] ?? []) as List;
 
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -118,12 +145,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             backgroundColor: Colors.white,
                             elevation: 2,
                             pressElevation: 4,
-                              side: BorderSide(
+                            side: BorderSide(
                               color: isSelected
                                   ? AppColor.MAHARISHI_BRONZE
                                   : Colors.grey.shade300,
                             ),
-                            // ✅ Reset question index when subject changes
                             onSelected: (selected) {
                               if (selected) {
                                 controller.selectedSubject.value = subject;
@@ -136,7 +162,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 ),
                 SizedBox(height: 20.h),
 
-                // 🔹 Question Card (Assignment Style)
+                // 🔹 Question Card
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -146,7 +172,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       BoxShadow(
                         color: Colors.black.withOpacity(0.06),
                         blurRadius: 10,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -154,7 +180,6 @@ class Testscreenview extends GetView<Testscreencontroller> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header with icon and subject
                       Row(
                         children: [
                           Container(
@@ -164,14 +189,14 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               gradient: LinearGradient(
                                 colors: [
                                   AppColor.MAHARISHI_GOLD.withOpacity(0.8),
-                                  AppColor.MAHARISHI_AMBER
+                                  AppColor.MAHARISHI_AMBER,
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.quiz_outlined,
                               color: Colors.white,
                               size: 24,
@@ -202,9 +227,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             ),
                           ),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12.w, vertical: 6.h),
                             decoration: BoxDecoration(
-                              color: AppColor.MAHARISHI_BRONZE.withOpacity(0.1),
+                              color:
+                                  AppColor.MAHARISHI_BRONZE.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -219,7 +246,8 @@ class Testscreenview extends GetView<Testscreencontroller> {
                         ],
                       ),
                       SizedBox(height: 12.h),
-                      // Star Rating Display
+
+                      // ⭐ Rating
                       Row(
                         children: [
                           Text(
@@ -230,22 +258,22 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          ...List.generate(5, (index) {
-                            final rating = question['rating'] ?? 0;
+                          ...List.generate(5, (i) {
                             return Icon(
-                              index < rating ? Icons.star : Icons.star_border,
+                              i < rating ? Icons.star : Icons.star_border,
                               color: Colors.amber.shade600,
                               size: 16,
                             );
                           }),
                         ],
                       ),
+
                       SizedBox(height: 16.h),
                       Divider(color: Colors.grey.shade200, height: 1),
                       SizedBox(height: 16.h),
-                      // Question Text
+
                       Text(
-                        question['question'],
+                        qText.isEmpty ? "No question text" : qText,
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w500,
@@ -259,22 +287,24 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 ),
                 SizedBox(height: 20.h),
 
-                // 🔹 Options
-                ...List.generate(question['options'].length, (index) {
-                  final option = question['options'][index];
-                  final selectedList =
-                      controller.selectedAnswers[question['id']] ?? <String>[];
-                  final isSelected = selectedList.contains(option);
+                // ✅ OPTIONS (single select)
+                ...List.generate(options.length, (index) {
+                  final opt = options[index] as Map;
+                  final String key = asString(opt['key']);
+                  final String text = asString(opt['text']);
+
+                  final selected = controller.selectedAnswers[qid];
+                  final bool isSelected = selected == key;
 
                   return GestureDetector(
-                    onTap: () => controller.toggleMultiSelect(
-                        question['id'], option, !isSelected),
+                    onTap: () => controller.selectOption(qid, key),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,
                       margin: EdgeInsets.symmetric(vertical: 6.h),
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                        decoration: BoxDecoration(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 12.h),
+                      decoration: BoxDecoration(
                         color: isSelected
                             ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
                             : Colors.white,
@@ -295,7 +325,6 @@ class Testscreenview extends GetView<Testscreencontroller> {
                         ],
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(
                             isSelected
@@ -309,7 +338,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                           SizedBox(width: 10.w),
                           Expanded(
                             child: Text(
-                              option,
+                              ' $text',
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 color: Colors.black87,
@@ -325,7 +354,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
 
                 SizedBox(height: 20.h),
 
-                // 🔹 Action Buttons Row
+                // 🔹 Action Buttons
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
@@ -334,14 +363,13 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     border: Border.all(color: Colors.grey.shade200),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => controller.reportQuestion(
                             context,
-                            question['question'],
-                            question['id'],
+                            qText,
+                            qid,
                           ),
                           icon: Icon(Icons.report_problem_outlined,
                               color: Colors.red.shade600, size: 18),
@@ -353,43 +381,30 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               fontSize: 13.sp,
                             ),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.red.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 10.h),
-                          ),
                         ),
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Obx(() {
-                          final marked = controller.markedForReview
-                              .contains(question['id']);
+                          final marked =
+                              controller.markedForReview.contains(qid);
                           return OutlinedButton.icon(
                             icon: Icon(
                               marked ? Icons.flag : Icons.outlined_flag,
-                              color: marked ? Colors.purple.shade600 : Colors.grey.shade600,
+                              color: marked
+                                  ? Colors.purple.shade600
+                                  : Colors.grey.shade600,
                               size: 18,
                             ),
                             label: Text(
                               marked ? "Unmark" : "Mark",
                               style: TextStyle(
-                                color: marked ? Colors.purple.shade600 : Colors.grey.shade700,
+                                color: marked
+                                    ? Colors.purple.shade600
+                                    : Colors.grey.shade700,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13.sp,
                               ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                  color: marked
-                                      ? Colors.purple.shade300
-                                      : Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 10.h),
                             ),
                             onPressed: controller.toggleMarkForReview,
                           );
@@ -398,97 +413,117 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20.h),
-
-                // 🔹 Navigation Buttons
+                
+    // 🔹 Navigation Buttons
                 Container(
-                  padding: EdgeInsets.all(12.w),
+                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: Icon(Icons.arrow_back_ios_new,
-                                  size: 16, color: Colors.white),
-                              label: Text("Previous",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14.sp,
-                                  )),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade600,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                elevation: 2,
-                              ),
-                              onPressed: controller.previousQuestion,
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              icon: Icon(Icons.arrow_forward_ios,
-                                  size: 16, color: Colors.white),
-                              label: Text("Next",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14.sp,
-                                  )),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColor.MAHARISHI_BRONZE,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                elevation: 2,
-                              ),
-                              onPressed: () => controller.nextQuestion(context),
-                            ),
-                          ),
-                        ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      SizedBox(height: 12.h),
-                      // Submit Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => controller.showSubmitDialog(context),
-                          icon: Icon(Icons.check_circle,
-                              color: Colors.white, size: 20),
-                          label: Text(
-                            "Submit Test",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15.sp,
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Previous Button
+                      if (controller.currentIndex.value > 0)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              if (controller.currentIndex.value > 0) {
+                                controller.currentIndex.value--;
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_back, size: 18),
+                            label: Text(
+                              "Previous",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade600,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: Colors.grey.shade800,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                            padding: EdgeInsets.symmetric(vertical: 14.h),
-                            elevation: 2,
                           ),
                         ),
+                      
+                      if (controller.currentIndex.value > 0) SizedBox(width: 12.w),
+
+                      // Next or Submit Button
+                      Expanded(
+                        child: Obx(() {
+                          final isLastQuestion = controller.currentIndex.value >= 
+                              currentQuestions.length - 1;
+                          final isLastSubject = controller.subjects.indexOf(
+                              controller.selectedSubject.value) >= 
+                              controller.subjects.length - 1;
+                          
+                          final showSubmit = isLastQuestion && isLastSubject;
+
+                          return ElevatedButton.icon(
+                            onPressed: () {
+                              if (showSubmit) {
+                                controller.submitTest(context);
+                              } else {
+                                if (controller.currentIndex.value < currentQuestions.length - 1) {
+                                  controller.currentIndex.value++;
+                                } else {
+                                  // Move to next subject
+                                  final currentSubjectIndex = controller.subjects.indexOf(
+                                      controller.selectedSubject.value);
+                                  if (currentSubjectIndex < controller.subjects.length - 1) {
+                                    controller.selectedSubject.value = 
+                                        controller.subjects[currentSubjectIndex + 1];
+                                    controller.currentIndex.value = 0;
+                                  }
+                                }
+                              }
+                            },
+                            icon: Icon(
+                              showSubmit ? Icons.check_circle : Icons.arrow_forward,
+                              size: 18,
+                            ),
+                            label: Text(
+                              showSubmit ? "Submit Test" : "Next",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: showSubmit 
+                                  ? Colors.green.shade600 
+                                  : AppColor.MAHARISHI_BRONZE,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }),
                       ),
                     ],
                   ),
                 ),
+
                 SizedBox(height: 24.h),
 
-                // 🔹 Question Palette
+                // ✅ PALETTE
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
@@ -517,59 +552,63 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       SizedBox(height: 12.h),
                       Divider(color: Colors.grey.shade200, height: 1),
                       SizedBox(height: 12.h),
+                      Obx(() {
+                        final questions = controller.currentQuestions;
 
-               Obx(() {
-  final questions = controller.currentQuestions;
+                        return Wrap(
+                          spacing: 10.w,
+                          runSpacing: 10.h,
+                          alignment: WrapAlignment.center,
+                          children: List.generate(questions.length, (qIndex) {
+                            final q = questions[qIndex];
+                            final id = asInt(q['id']);
 
-  return Wrap(
-    spacing: 10.w,
-    runSpacing: 10.h,
-    alignment: WrapAlignment.center,
-    children: List.generate(questions.length, (qIndex) {
-      final q = questions[qIndex];
-      final id = q['id'] as int;
+                            final answered = controller.selectedAnswers[id] != null &&
+                                controller.selectedAnswers[id]
+                                    .toString()
+                                    .isNotEmpty;
 
-      final hasKey = controller.selectedAnswers.containsKey(id);
-      final answerList = controller.selectedAnswers[id] ?? [];
-      final answered = hasKey && answerList.isNotEmpty;
+                            final marked = controller.markedForReview.contains(id);
+                            final visited =
+                                controller.visitedQuestions.contains(id);
 
-      final marked = controller.markedForReview.contains(id);
-      final visited = controller.visitedQuestions.contains(id);
+                            Color color;
+                            if (marked) {
+                              color = Colors.purple;
+                            } else if (answered) {
+                              color = Colors.green;
+                            } else if (visited) {
+                              color = Colors.red;
+                            } else {
+                              color = Colors.grey;
+                            }
 
-      Color color;
-      if (marked) {
-        color = Colors.purple;
-      } else if (answered) {
-        color = Colors.green;
-      } else if (visited) {
-        color = Colors.red;
-      } else {
-        color = Colors.grey;
-      }
-
-      return GestureDetector(
-        onTap: () {
-          controller.currentIndex.value = qIndex;
-          controller.visitedQuestions.add(id);
-        },
-        child: CircleAvatar(
-          radius: 18,
-          backgroundColor: color,
-          child: Text(
-            '${qIndex + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
-    }),
-  );
-}),
-     ],
+                            return GestureDetector(
+                              onTap: () {
+                                controller.currentIndex.value = qIndex;
+                                controller.visitedQuestions.add(id);
+                              },
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: color,
+                                child: Text(
+                                  '${qIndex + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        );
+                      }),
+                    ],
                   ),
                 ),
+                SizedBox(height: 20.h),
+
+            
                 SizedBox(height: 20.h),
               ],
             ),

@@ -507,7 +507,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                                   ),
                                                   SizedBox(width: 8.w),
                                                   Text(
-                                                    isAttempted ? 'Continue Test' : 'Start Test',
+                                                    isAttempted ? 'Try Again' : 'Start Test',
                                                     style: TextStyle(
                                                       fontSize: 14.sp,
                                                       fontWeight: FontWeight.w600,
