@@ -111,6 +111,7 @@ class ConnectivityService extends GetxService {
     }
 
     isUploading.value = true;
+    print("🚀 Starting upload process for test: $_currentTestId");
 
     try {
       Box pendingBox;
@@ -134,65 +135,111 @@ class ConnectivityService extends GetxService {
 
       for (var key in pendingBox.keys) {
         try {
-          final data = jsonDecode(pendingBox.get(key));
+          print("📝 Processing answer key: $key");
+          final rawData = pendingBox.get(key);
+          print("📄 Raw data: $rawData");
+          
+          final data = jsonDecode(rawData);
           final answerData = Map<String, dynamic>.from(data);
+          print("✅ Parsed answer data: $answerData");
 
           final qid = answerData['questionId'] as int;
 
           // Skip if already uploaded
           if (uploadedQuestions.contains(qid)) {
+            print("⏭️ QID $qid already uploaded, skipping");
             keysToDelete.add(key);
             continue;
           }
 
           // Upload to server
+          print("⬆️ Uploading QID $qid to server...");
           final success = await _submitQuestion(answerData);
 
           if (success) {
             successCount++;
             uploadedQuestions.add(qid);
             keysToDelete.add(key);
-            print("✅ Uploaded QID $qid");
+            print("✅ Successfully uploaded QID $qid");
           } else {
             failCount++;
-            print("⚠️ Failed to upload QID $qid");
+            print("❌ Failed to upload QID $qid");
           }
-        } catch (e) {
+        } catch (e, stackTrace) {
           failCount++;
-          print("❌ Error uploading answer: $e");
+          print("❌ Error processing answer key $key: $e");
+          print("Stack trace: $stackTrace");
         }
       }
 
+      print("🗑️ Deleting ${keysToDelete.length} successfully uploaded answers from Hive");
       // Delete successfully uploaded answers from Hive
       for (var key in keysToDelete) {
         await pendingBox.delete(key);
       }
 
-      // Show notification
-      if (successCount > 0) {
-        Get.snackbar(
-          "✅ Answers Synced",
-          "$successCount answer(s) uploaded successfully!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-        );
+      print("📊 Upload complete: $successCount succeeded, $failCount failed");
+
+      // Show notification only if there's a context and navigation isn't happening
+      if (successCount > 0 && Get.context != null) {
+        // Check if user is not currently navigating
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (Get.currentRoute != '/') {
+            Get.snackbar(
+              "✅ Answers Synced",
+              "$successCount answer(s) uploaded successfully!",
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 2),
+              isDismissible: true,
+              dismissDirection: DismissDirection.horizontal,
+              margin: EdgeInsets.only(bottom: 20, left: 20, right: 20),
+            );
+          }
+        });
       }
 
       if (failCount > 0) {
         print("⚠️ $failCount answers failed to upload, will retry later");
+        Get.snackbar(
+          "⚠️ Partial Sync",
+          "$failCount answer(s) failed to upload. Will retry.",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
+          margin: EdgeInsets.all(16),
+        );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print("❌ Error in uploadPendingAnswers: $e");
+      print("Stack trace: $stackTrace");
     } finally {
       isUploading.value = false;
+      print("🏁 Upload process finished");
     }
   }
 
   /// Submit a single question to the API
   Future<bool> _submitQuestion(Map<String, dynamic> answerData) async {
     try {
+      print("🌐 Making HTTP POST to ${Adminurl.submitquestion}");
+      print("📦 Request body: ${jsonEncode({
+        "StudentId": answerData['studentId'],
+        "QuestionId": answerData['questionId'],
+        "BatchId": answerData['batchId'],
+        "ExamTestId": answerData['examTestId'],
+        "AssigtChapterId": int.tryParse(_assignmentChapterId ?? '0') ?? 0,
+        "AssigtTopicId": int.tryParse(_assignmentTopicId ?? '0') ?? 0,
+        "ChoiceOption": answerData['choiceOption'],
+        "OptionCorrect": answerData['optionCorrect'],
+        "OptionStatus": answerData['optionStatus'],
+        "QuestionTestId": _questionTestId ?? '',
+        "SchoolId": answerData['schoolId'],
+        "CreateBy": answerData['studentId'],
+      })}");
+      
       final response = await http.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
@@ -213,11 +260,27 @@ class ConnectivityService extends GetxService {
           "SchoolId": answerData['schoolId'],
           "CreateBy": answerData['studentId'],
         }),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print("⏱️ HTTP request timed out after 30 seconds");
+          throw TimeoutException('Request timeout');
+        },
       );
 
-      return response.statusCode == 200;
-    } catch (e) {
-      print("❌ Exception submitting question: $e");
+      print("📥 Response status: ${response.statusCode}");
+      print("📥 Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        print("✅ Server accepted answer for QID ${answerData['questionId']}");
+        return true;
+      } else {
+        print("⚠️ Server returned non-200 status: ${response.statusCode} for QID ${answerData['questionId']}");
+        return false;
+      }
+    } catch (e, stackTrace) {
+      print("❌ Exception submitting question ${answerData['questionId']}: $e");
+      print("Stack trace: $stackTrace");
       return false;
     }
   }

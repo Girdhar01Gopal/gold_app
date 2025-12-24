@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -33,7 +34,11 @@ class ResultScreen extends StatelessWidget {
   });
 
   final GlobalKey _repaintKey = GlobalKey();
-
+  var isOnline = false.obs;
+@override
+void initState() async{
+   final connectivityResult = await Connectivity().checkConnectivity();
+    isOnline.value = connectivityResult != ConnectivityResult.none;}
   @override
   Widget build(BuildContext context) {
     final double attemptedPercent = (attempted / total) * 100;
@@ -51,9 +56,9 @@ class ResultScreen extends StatelessWidget {
             ?.where((q) => q['studentAnswer'] == '—')
             .length ??
         0;
-    final wrong = total - correct - skipped;
+final wrong = total - correct - skipped;
 
-    return Scaffold(
+return Scaffold(
       backgroundColor: const Color(0xFFF4F5F9),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -296,6 +301,7 @@ class ResultScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    
                     _bottomButton(
                       label: "Dashboard",
                       icon: Icons.home_outlined,

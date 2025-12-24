@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -492,10 +493,18 @@ class Testscreenview extends GetView<Testscreencontroller> {
                           return ElevatedButton.icon(
                             onPressed: () async {
                               // Upload current answer before moving to next
+                               final connectivityResult = await Connectivity().checkConnectivity();
+    final isOnline = connectivityResult != ConnectivityResult.none;
                               await controller.uploadCurrentQuestionAnswer();
 
                               if (showSubmit) {
-                                controller.submitTest(context);
+                                if(isOnline){
+ controller.submitTest(context);
+                                }
+                                else{
+                                  Get.snackbar("Error", "Please Check Your Connectivity Before Submit!",colorText: Colors.white,backgroundColor: Colors.red);
+                                }
+                               
                               } else {
                                 if (controller.currentIndex.value <
                                     currentQuestions.length - 1) {
