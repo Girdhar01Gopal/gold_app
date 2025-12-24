@@ -75,8 +75,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.timer_outlined,
-                        color: Colors.white, size: 18),
+                    const Icon(
+                      Icons.timer_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     SizedBox(width: 6.w),
                     Text(
                       controller.formattedTime,
@@ -122,43 +125,45 @@ class Testscreenview extends GetView<Testscreencontroller> {
               children: [
                 // 🔹 Subject Tabs
                 Center(
-                  child: Obx(() => Wrap(
-                        spacing: 8.w,
-                        runSpacing: 6.h,
-                        alignment: WrapAlignment.center,
-                        children: controller.subjects.map((subject) {
-                          final isSelected =
-                              controller.selectedSubject.value == subject;
-                          return ChoiceChip(
-                            checkmarkColor: Colors.white,
-                            label: Text(
-                              subject,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.grey.shade800,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedColor: AppColor.MAHARISHI_BRONZE,
-                            backgroundColor: Colors.white,
-                            elevation: 2,
-                            pressElevation: 4,
-                            side: BorderSide(
+                  child: Obx(
+                    () => Wrap(
+                      spacing: 8.w,
+                      runSpacing: 6.h,
+                      alignment: WrapAlignment.center,
+                      children: controller.subjects.map((subject) {
+                        final isSelected =
+                            controller.selectedSubject.value == subject;
+                        return ChoiceChip(
+                          checkmarkColor: Colors.white,
+                          label: Text(
+                            subject,
+                            style: TextStyle(
                               color: isSelected
-                                  ? AppColor.MAHARISHI_BRONZE
-                                  : Colors.grey.shade300,
+                                  ? Colors.white
+                                  : Colors.grey.shade800,
+                              fontWeight: FontWeight.w600,
                             ),
-                            onSelected: (selected) {
-                              if (selected) {
-                                controller.selectedSubject.value = subject;
-                                controller.currentIndex.value = 0;
-                              }
-                            },
-                          );
-                        }).toList(),
-                      )),
+                          ),
+                          selected: isSelected,
+                          selectedColor: AppColor.MAHARISHI_BRONZE,
+                          backgroundColor: Colors.white,
+                          elevation: 2,
+                          pressElevation: 4,
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppColor.MAHARISHI_BRONZE
+                                : Colors.grey.shade300,
+                          ),
+                          onSelected: (selected) {
+                            if (selected) {
+                              controller.selectedSubject.value = subject;
+                              controller.currentIndex.value = 0;
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 20.h),
 
@@ -228,10 +233,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
                           ),
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 12.w, vertical: 6.h),
+                              horizontal: 12.w,
+                              vertical: 6.h,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  AppColor.MAHARISHI_BRONZE.withOpacity(0.1),
+                              color: AppColor.MAHARISHI_BRONZE.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -303,7 +309,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       curve: Curves.easeInOut,
                       margin: EdgeInsets.symmetric(vertical: 6.h),
                       padding: EdgeInsets.symmetric(
-                          horizontal: 14.w, vertical: 12.h),
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
@@ -366,13 +374,13 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => controller.reportQuestion(
-                            context,
-                            qText,
-                            qid,
+                          onPressed: () =>
+                              controller.reportQuestion(context, qText, qid),
+                          icon: Icon(
+                            Icons.report_problem_outlined,
+                            color: Colors.red.shade600,
+                            size: 18,
                           ),
-                          icon: Icon(Icons.report_problem_outlined,
-                              color: Colors.red.shade600, size: 18),
                           label: Text(
                             "Report",
                             style: TextStyle(
@@ -386,8 +394,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Obx(() {
-                          final marked =
-                              controller.markedForReview.contains(qid);
+                          final marked = controller.markedForReview.contains(
+                            qid,
+                          );
                           return OutlinedButton.icon(
                             icon: Icon(
                               marked ? Icons.flag : Icons.outlined_flag,
@@ -413,10 +422,13 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     ],
                   ),
                 ),
-                
-    // 🔹 Navigation Buttons
+
+                // 🔹 Navigation Buttons
                 Container(
-                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 12.h,
+                    horizontal: 16.w,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -459,41 +471,56 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             ),
                           ),
                         ),
-                      
-                      if (controller.currentIndex.value > 0) SizedBox(width: 12.w),
+
+                      if (controller.currentIndex.value > 0)
+                        SizedBox(width: 12.w),
 
                       // Next or Submit Button
                       Expanded(
                         child: Obx(() {
-                          final isLastQuestion = controller.currentIndex.value >= 
+                          final isLastQuestion =
+                              controller.currentIndex.value >=
                               currentQuestions.length - 1;
-                          final isLastSubject = controller.subjects.indexOf(
-                              controller.selectedSubject.value) >= 
+                          final isLastSubject =
+                              controller.subjects.indexOf(
+                                controller.selectedSubject.value,
+                              ) >=
                               controller.subjects.length - 1;
-                          
+
                           final showSubmit = isLastQuestion && isLastSubject;
 
                           return ElevatedButton.icon(
-                            onPressed: () {
+                            onPressed: () async {
+                              // Upload current answer before moving to next
+                              await controller.uploadCurrentQuestionAnswer();
+
                               if (showSubmit) {
                                 controller.submitTest(context);
                               } else {
-                                if (controller.currentIndex.value < currentQuestions.length - 1) {
+                                if (controller.currentIndex.value <
+                                    currentQuestions.length - 1) {
                                   controller.currentIndex.value++;
                                 } else {
                                   // Move to next subject
-                                  final currentSubjectIndex = controller.subjects.indexOf(
-                                      controller.selectedSubject.value);
-                                  if (currentSubjectIndex < controller.subjects.length - 1) {
-                                    controller.selectedSubject.value = 
-                                        controller.subjects[currentSubjectIndex + 1];
+                                  final currentSubjectIndex = controller
+                                      .subjects
+                                      .indexOf(
+                                        controller.selectedSubject.value,
+                                      );
+                                  if (currentSubjectIndex <
+                                      controller.subjects.length - 1) {
+                                    controller.selectedSubject.value =
+                                        controller
+                                            .subjects[currentSubjectIndex + 1];
                                     controller.currentIndex.value = 0;
                                   }
                                 }
                               }
                             },
                             icon: Icon(
-                              showSubmit ? Icons.check_circle : Icons.arrow_forward,
+                              showSubmit
+                                  ? Icons.check_circle
+                                  : Icons.arrow_forward,
                               size: 18,
                             ),
                             label: Text(
@@ -504,8 +531,8 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: showSubmit 
-                                  ? Colors.green.shade600 
+                              backgroundColor: showSubmit
+                                  ? Colors.green.shade600
                                   : AppColor.MAHARISHI_BRONZE,
                               foregroundColor: Colors.white,
                               elevation: 2,
@@ -536,8 +563,11 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.grid_view_rounded,
-                              color: AppColor.MAHARISHI_BRONZE, size: 20),
+                          Icon(
+                            Icons.grid_view_rounded,
+                            color: AppColor.MAHARISHI_BRONZE,
+                            size: 20,
+                          ),
                           SizedBox(width: 8.w),
                           Text(
                             "Question Palette",
@@ -563,14 +593,17 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             final q = questions[qIndex];
                             final id = asInt(q['id']);
 
-                            final answered = controller.selectedAnswers[id] != null &&
+                            final answered =
+                                controller.selectedAnswers[id] != null &&
                                 controller.selectedAnswers[id]
                                     .toString()
                                     .isNotEmpty;
 
-                            final marked = controller.markedForReview.contains(id);
-                            final visited =
-                                controller.visitedQuestions.contains(id);
+                            final marked = controller.markedForReview.contains(
+                              id,
+                            );
+                            final visited = controller.visitedQuestions
+                                .contains(id);
 
                             Color color;
                             if (marked) {
@@ -608,7 +641,6 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 ),
                 SizedBox(height: 20.h),
 
-            
                 SizedBox(height: 20.h),
               ],
             ),

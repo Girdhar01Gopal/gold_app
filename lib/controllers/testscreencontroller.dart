@@ -18,40 +18,57 @@ import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:gold_app/services/connectivity_service.dart';
+import 'package:gold_app/services/connectivity_service.dart';
+import 'dart:async';
 
 class Testscreencontroller extends GetxController {
+  // ------------ CONNECTIVITY SUBSCRIPTION ------------
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+
   // ------------ SUBJECT / QUESTIONS ------------
   final subjects = <String>[].obs;
   final selectedSubject = ''.obs;
- Timer? _timer;
+  Timer? _timer;
   var remainingSeconds = 0.obs;
   var timerDisplay = '00:00'.obs;
   var schoolId = ''.obs;
   var courseId = ''.obs;
   var testId = ''.obs;
- var studentid = ''.obs;
- var examtestid = ''.obs;
+  var studentid = ''.obs;
+  var examtestid = ''.obs;
   var studentidd = ''.obs;
   var passcode = ''.obs;
   var batchid = ''.obs;
 
+  // Get global connectivity service
+  late final ConnectivityService connectivityService;
+
+  // ------------ CONNECTIVITY & PENDING UPLOADS ------------
+  var isOnline = true.obs;
+  final pendingAnswers = <Map<String, dynamic>>[].obs;
+
   // ------------ TIMER ------------
-  RxInt viewsecond = 0.obs;        // total minutes from API
-  RxInt totalSeconds = 0.obs;      // total seconds
+  RxInt viewsecond = 0.obs; // total minutes from API
+  RxInt totalSeconds = 0.obs; // total seconds
   RxBool isTimerRunning = false.obs;
-var time = ''.obs;
-   var assignmenttopicid = ''.obs;
-   var assignmentchapterid = ''.obs;
+  var time = ''.obs;
+  var assignmenttopicid = ''.obs;
+  var assignmentchapterid = ''.obs;
   Timer? quizTimer;
 
   // ------------ QUESTION STATE ------------
   final currentIndex = 0.obs;
-final questionTestId = ''.obs;
+  final questionTestId = ''.obs;
+
   /// Stores ONLY option key "A"/"B"/"C"/"D" or List<String> for multi-select
   final selectedAnswers = <int, dynamic>{}.obs;
 
   final markedForReview = <int>{}.obs;
   final visitedQuestions = <int>{}.obs;
+
+  /// Track successfully uploaded question IDs to avoid duplicate uploads
+  final uploadedQuestions = <int>{}.obs;
 
   /// subject → list of questions
   final allQuestions = <String, List<Map<String, dynamic>>>{}.obs;
@@ -72,104 +89,129 @@ final questionTestId = ''.obs;
     return '$random';
   }
 
-@override
-void onInit() async {
-  super.onInit();
+  @override
+  void onInit() async {
+    super.onInit();
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
- questionTestId.value = generateQuestionTestId();
+    questionTestId.value = generateQuestionTestId();
 
-  schoolId.value   = await PrefManager().readValue(key: PrefConst.SchoolId) ?? '';
-  studentid.value  = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
-   studentidd.value  = await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
-   time.value = Get.arguments['timelimit'] ?? '';
-       assignmenttopicid.value = Get.arguments['assignmenttopicid'] ?? '';
+    schoolId.value =
+        await PrefManager().readValue(key: PrefConst.SchoolId) ?? '';
+    studentid.value =
+        await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
+    studentidd.value =
+        await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
+    time.value = Get.arguments['timelimit'] ?? '';
+    assignmenttopicid.value = Get.arguments['assignmenttopicid'] ?? '';
     assignmentchapterid.value = Get.arguments['assignmentchapterid'] ?? '';
 
- // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? ''; 
-  testId.value     = Get.arguments['testId'] ?? '';
-  passcode.value   = Get.arguments['passcode'] ?? '';
+    // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
+    testId.value = Get.arguments['testId'] ?? '';
+    passcode.value = Get.arguments['passcode'] ?? '';
 
-  // ✅🔥 NOW DELETE THE CORRUPTED BOX (AFTER testId EXISTS)
-  try {
-    await Hive.deleteBoxFromDisk('offlineexam${testId.value}');
-    await Hive.deleteBoxFromDisk('offline_answers_${testId.value}');
-    print("✅ Corrupted Hive boxes wiped");
-  } catch (e) {
-    print("⚠️ Hive cleanup skipped: $e");
-  }
+    // ✅🔥 NOW DELETE THE CORRUPTED BOX (AFTER testId EXISTS)
+    try {
+      await Hive.deleteBoxFromDisk('offlineexam${testId.value}');
+      await Hive.deleteBoxFromDisk('offline_answers_${testId.value}');
+      print("✅ Corrupted Hive boxes wiped");
+    } catch (e) {
+      print("⚠️ Hive cleanup skipped: $e");
+    }
 
-  await _loadQuestions();
-  await _loadFromOffline();
+    await _loadQuestions();
+    await _loadFromOffline();
+    await _loadPendingAnswersFromHive();
 
-  if (allQuestions.isNotEmpty) {
-    final firstSubjectList = allQuestions.values.first;
-    if (firstSubjectList.isNotEmpty) {
-      final int minutes = (firstSubjectList.first['viewsecond'] as int?) ?? 0;
-      viewsecond.value = minutes;
+    // Initialize global connectivity service
+    connectivityService = Get.put(ConnectivityService(), permanent: true);
+    connectivityService.initializeTestContext(
+      testId: testId.value,
+      schoolId: schoolId.value,
+      studentId: studentid.value,
+      studentidd: studentidd.value,
+      questionTestId: questionTestId.value,
+      assignmentChapterId: assignmentchapterid.value,
+      assignmentTopicId: assignmenttopicid.value,
+    );
 
-      if (viewsecond.value > 0) {
-        startTimer(viewsecond.value);
-      } else {
-        print("⚠️ viewsecond is 0 → Timer not started");
+    // Sync uploaded questions from service
+    uploadedQuestions.value = connectivityService.uploadedQuestions.toSet();
+    isOnline.value = connectivityService.isOnline.value;
+
+    if (allQuestions.isNotEmpty) {
+      final firstSubjectList = allQuestions.values.first;
+      if (firstSubjectList.isNotEmpty) {
+        final int minutes = (firstSubjectList.first['viewsecond'] as int?) ?? 0;
+        viewsecond.value = minutes;
+
+        if (viewsecond.value > 0) {
+          startTimer(viewsecond.value);
+        } else {
+          print("⚠️ viewsecond is 0 → Timer not started");
+        }
       }
     }
   }
 
-  
-}
+  Future<void> submitFeedback({
+    required answer1,
+    required answer2,
+    required answer3,
+  }) async {
+    try {
+      final url = Uri.parse("${Adminurl.baseurl}/MobApp/AppFeedback");
 
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "StudentId": studentidd.value,
+          "CourseId": studentid.value,
+          "ExamTestId": examtestid.value,
+          "BatchId": batchid.value,
 
-Future<void> submitFeedback({
-  required answer1,
-  required answer2,
-  required answer3,
-}) async {
-  try {
-    final url = Uri.parse("${Adminurl.baseurl}/MobApp/AppFeedback");
+          "Question1Ans": answer1.toString(),
+          "Question2Ans": answer2.toString(),
+          "Question3Ans": answer3.toString(),
+          "SchoolId": schoolId.value,
+          "CreateBy": studentid.value,
+          "FeedBackType": "ExamTest",
+        }),
+      );
+      print(jsonEncode);
 
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-       
-      },
-      body: jsonEncode({
-        "StudentId": studentidd.value,
-        "CourseId": studentid.value,
-        "ExamTestId": examtestid.value,
-        "BatchId": batchid.value, 
-       
-        "Question1Ans": answer1.toString(),
-        "Question2Ans": answer2.toString(),
-        "Question3Ans": answer3.toString(),
-        "SchoolId": schoolId.value,
-        "CreateBy": studentid.value,
-        "FeedBackType": "ExamTest"
-      }),
-    );
-    print(jsonEncode);
-
-    if (response.statusCode == 200) {
-      print("✅ Feedback submitted successfully");
-      Get.offAllNamed(AdminRoutes.LOADING_SCREEN);
-      print(response.body);
-      Get.snackbar("Success", "Feedback submitted",
-          backgroundColor: Colors.green, colorText: Colors.white);
-    } else {
-      print("❌ Server error: ${response.statusCode}");
-      print(response.body);
-      Get.snackbar("Error", "Failed to submit feedback",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      if (response.statusCode == 200) {
+        print("✅ Feedback submitted successfully");
+        Get.offAllNamed(AdminRoutes.LOADING_SCREEN);
+        print(response.body);
+        Get.snackbar(
+          "Success",
+          "Feedback submitted",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        print("❌ Server error: ${response.statusCode}");
+        print(response.body);
+        Get.snackbar(
+          "Error",
+          "Failed to submit feedback",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      print("❌ Exception while submitting feedback: $e");
+      Get.snackbar(
+        "Error",
+        "Something went wrong",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
-
-  } catch (e) {
-    print("❌ Exception while submitting feedback: $e");
-    Get.snackbar("Error", "Something went wrong",
-        backgroundColor: Colors.red, colorText: Colors.white);
   }
-}
 
   // ===================================================
   // TIMER
@@ -205,7 +247,9 @@ Future<void> submitFeedback({
       }
     });
 
-    print("⏱ Timer started for $minutes minutes (${totalSeconds.value} seconds)");
+    print(
+      "⏱ Timer started for $minutes minutes (${totalSeconds.value} seconds)",
+    );
   }
 
   void autoSubmit() {
@@ -216,13 +260,14 @@ Future<void> submitFeedback({
         dialogType: DialogType.warning,
         animType: AnimType.scale,
         title: "Time's Up!",
-        desc: "Your exam time has ended. Your answers are being submitted automatically.",
+        desc:
+            "Your exam time has ended. Your answers are being submitted automatically.",
         autoHide: const Duration(seconds: 3),
         onDismissCallback: (type) {
           submitTest(Get.context);
         },
       ).show();
-      
+
       // Also submit after 3 seconds regardless of dialog state
       Future.delayed(const Duration(seconds: 3), () {
         submitTest(Get.context);
@@ -232,23 +277,26 @@ Future<void> submitFeedback({
     }
   }
 
-
-
   // ===================================================
   // LOAD QUESTIONS FROM API
   // ===================================================
   Future<void> _loadQuestions() async {
-    final topicId = assignmenttopicid.value.isEmpty ? '' : assignmenttopicid.value;
-  final chapterId = assignmentchapterid.value.isEmpty ? '' : assignmentchapterid.value;
+    final topicId = assignmenttopicid.value.isEmpty
+        ? ''
+        : assignmenttopicid.value;
+    final chapterId = assignmentchapterid.value.isEmpty
+        ? ''
+        : assignmentchapterid.value;
     final url =
-      '${Adminurl.testurl}/${schoolId.value}/${studentid.value}/$topicId/$chapterId/${testId.value}/${passcode.value}';
+        '${Adminurl.testurl}/${schoolId.value}/${studentid.value}/$topicId/$chapterId/${testId.value}/${passcode.value}';
     print("🔗 Fetching questions from: $url");
 
     try {
       final response = await http.get(
         Uri.parse(url),
-        headers: {"MobAppAssignmentKey": "bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6",
-},
+        headers: {
+          "MobAppAssignmentKey": "bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6",
+        },
       );
 
       if (response.statusCode != 200) {
@@ -262,11 +310,10 @@ Future<void> submitFeedback({
       final parsed = exammodel.fromJson(jsonDecode(response.body));
 
       // **Save data to offline Hive**
-      await _saveToOffline(parsed.data!);  // Store questions offline first
+      await _saveToOffline(parsed.data!); // Store questions offline first
 
       // **Do not load questions into the UI yet, let it be stored in Hive**
       print("Questions saved to offline Hive!");
-
     } catch (e) {
       print("❌ Error during API fetch. Falling back to offline...");
       // **Load questions from Hive if no internet**
@@ -274,147 +321,466 @@ Future<void> submitFeedback({
     }
   }
 
-// ===================================================
-// SAVE QUESTIONS TO OFFLINE HIVE
-// ===================================================
-Future<void> _saveToOffline(List<Data> questions) async {
-  try {
-    // ✅ Close the box if it's already open
-    if (Hive.isBoxOpen('offlineexam${testId.value}')) {
-      await Hive.box('offlineexam${testId.value}').close();
-    }
-    
-    var box = await Hive.openBox<Hivemodel>('offlineexam${testId.value}');
-    await box.clear();  // Clear existing data
+  // ===================================================
+  // SAVE QUESTIONS TO OFFLINE HIVE
+  // ===================================================
+  Future<void> _saveToOffline(List<Data> questions) async {
+    try {
+      // ✅ Close the box if it's already open
+      if (Hive.isBoxOpen('offlineexam${testId.value}')) {
+        await Hive.box('offlineexam${testId.value}').close();
+      }
 
-    for (var q in questions) {
-      await box.add(
-        Hivemodel()
-          ..questionId = q.questionId
-          ..subjectName = q.subjectName
-          ..questions = q.questions
-          ..optionA = q.optionA
-          ..ansOptionA = q.ansOptionA
-          ..optionB = q.optionB
-          ..ansOptionB = q.ansOptionB
-          ..optionC = q.optionC
-          ..ansOptionC = q.ansOptionC
-          ..optionD = q.optionD
-          ..ansOptionD = q.ansOptionD
-          ..optionCorrect = q.optionCorrect
-          ..correctOptionText = q.correctOptionText
-          ..questionRating = q.questionRating
-          ..questionMarks = q.questionMarks
-          ..totalMinutes = q.totalMinutes
-          ..schoolId = q.schoolId?.toString()
-          ..batchId = q.batchId
-          ..examTestId = q.examTestId,
+      var box = await Hive.openBox<Hivemodel>('offlineexam${testId.value}');
+      await box.clear(); // Clear existing data
+
+      for (var q in questions) {
+        await box.add(
+          Hivemodel()
+            ..questionId = q.questionId
+            ..subjectName = q.subjectName
+            ..questions = q.questions
+            ..optionA = q.optionA
+            ..ansOptionA = q.ansOptionA
+            ..optionB = q.optionB
+            ..ansOptionB = q.ansOptionB
+            ..optionC = q.optionC
+            ..ansOptionC = q.ansOptionC
+            ..optionD = q.optionD
+            ..ansOptionD = q.ansOptionD
+            ..optionCorrect = q.optionCorrect
+            ..correctOptionText = q.correctOptionText
+            ..questionRating = q.questionRating
+            ..questionMarks = q.questionMarks
+            ..totalMinutes = q.totalMinutes
+            ..schoolId = q.schoolId?.toString()
+            ..batchId = q.batchId
+            ..examTestId = q.examTestId,
+        );
+      }
+
+      print("Questions saved to offline Hive!");
+    } catch (e) {
+      print("❌ Error saving to Hive: $e");
+    }
+  }
+
+  // ===================================================
+  // LOAD QUESTIONS FROM OFFLINE HIVE
+  // ===================================================
+  Future<void> _loadFromOffline() async {
+    try {
+      // ✅ Check if box is already open, if not open it
+      Box<Hivemodel> questionBox;
+      if (Hive.isBoxOpen('offlineexam${testId.value}')) {
+        questionBox = Hive.box<Hivemodel>('offlineexam${testId.value}');
+      } else {
+        questionBox = await Hive.openBox<Hivemodel>(
+          'offlineexam${testId.value}',
+        );
+      }
+
+      if (questionBox.isEmpty) {
+        Get.snackbar("Error", "No offline questions available");
+        return;
+      }
+
+      allQuestions.clear();
+
+      int fallbackId = 1; // ✅ ensures unique IDs
+
+      for (final q in questionBox.values) {
+        final subject = q.subjectName ?? 'General';
+        allQuestions.putIfAbsent(subject, () => []);
+
+        // store ids for submit
+        batchid.value = (q.batchId ?? 0).toString();
+        examtestid.value = (q.examTestId ?? 0).toString();
+
+        // ✅ FIX: QuestionId from API is 0, so generate unique id
+        int id = (q.questionId ?? 0);
+        if (id == 0) id = fallbackId++;
+
+        allQuestions[subject]!.add({
+          // ✅ normalized keys (USE THESE IN VIEW)
+          'id': id,
+          'question': q.questions ?? '',
+
+          // ✅ normalized options list used by view
+          'options':
+              [
+                    {'key': 'A', 'text': q.optionA ?? q.ansOptionA ?? ''},
+                    {'key': 'B', 'text': q.optionB ?? q.ansOptionB ?? ''},
+                    {'key': 'C', 'text': q.optionC ?? q.ansOptionC ?? ''},
+                    {'key': 'D', 'text': q.optionD ?? q.ansOptionD ?? ''},
+                  ]
+                  .where((e) => (e['text'] ?? '').toString().trim().isNotEmpty)
+                  .toList(),
+
+          // ✅ normalized correct option (the API uses "D", you want just key)
+          'correctKey': (q.optionCorrect ?? '').toString().trim(),
+
+          'viewsecond': q.totalMinutes ?? 0,
+          'rating': int.tryParse(q.questionRating ?? '0') ?? 0,
+
+          'marks': q.questionMarks ?? 0,
+
+          // keep server ids separately if needed later
+          'serverQuestionId': q.questionId ?? 0,
+          'batchId': q.batchId ?? 0,
+          'examTestId': q.examTestId ?? 0,
+        });
+      }
+
+      subjects.value = allQuestions.keys.toList();
+      if (subjects.isNotEmpty) {
+        selectedSubject.value = subjects.first;
+      }
+
+      // visited
+      final list = currentQuestions;
+      if (list.isNotEmpty) {
+        visitedQuestions.add(list.first['id'] as int);
+      }
+
+      allQuestions.refresh();
+      print("✅ Loaded questions from offline Hive.");
+    } catch (e) {
+      print("❌ Error loading from offline Hive: $e");
+      Get.snackbar("Error", "Failed to load offline questions");
+    }
+  }
+
+  // ===================================================
+  // CONNECTIVITY MONITORING
+  // ===================================================
+  void _startConnectivityMonitoring() {
+    // Check initial connectivity
+    Connectivity().checkConnectivity().then((result) {
+      isOnline.value = result != ConnectivityResult.none;
+      print(
+        "📡 Initial connectivity: ${isOnline.value ? 'Online' : 'Offline'}",
+      );
+    });
+
+    // Listen to connectivity changes - this persists across screens
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      (List<ConnectivityResult> results) {
+        final wasOffline = !isOnline.value;
+        isOnline.value =
+            results.isNotEmpty && results.first != ConnectivityResult.none;
+
+        print(
+          "📡 Connectivity changed: ${isOnline.value ? 'Online' : 'Offline'}",
+        );
+
+        // If we just came online, reload pending answers from Hive and upload
+        if (wasOffline && isOnline.value) {
+          print("🌐 Internet connected! Checking for pending answers...");
+          _syncPendingAnswersFromHive();
+        }
+      },
+      onError: (error) {
+        print("❌ Connectivity monitoring error: $error");
+      },
+      cancelOnError: false,
+    );
+  }
+
+  // ===================================================
+  // SYNC PENDING ANSWERS FROM HIVE (called when coming online)
+  // ===================================================
+  Future<void> _syncPendingAnswersFromHive() async {
+    try {
+      // Reload pending answers from Hive
+      await _loadPendingAnswersFromHive();
+
+      if (pendingAnswers.isEmpty) {
+        print("✅ No pending answers to upload");
+        return;
+      }
+
+      print("🔄 Found ${pendingAnswers.length} pending answers. Uploading...");
+      await _uploadPendingAnswers();
+    } catch (e) {
+      print("❌ Error syncing pending answers from Hive: $e");
+    }
+  }
+
+  // ===================================================
+  // UPLOAD PENDING ANSWERS
+  // ===================================================
+  Future<void> _uploadPendingAnswers() async {
+    if (pendingAnswers.isEmpty) return;
+
+    final List<Map<String, dynamic>> toUpload = List.from(pendingAnswers);
+    pendingAnswers.clear();
+    int successCount = 0;
+    int failCount = 0;
+
+    for (var answerData in toUpload) {
+      try {
+        final success = await submitquestion(
+          answerData['studentId'],
+          answerData['questionId'],
+          answerData['batchId'],
+          answerData['examTestId'],
+          answerData['choiceOption'],
+          answerData['optionCorrect'],
+          answerData['optionStatus'],
+          answerData['schoolId'],
+        );
+
+        if (success) {
+          successCount++;
+          print(
+            "✅ Uploaded pending answer for QID ${answerData['questionId']}",
+          );
+          final qid = answerData['questionId'] as int;
+          uploadedQuestions.add(qid);
+          await _removeAnswerFromPending(qid);
+        } else {
+          failCount++;
+          print(
+            "⚠️ Failed to upload answer for QID ${answerData['questionId']}, re-queuing",
+          );
+          pendingAnswers.add(answerData);
+        }
+      } catch (e) {
+        failCount++;
+        print("❌ Error uploading pending answer: $e");
+        pendingAnswers.add(answerData);
+      }
+    }
+
+    // Show appropriate notification
+    if (successCount > 0 && pendingAnswers.isEmpty) {
+      Get.snackbar(
+        "✅ Synced",
+        "$successCount answer(s) uploaded successfully!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } else if (successCount > 0 && pendingAnswers.isNotEmpty) {
+      Get.snackbar(
+        "⚠️ Partially Synced",
+        "$successCount uploaded, ${pendingAnswers.length} pending",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } else if (failCount > 0) {
+      Get.snackbar(
+        "❌ Upload Failed",
+        "${pendingAnswers.length} answer(s) will retry later",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
       );
     }
-
-    print("Questions saved to offline Hive!");
-  } catch (e) {
-    print("❌ Error saving to Hive: $e");
   }
-}
 
-// ===================================================
-// LOAD QUESTIONS FROM OFFLINE HIVE
-// ===================================================
-Future<void> _loadFromOffline() async {
-  try {
-    // ✅ Check if box is already open, if not open it
-    Box<Hivemodel> questionBox;
-    if (Hive.isBoxOpen('offlineexam${testId.value}')) {
-      questionBox = Hive.box<Hivemodel>('offlineexam${testId.value}');
-    } else {
-      questionBox = await Hive.openBox<Hivemodel>('offlineexam${testId.value}');
-    }
+  // ===================================================
+  // UPLOAD CURRENT QUESTION ANSWER (called on Next)
+  // ===================================================
+  Future<void> uploadCurrentQuestionAnswer() async {
+    final questions = currentQuestions;
+    if (questions.isEmpty || currentIndex.value >= questions.length) return;
 
-    if (questionBox.isEmpty) {
-      Get.snackbar("Error", "No offline questions available");
+    final q = questions[currentIndex.value];
+    final id = q['id'] as int;
+    final ans = selectedAnswers[id];
+    final studentAns = (ans != null && ans.toString().isNotEmpty)
+        ? ans.toString()
+        : "";
+
+    // Don't upload if not attempted
+    if (studentAns.isEmpty) {
+      print("⏭️ Skipping upload - question not attempted");
       return;
     }
 
-    allQuestions.clear();
+    final correct = q['correctKey']?.toString() ?? "";
+    final isCorrect = studentAns == correct;
 
-    int fallbackId = 1; // ✅ ensures unique IDs
-
-    for (final q in questionBox.values) {
-      final subject = q.subjectName ?? 'General';
-      allQuestions.putIfAbsent(subject, () => []);
-
-      // store ids for submit
-      batchid.value = (q.batchId ?? 0).toString();
-      examtestid.value = (q.examTestId ?? 0).toString();
-
-      // ✅ FIX: QuestionId from API is 0, so generate unique id
-      int id = (q.questionId ?? 0);
-      if (id == 0) id = fallbackId++;
-
-      allQuestions[subject]!.add({
-        // ✅ normalized keys (USE THESE IN VIEW)
-        'id': id,
-        'question': q.questions ?? '',
-
-        // ✅ normalized options list used by view
-        'options': [
-          {'key': 'A', 'text': q.optionA ?? q.ansOptionA ?? ''},
-          {'key': 'B', 'text': q.optionB ?? q.ansOptionB ?? ''},
-          {'key': 'C', 'text': q.optionC ?? q.ansOptionC ?? ''},
-          {'key': 'D', 'text': q.optionD ?? q.ansOptionD ?? ''},
-        ].where((e) => (e['text'] ?? '').toString().trim().isNotEmpty).toList(),
-
-        // ✅ normalized correct option (the API uses "D", you want just key)
-        'correctKey': (q.optionCorrect ?? '').toString().trim(),
-
-        'viewsecond': q.totalMinutes ?? 0,
-        'rating': int.tryParse(q.questionRating ?? '0') ?? 0,
-
-        'marks': q.questionMarks ?? 0,
-
-        // keep server ids separately if needed later
-        'serverQuestionId': q.questionId ?? 0,
-        'batchId': q.batchId ?? 0,
-        'examTestId': q.examTestId ?? 0,
-      });
-    }
-
-    subjects.value = allQuestions.keys.toList();
-    if (subjects.isNotEmpty) {
-      selectedSubject.value = subjects.first;
-    }
-
-    // visited
-    final list = currentQuestions;
-    if (list.isNotEmpty) {
-      visitedQuestions.add(list.first['id'] as int);
-    }
-
-    allQuestions.refresh();
-    print("✅ Loaded questions from offline Hive.");
-  } catch (e) {
-    print("❌ Error loading from offline Hive: $e");
-    Get.snackbar("Error", "Failed to load offline questions");
-  }
-}
-
-// ===================================================
-// SAVE ANSWER TO OFFLINE HIVE
-// ===================================================
-Future<void> _saveAnswerOffline(int qid, String ans) async {
-  try {
-    Box answerBox;
-    if (Hive.isBoxOpen('offline_answers_${testId.value}')) {
-      answerBox = Hive.box('offline_answers_${testId.value}');
+    String optionStatus;
+    if (studentAns.isEmpty) {
+      optionStatus = "Not Attempted";
+    } else if (isCorrect) {
+      optionStatus = "Correct";
     } else {
-      answerBox = await Hive.openBox('offline_answers_${testId.value}');
+      optionStatus = "Incorrect";
     }
-    await answerBox.put(qid, ans);
-  } catch (e) {
-    print("❌ Error saving answer offline: $e");
+
+    final answerData = {
+      'studentId': studentidd.value,
+      'questionId': q['serverQuestionId'] ?? id,
+      'batchId': q['batchId'] ?? batchid.value,
+      'examTestId': q['examTestId'] ?? examtestid.value,
+      'choiceOption': studentAns,
+      'optionCorrect': correct,
+      'optionStatus': optionStatus,
+      'schoolId': schoolId.value,
+    };
+
+    if (isOnline.value) {
+      // Upload immediately if online
+      try {
+        final success = await submitquestion(
+          answerData['studentId'],
+          answerData['questionId'],
+          answerData['batchId'],
+          answerData['examTestId'],
+          answerData['choiceOption'],
+          answerData['optionCorrect'],
+          answerData['optionStatus'],
+          answerData['schoolId'],
+        );
+
+        if (success) {
+          print("✅ Answer uploaded for QID ${answerData['questionId']}");
+          uploadedQuestions.add(id);
+          connectivityService.uploadedQuestions.add(id);
+          await _removeAnswerFromPending(id);
+        } else {
+          print("⚠️ Failed to upload, saving to pending queue");
+          pendingAnswers.add(answerData);
+          await _saveAnswerOffline(id, studentAns);
+          await _savePendingAnswerToHive(answerData);
+        }
+      } catch (e) {
+        print("❌ Error uploading answer: $e");
+        pendingAnswers.add(answerData);
+        await _saveAnswerOffline(id, studentAns);
+        await _savePendingAnswerToHive(answerData);
+      }
+    } else {
+      // Save to pending queue if offline
+      print("📴 Offline - adding answer to pending queue");
+      pendingAnswers.add(answerData);
+      await _saveAnswerOffline(id, studentAns);
+      await _savePendingAnswerToHive(answerData);
+
+      Get.snackbar(
+        "📴 Offline",
+        "Answer saved. Will upload when online.",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
-}
+
+  // ===================================================
+  // SAVE ANSWER TO OFFLINE HIVE
+  // ===================================================
+  Future<void> _saveAnswerOffline(int qid, String ans) async {
+    try {
+      Box answerBox;
+      if (Hive.isBoxOpen('offline_answers_${testId.value}')) {
+        answerBox = Hive.box('offline_answers_${testId.value}');
+      } else {
+        answerBox = await Hive.openBox('offline_answers_${testId.value}');
+      }
+      await answerBox.put(qid, ans);
+    } catch (e) {
+      print("❌ Error saving answer offline: $e");
+    }
+  }
+
+  // ===================================================
+  // PERSIST PENDING ANSWERS TO HIVE
+  // ===================================================
+  Future<void> _savePendingAnswerToHive(Map<String, dynamic> answerData) async {
+    try {
+      Box pendingBox;
+      if (Hive.isBoxOpen('pending_answers_${testId.value}')) {
+        pendingBox = Hive.box('pending_answers_${testId.value}');
+      } else {
+        pendingBox = await Hive.openBox('pending_answers_${testId.value}');
+      }
+
+      // Use question ID as key to avoid duplicates
+      final qid = answerData['questionId'];
+      await pendingBox.put(qid, jsonEncode(answerData));
+      print("💾 Saved pending answer to Hive for QID $qid");
+    } catch (e) {
+      print("❌ Error saving pending answer to Hive: $e");
+    }
+  }
+
+  Future<void> _removeAnswerFromPending(int qid) async {
+    try {
+      if (Hive.isBoxOpen('pending_answers_${testId.value}')) {
+        final pendingBox = Hive.box('pending_answers_${testId.value}');
+
+        // Find and remove the answer from Hive by matching question ID
+        for (var key in pendingBox.keys) {
+          try {
+            final data = jsonDecode(pendingBox.get(key));
+            if (data['questionId'] == qid) {
+              await pendingBox.delete(key);
+              print("🗑️ Removed uploaded answer from pending queue: QID $qid");
+              break;
+            }
+          } catch (e) {
+            // Skip invalid entries
+          }
+        }
+      }
+    } catch (e) {
+      print("❌ Error removing from pending: $e");
+    }
+  }
+
+  Future<void> _loadPendingAnswersFromHive() async {
+    try {
+      Box pendingBox;
+      if (Hive.isBoxOpen('pending_answers_${testId.value}')) {
+        pendingBox = Hive.box('pending_answers_${testId.value}');
+      } else {
+        pendingBox = await Hive.openBox('pending_answers_${testId.value}');
+      }
+
+      if (pendingBox.isEmpty) {
+        print("📭 No pending answers found in Hive");
+        return;
+      }
+
+      // Clear existing pending answers to avoid duplicates
+      pendingAnswers.clear();
+
+      for (var key in pendingBox.keys) {
+        try {
+          final data = jsonDecode(pendingBox.get(key));
+          final answerMap = Map<String, dynamic>.from(data);
+
+          // Only add if not already uploaded
+          final qid = answerMap['questionId'] as int;
+          if (!uploadedQuestions.contains(qid)) {
+            pendingAnswers.add(answerMap);
+          } else {
+            // Remove from Hive if already uploaded
+            await pendingBox.delete(key);
+            print("🗑️ Removed already-uploaded answer from Hive: QID $qid");
+          }
+        } catch (e) {
+          print("⚠️ Error parsing pending answer: $e");
+          // Optionally delete corrupt entries
+          await pendingBox.delete(key);
+        }
+      }
+
+      print("📥 Loaded ${pendingAnswers.length} pending answers from Hive");
+    } catch (e) {
+      print("❌ Error loading pending answers from Hive: $e");
+    }
+  }
 
   // ===================================================
   // SUBMIT SINGLE QUESTION TO API
@@ -430,39 +796,39 @@ Future<void> _saveAnswerOffline(int qid, String ans) async {
     var SchoolId,
   ) async {
     try {
-    final response = await http.post(
-      Uri.parse(Adminurl.submitquestion),
-      headers: {
-        "MobAppStdAssign": "Mg97kdw-jm47r0t-lxn2mg-jdrtcs3-jk22mer",
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        "StudentId": StudentId,
-        "QuestionId": QuestionId,
-        "BatchId": BatchId,
-        "ExamTestId": ExamTestId,
-        "AssigtChapterId": int.tryParse(assignmentchapterid.value) ?? 0,
-        "AssigtTopicId": int.tryParse(assignmenttopicid.value) ?? 0,
-        "ChoiceOption": ChoiceOption,
-        "OptionCorrect": OptionCorrect,
-        "OptionStatus": OptionStatus,
-        "QuestionTestId": questionTestId.value,
-        "SchoolId": SchoolId,
-        "CreateBy": StudentId
-      }),
-    );
-    
-    if (response.statusCode == 200) {
-      print("✅ Saved QID $QuestionId");
-      return true;
-    } else {
-      print("❌ API Error ${response.statusCode}: ${response.body}");
+      final response = await http.post(
+        Uri.parse(Adminurl.submitquestion),
+        headers: {
+          "MobAppStdAssign": "Mg97kdw-jm47r0t-lxn2mg-jdrtcs3-jk22mer",
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "StudentId": StudentId,
+          "QuestionId": QuestionId,
+          "BatchId": BatchId,
+          "ExamTestId": ExamTestId,
+          "AssigtChapterId": int.tryParse(assignmentchapterid.value) ?? 0,
+          "AssigtTopicId": int.tryParse(assignmenttopicid.value) ?? 0,
+          "ChoiceOption": ChoiceOption,
+          "OptionCorrect": OptionCorrect,
+          "OptionStatus": OptionStatus,
+          "QuestionTestId": questionTestId.value,
+          "SchoolId": SchoolId,
+          "CreateBy": StudentId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Saved QID $QuestionId");
+        return true;
+      } else {
+        print("❌ API Error ${response.statusCode}: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("❌ Exception submitting question: $e");
       return false;
     }
-  } catch (e) {
-    print("❌ Exception submitting question: $e");
-    return false;
-  }
   }
 
   void toggleMarkForReview() {
@@ -516,7 +882,12 @@ Future<void> _saveAnswerOffline(int qid, String ans) async {
 
       if (response.statusCode == 200) {
         print("✅ Report Submitted for QID $questionId");
-        Get.snackbar("Success", "Report Submitted Successfully", colorText: Colors.white, backgroundColor: Colors.green);
+        Get.snackbar(
+          "Success",
+          "Report Submitted Successfully",
+          colorText: Colors.white,
+          backgroundColor: Colors.green,
+        );
       } else {
         print("❌ API Error ${response.statusCode}: ${response.body}");
       }
@@ -526,7 +897,11 @@ Future<void> _saveAnswerOffline(int qid, String ans) async {
   }
 
   // Report Question
-  void reportQuestion(BuildContext context, String questionText, int questionId) {
+  void reportQuestion(
+    BuildContext context,
+    String questionText,
+    int questionId,
+  ) {
     final TextEditingController messageController = TextEditingController();
     final themeColor = const Color(0xFF8B2D28); // Premium deep red
 
@@ -574,350 +949,377 @@ Future<void> _saveAnswerOffline(int qid, String ans) async {
             ),
             const SizedBox(height: 14),
             TextField(
-            controller: messageController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: "Describe the issue",
-              labelStyle: TextStyle(color: Colors.deepPurple),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: themeColor, width: 1.3),
-              ),
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey.shade400),
+              controller: messageController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: "Describe the issue",
+                labelStyle: TextStyle(color: Colors.deepPurple),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: themeColor, width: 1.3),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          /// Buttons Row
-          Row(
-            children: [
-              /// Cancel Button
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Get.back(),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: themeColor, width: 1.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(
-                      color: themeColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              /// Submit Button
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final msg = messageController.text.trim();
-                    if (msg.isEmpty) {
-                      Get.snackbar("Error", "Please enter a message",
-                          backgroundColor: Colors.red.shade100,
-                          colorText: Colors.black);
-                      return;
-                    }
-
-                    /// Show Loading
-                    Get.dialog(
-                       Center(
-                        child:LoadingAnimationWidget.newtonCradle (
-                            color: Colors.redAccent,
-                            size: 80.h),
+            /// Buttons Row
+            Row(
+              children: [
+                /// Cancel Button
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Get.back(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: themeColor, width: 1.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      barrierDismissible: false,
-                    );
-
-                    await report(
-                      questionId,
-                      msg,
-                      schoolId.value,
-                      studentidd.value,
-                    );
-
-                    /// Close loading first
-                    Navigator.of(Get.context!).pop();
-                    Navigator.of(Get.context!).pop();
-             
-
-                    /// Close Bottom Sheet
-                  
-
-                    /// Success message
-                  
-
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                  child: const Text(
-                    "Submit",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(
+                        color: themeColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          )
-        ],
-      ),
-    ),
 
-    isScrollControlled: true,
-    enableDrag: true,
-  );
-}
+                const SizedBox(width: 12),
 
-  Future<void> submitTest(BuildContext? context) async {
-  final reviewData = <Map<String, dynamic>>[]; 
-  int attempted = 0;
-  int totalMarks = 0;
-  int obtainedMarks = 0;
+                /// Submit Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final msg = messageController.text.trim();
+                      if (msg.isEmpty) {
+                        Get.snackbar(
+                          "Error",
+                          "Please enter a message",
+                          backgroundColor: Colors.red.shade100,
+                          colorText: Colors.black,
+                        );
+                        return;
+                      }
 
-  // Show loading dialog
-  if (context != null) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: LoadingAnimationWidget.newtonCradle(
-          color: Colors.red,
-          size: 80,
+                      /// Show Loading
+                      Get.dialog(
+                        Center(
+                          child: LoadingAnimationWidget.newtonCradle(
+                            color: Colors.redAccent,
+                            size: 80.h,
+                          ),
+                        ),
+                        barrierDismissible: false,
+                      );
+
+                      await report(
+                        questionId,
+                        msg,
+                        schoolId.value,
+                        studentidd.value,
+                      );
+
+                      /// Close loading first
+                      Navigator.of(Get.context!).pop();
+                      Navigator.of(Get.context!).pop();
+
+                      /// Close Bottom Sheet
+
+                      /// Success message
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: themeColor,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "Submit",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+
+      isScrollControlled: true,
+      enableDrag: true,
     );
   }
 
-  // Check connectivity
-  final conn = await Connectivity().checkConnectivity();
-  bool isOnline = conn != ConnectivityResult.none;
+  Future<void> submitTest(BuildContext? context) async {
+    final reviewData = <Map<String, dynamic>>[];
+    int attempted = 0;
+    int totalMarks = 0;
+    int obtainedMarks = 0;
 
-  // ✅ SUBMIT EACH ANSWER TO API
-  for (var subject in allQuestions.keys) {
-    final list = allQuestions[subject]!;
-    
-    for (var q in list) {
-      final id = q['id'] as int;
-      final ans = selectedAnswers[id];
-      final studentAns = (ans != null && ans.toString().isNotEmpty) ? ans.toString() : "";
-      final correct = q['correctKey']?.toString() ?? "";
-
-      final int marks = (q['marks'] ?? 0) as int;
-      totalMarks += marks;
-
-      bool isCorrect = studentAns == correct;
-      
-      // ✅ Determine OptionStatus
-      String optionStatus;
-      if (studentAns.isEmpty) {
-        optionStatus = "Not Attempted";
-      } else if (isCorrect) {
-        optionStatus = "Correct";
-      } else {
-        optionStatus = "Incorrect";
-      }
-
-      // Count attempted questions (exclude marked for review without answer)
-      if (studentAns.isNotEmpty && !markedForReview.contains(id)) {
-        attempted++;
-      }
-
-      if (isCorrect && studentAns.isNotEmpty) {
-        obtainedMarks += marks;
-      }
-
-      // Prepare review data
-      reviewData.add({
-        'subject': subject,
-        'question': q['question'],
-        'studentAnswer': studentAns.isEmpty ? "—" : studentAns,
-        'correctAnswer': correct,
-        'isCorrect': isCorrect,
-        'marks': marks,
-      });
-
-      // ✅ Submit to API (online or save offline)
-      if (isOnline) {
-        await submitquestion(
-          studentidd.value,
-          q['serverQuestionId'] ?? id,
-          q['batchId'] ?? batchid.value,  // ✅ BatchId from question
-          q['examTestId'] ?? examtestid.value,  // ✅ ExamTestId from question
-          studentAns.isEmpty ? "" : studentAns,  // ✅ Empty string instead of "NotAttempted"
-          correct,
-          optionStatus,  // ✅ Pass "Not Attempted", "Correct", or "Incorrect"
-          schoolId.value,
-        );
-      } else {
-        // Save offline if no internet
-        if (studentAns.isNotEmpty) {
-          await _saveAnswerOffline(id, studentAns);
-        }
-      }
-    }
-  }
-
-  // Calculate not attempted and reviewed
-  final total = reviewData.length;
-  final reviewed = markedForReview.length;
-  final notAttempted = total - attempted - reviewed;
-
-  // Close loading dialog
-  if (context != null) Navigator.pop(context);
-
-  // Show result screen
-  Get.offAll(() => ResultScreen(
-    total: total,
-    attempted: attempted,
-    reviewed: reviewed,
-    notAttempted: notAttempted,
-    totalMarks: totalMarks,
-    obtainedMarks: obtainedMarks,
-    questionReviewData: reviewData,
-  ));
-
-  // Show sync message if offline
-  if (!isOnline) {
-    Get.snackbar(
-      "Offline Submission", 
-      "Answers saved offline. Will sync when online.",
-      backgroundColor: Colors.orange,
-      colorText: Colors.white,
-    );
-  }
-}
-
-// ===================================================
-// SYNC OFFLINE ANSWERS TO SERVER
-// ===================================================
-Future<void> syncAnswersOnline() async {
-  try {
-    Box answerBox;
-    if (Hive.isBoxOpen('offline_answers_${testId.value}')) {
-      answerBox = Hive.box('offline_answers_${testId.value}');
-    } else {
-      answerBox = await Hive.openBox('offline_answers_${testId.value}');
-    }
-
-    if (answerBox.isEmpty) {
-      print("✅ No offline answers to sync");
-      return;
-    }
-
-    print("📤 Syncing ${answerBox.length} offline answers...");
-
-    for (var key in answerBox.keys) {
-      final qid = key as int;
-      final ans = answerBox.get(qid);
-
-      // Find the question details from allQuestions
-      Map<String, dynamic>? questionData;
-      for (var list in allQuestions.values) {
-        questionData = list.firstWhere(
-          (q) => q['id'] == qid,
-          orElse: () => {},
-        );
-        if (questionData.isNotEmpty) break;
-      }
-
-      if (questionData == null || questionData.isEmpty) continue;
-
-      final correctKey = questionData['correctKey']?.toString() ?? '';
-      final isCorrect = ans == correctKey;
-
-      await submitquestion(
-          studentidd.value,
-        questionData['serverQuestionId'] ?? qid,
-        questionData['batchId'] ?? batchid.value,
-        questionData['examTestId'] ?? examtestid.value,
-        ans,
-        correctKey,
-        isCorrect ? "Correct" : "Not-Attempted",
-        schoolId.value,
+    // Show loading dialog
+    if (context != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => Center(
+          child: LoadingAnimationWidget.newtonCradle(
+            color: Colors.red,
+            size: 80,
+          ),
+        ),
       );
     }
 
-    // Clear offline answers after successful sync
-    await answerBox.clear();
-    print("✅ All offline answers synced and cleared");
-  } catch (e) {
-    print("❌ Error syncing offline answers: $e");
+    // Check connectivity
+    final conn = await Connectivity().checkConnectivity();
+    bool isOnline = conn != ConnectivityResult.none;
+
+    // ✅ SUBMIT EACH ANSWER TO API
+    for (var subject in allQuestions.keys) {
+      final list = allQuestions[subject]!;
+
+      for (var q in list) {
+        final id = q['id'] as int;
+        final ans = selectedAnswers[id];
+        final studentAns = (ans != null && ans.toString().isNotEmpty)
+            ? ans.toString()
+            : "";
+        final correct = q['correctKey']?.toString() ?? "";
+
+        final int marks = (q['marks'] ?? 0) as int;
+        totalMarks += marks;
+
+        bool isCorrect = studentAns == correct;
+
+        // ✅ Determine OptionStatus
+        String optionStatus;
+        if (studentAns.isEmpty) {
+          optionStatus = "Not Attempted";
+        } else if (isCorrect) {
+          optionStatus = "Correct";
+        } else {
+          optionStatus = "Incorrect";
+        }
+
+        // Count attempted questions (exclude marked for review without answer)
+        if (studentAns.isNotEmpty && !markedForReview.contains(id)) {
+          attempted++;
+        }
+
+        if (isCorrect && studentAns.isNotEmpty) {
+          obtainedMarks += marks;
+        }
+
+        // Prepare review data
+        reviewData.add({
+          'subject': subject,
+          'question': q['question'],
+          'studentAnswer': studentAns.isEmpty ? "—" : studentAns,
+          'correctAnswer': correct,
+          'isCorrect': isCorrect,
+          'marks': marks,
+        });
+
+        // ✅ Submit to API (online or save offline)
+        // Skip if already uploaded via Next button
+        if (!uploadedQuestions.contains(id)) {
+          if (isOnline) {
+            final uploadSuccess = await submitquestion(
+              studentidd.value,
+              q['serverQuestionId'] ?? id,
+              q['batchId'] ?? batchid.value, // ✅ BatchId from question
+              q['examTestId'] ?? examtestid.value, // ✅ ExamTestId from question
+              studentAns.isEmpty
+                  ? ""
+                  : studentAns, // ✅ Empty string instead of "NotAttempted"
+              correct,
+              optionStatus, // ✅ Pass "Not Attempted", "Correct", or "Incorrect"
+              schoolId.value,
+            );
+
+            if (uploadSuccess) {
+              uploadedQuestions.add(id);
+            }
+          } else {
+            // Save offline if no internet
+            if (studentAns.isNotEmpty) {
+              await _saveAnswerOffline(id, studentAns);
+            }
+          }
+        } else {
+          print("⏭️ Skipping QID $id - already uploaded");
+        }
+      }
+    }
+
+    // Calculate not attempted and reviewed
+    final total = reviewData.length;
+    final reviewed = markedForReview.length;
+    final notAttempted = total - attempted - reviewed;
+
+    // Close loading dialog
+    if (context != null) Navigator.pop(context);
+
+    // Show result screen
+    Get.offAll(
+      () => ResultScreen(
+        total: total,
+        attempted: attempted,
+        reviewed: reviewed,
+        notAttempted: notAttempted,
+        totalMarks: totalMarks,
+        obtainedMarks: obtainedMarks,
+        questionReviewData: reviewData,
+      ),
+    );
+
+    // Show sync message if offline
+    if (!isOnline) {
+      Get.snackbar(
+        "Offline Submission",
+        "Answers saved offline. Will sync when online.",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+    }
   }
-}
 
-// Add this method to print all test data in JSON format
-void printTestDataAsJson() {
-  final questions = currentQuestions;
-  final testData = {
-    'test_info': {
-      'selected_subject': selectedSubject.value,
-      'current_question_index': currentIndex.value,
-      'total_questions': questions.length,
-      'remaining_time_seconds': remainingSeconds.value,
-      'formatted_time': formattedTime,
-    },
-    'statistics': {
-      'total_questions': questions.length,
-      'attempted': selectedAnswers.length,
-      'marked_for_review': markedForReview.length,
-      'not_attempted': questions.length - selectedAnswers.length,
-      'visited_questions': visitedQuestions.length,
-    },
-    'subjects': subjects,
-    'questions': questions.map((q) {
-      final id = q['id'];
-      return {
-        'id': id,
-        'subject': q['subject'],
-        'question': q['question'],
-        'rating': q['rating'],
-        'options': q['options'],
-        'correct_option': q['correct_option'],
-        'student_answer': selectedAnswers[id] ?? 'Not Attempted',
-        'is_correct': selectedAnswers[id] == q['correct_option'],
-        'is_marked_for_review': markedForReview.contains(id),
-        'is_visited': visitedQuestions.contains(id),
-      };
-    }).toList(),
-    'answers_summary': selectedAnswers.map((key, value) => MapEntry(key.toString(), value)),
-    'marked_questions': markedForReview.toList(),
-    'visited_questions': visitedQuestions.toList(),
-  };
+  // ===================================================
+  // SYNC OFFLINE ANSWERS TO SERVER
+  // ===================================================
+  Future<void> syncAnswersOnline() async {
+    try {
+      Box answerBox;
+      if (Hive.isBoxOpen('offline_answers_${testId.value}')) {
+        answerBox = Hive.box('offline_answers_${testId.value}');
+      } else {
+        answerBox = await Hive.openBox('offline_answers_${testId.value}');
+      }
 
-  // Print formatted JSON
-  final jsonString = JsonEncoder.withIndent('  ').convert(testData);
-  print('=== TEST DATA JSON ===');
-  print(jsonString);
-  print('=== END TEST DATA ===');
-  
-  return;
-}
+      if (answerBox.isEmpty) {
+        print("✅ No offline answers to sync");
+        return;
+      }
 
-/*
+      print("📤 Syncing ${answerBox.length} offline answers...");
+
+      for (var key in answerBox.keys) {
+        final qid = key as int;
+        final ans = answerBox.get(qid);
+
+        // Find the question details from allQuestions
+        Map<String, dynamic>? questionData;
+        for (var list in allQuestions.values) {
+          questionData = list.firstWhere(
+            (q) => q['id'] == qid,
+            orElse: () => {},
+          );
+          if (questionData.isNotEmpty) break;
+        }
+
+        if (questionData == null || questionData.isEmpty) continue;
+
+        final correctKey = questionData['correctKey']?.toString() ?? '';
+        final isCorrect = ans == correctKey;
+
+        await submitquestion(
+          studentidd.value,
+          questionData['serverQuestionId'] ?? qid,
+          questionData['batchId'] ?? batchid.value,
+          questionData['examTestId'] ?? examtestid.value,
+          ans,
+          correctKey,
+          isCorrect ? "Correct" : "Not-Attempted",
+          schoolId.value,
+        );
+      }
+
+      // Clear offline answers after successful sync
+      await answerBox.clear();
+      print("✅ All offline answers synced and cleared");
+    } catch (e) {
+      print("❌ Error syncing offline answers: $e");
+    }
+  }
+
+  // Add this method to print all test data in JSON format
+  void printTestDataAsJson() {
+    final questions = currentQuestions;
+    final testData = {
+      'test_info': {
+        'selected_subject': selectedSubject.value,
+        'current_question_index': currentIndex.value,
+        'total_questions': questions.length,
+        'remaining_time_seconds': remainingSeconds.value,
+        'formatted_time': formattedTime,
+      },
+      'statistics': {
+        'total_questions': questions.length,
+        'attempted': selectedAnswers.length,
+        'marked_for_review': markedForReview.length,
+        'not_attempted': questions.length - selectedAnswers.length,
+        'visited_questions': visitedQuestions.length,
+      },
+      'subjects': subjects,
+      'questions': questions.map((q) {
+        final id = q['id'];
+        return {
+          'id': id,
+          'subject': q['subject'],
+          'question': q['question'],
+          'rating': q['rating'],
+          'options': q['options'],
+          'correct_option': q['correct_option'],
+          'student_answer': selectedAnswers[id] ?? 'Not Attempted',
+          'is_correct': selectedAnswers[id] == q['correct_option'],
+          'is_marked_for_review': markedForReview.contains(id),
+          'is_visited': visitedQuestions.contains(id),
+        };
+      }).toList(),
+      'answers_summary': selectedAnswers.map(
+        (key, value) => MapEntry(key.toString(), value),
+      ),
+      'marked_questions': markedForReview.toList(),
+      'visited_questions': visitedQuestions.toList(),
+    };
+
+    // Print formatted JSON
+    final jsonString = JsonEncoder.withIndent('  ').convert(testData);
+    print('=== TEST DATA JSON ===');
+    print(jsonString);
+    print('=== END TEST DATA ===');
+
+    return;
+  }
+
+  /*
   Placeholder classes to satisfy compile-time reference to FlutterAppUsage().
   Replace these with the real app-usage package implementation or import
   the appropriate package when integrating actual usage tracking.
 */
 
+  void selectOption(int questionId, String optionKey) {
+    selectedAnswers[questionId] = optionKey;
+    visitedQuestions.add(questionId);
+    update();
+  }
 
-void selectOption(int questionId, String optionKey) {
-  selectedAnswers[questionId] = optionKey;
-  visitedQuestions.add(questionId);
-  update();
-}}
+  @override
+  void onClose() {
+    // Don't clear connectivity service context here, let it persist
+    // connectivityService.clearTestContext();
+    _connectivitySubscription?.cancel();
+    _timer?.cancel();
+    quizTimer?.cancel();
+    super.onClose();
+  }
+}
