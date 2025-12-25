@@ -11,19 +11,18 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(LoginController());
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return ScreenUtilInit(
-    //  designSize: const Size(375, 812),
       builder: (context, child) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: isDarkMode ? Colors.black : Colors.white,
           body: Stack(
             children: [
-              /// ---------- Curved Gold Header Background ----------
+              /// ---------- Curved Header Background ----------
               CustomPaint(
                 size: Size(MediaQuery.of(context).size.width, 300.h),
-                painter: GradientCurvePainter(),
-                
+                painter: GradientCurvePainter(isDarkMode),
               ),
 
               /// ---------- Main Content ----------
@@ -40,7 +39,7 @@ class LoginScreen extends StatelessWidget {
                         width: 100.h,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          color: isDarkMode ? Colors.grey[800] : Colors.white,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black26,
@@ -57,7 +56,6 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
 
                       SizedBox(height: 75.h),
 
@@ -68,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2B2B2B),
+                          color: isDarkMode ? Colors.white : const Color(0xFF2B2B2B),
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -76,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                       Text(
                         "Your digital learning companion",
                         style: TextStyle(
-                          color: Colors.grey[700],
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
                           fontSize: 14.sp,
                         ),
                       ),
@@ -88,10 +86,14 @@ class LoginScreen extends StatelessWidget {
                         width: double.infinity,
                         padding: EdgeInsets.all(24.w),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: isDarkMode
+                              ? Colors.black.withOpacity(0.7)
+                              : Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(25.r),
                           border: Border.all(
-                            color:  Color(0xFF0D47A1).withOpacity(0.4),
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.4)
+                                : Color(0xFF0D47A1).withOpacity(0.4),
                             width: 1,
                           ),
                           boxShadow: [
@@ -110,43 +112,45 @@ class LoginScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.w600,
-                                color:  Color(0xFF0D47A1),
+                                color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
                               ),
                             ),
                             SizedBox(height: 25.h),
 
                             /// ---------- Input ----------
-                            TextField(
-                              controller: controller.passwordController,
-                              decoration: InputDecoration(
-                                hintText: "Enter Enrollment Number",
-                                prefixIcon: const Icon(
-                                  CupertinoIcons.number_circle,
-                                  color: Colors.black54,
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 15.h,
-                                  horizontal: 18.w,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  borderSide: const BorderSide(
-                                    color:  Color(0xFF0D47A1),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  borderSide: const BorderSide(
-                                    color:  Color(0xFF0D47A1),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 30.h),
+                        TextField(
+  controller: controller.passwordController,
+  decoration: InputDecoration(
+    hintText: "Enter Enrollment Number",
+    prefixIcon: const Icon(
+      CupertinoIcons.number_circle,
+      color: Colors.black54,
+    ),
+    filled: true,
+    fillColor: isDarkMode ? Colors.white : Colors.white,
+    contentPadding: EdgeInsets.symmetric(
+      vertical: 15.h,
+      horizontal: 18.w,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14.r),
+      borderSide: BorderSide(
+        color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14.r),
+      borderSide: BorderSide(
+        color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
+        width: 1.5,
+      ),
+    ),
+  ),
+  style: TextStyle(
+    color: isDarkMode ? Colors.black : Colors.black,  // Adjusting text color
+  ),
+),
+ SizedBox(height: 30.h),
 
                             /// ---------- Continue Button ----------
                             Obx(
@@ -155,7 +159,9 @@ class LoginScreen extends StatelessWidget {
                                     ? null
                                     : () => controller.login(enrollmentNo: controller.passwordController.text.trim()),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:  Color(0xFF0D47A1),
+                                  backgroundColor: isDarkMode
+                                      ? Colors.grey.shade800
+                                      : Color(0xFF0D47A1),
                                   minimumSize: Size(double.infinity, 52.h),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14.r),
@@ -163,16 +169,18 @@ class LoginScreen extends StatelessWidget {
                                   elevation: 3,
                                 ),
                                 child: controller.isLoading.value
-                                    ?  LoadingAnimationWidget.fourRotatingDots(
-        color:  Color(0xFF0D47A1),
-        size: 50,
-      )
+                                    ? LoadingAnimationWidget.fourRotatingDots(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Color(0xFF0D47A1),
+                                        size: 50,
+                                      )
                                     : Text(
                                         "Continue",
                                         style: TextStyle(
                                           fontSize: 17.sp,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: isDarkMode ? Colors.white : Colors.white,
                                         ),
                                       ),
                               ),
@@ -187,7 +195,7 @@ class LoginScreen extends StatelessWidget {
                       Text(
                         "© MGEPL",
                         style: TextStyle(
-                          color: Colors.grey[700],
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
                           fontSize: 13.sp,
                         ),
                         textAlign: TextAlign.center,
@@ -204,9 +212,12 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-
 /// ---------- Premium Curved Gold Background with Icon ----------
 class GradientCurvePainter extends CustomPainter {
+  final bool isDarkMode;
+
+  GradientCurvePainter(this.isDarkMode);
+
   @override
   void paint(Canvas canvas, Size size) {
     // ---------- Curve Shape ----------
@@ -228,10 +239,10 @@ class GradientCurvePainter extends CustomPainter {
     path.close();
 
     // ---------- Gradient ----------
-    final gradient = const LinearGradient(
+    final gradient = LinearGradient(
       colors: [
-        Color(0xFF0D47A1), // Assignment primary color
-                  Color(0xFF4CA1AF),// rich bronze
+        isDarkMode ? Colors.black : Color(0xFF0D47A1), 
+        isDarkMode ? Colors.grey.shade700 : Color(0xFF4CA1AF),
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,

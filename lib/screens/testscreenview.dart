@@ -34,7 +34,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 3,
@@ -141,13 +141,13 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             style: TextStyle(
                               color: isSelected
                                   ? Colors.white
-                                  : Colors.grey.shade800,
+                                  : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey.shade800,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           selected: isSelected,
                           selectedColor: AppColor.MAHARISHI_BRONZE,
-                          backgroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).cardColor,
                           elevation: 2,
                           pressElevation: 4,
                           side: BorderSide(
@@ -171,9 +171,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 // 🔹 Question Card
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.06),
@@ -218,7 +218,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                                   style: TextStyle(
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
                                   ),
                                 ),
                                 SizedBox(height: 2.h),
@@ -226,7 +226,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                                   "${currentQuestions.length} Total Questions",
                                   style: TextStyle(
                                     fontSize: 12.sp,
-                                    color: Colors.grey.shade600,
+                                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                                   ),
                                 ),
                               ],
@@ -261,7 +261,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             'Difficulty: ',
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -276,7 +276,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       ),
 
                       SizedBox(height: 16.h),
-                      Divider(color: Colors.grey.shade200, height: 1),
+                      Divider(color: Theme.of(context).dividerColor, height: 1),
                       SizedBox(height: 16.h),
 
                       Text(
@@ -284,7 +284,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           height: 1.6,
                         ),
                         textAlign: TextAlign.justify,
@@ -316,12 +316,12 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
-                            : Colors.white,
+                            : Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
                           color: isSelected
                               ? AppColor.MAHARISHI_BRONZE
-                              : Colors.grey.shade300,
+                              : Theme.of(context).dividerColor,
                           width: 1.2,
                         ),
                         boxShadow: [
@@ -350,7 +350,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               ' $text',
                               style: TextStyle(
                                 fontSize: 14.sp,
-                                color: Colors.black87,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -367,9 +367,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: Row(
                     children: [
@@ -431,9 +431,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     horizontal: 16.w,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -462,8 +462,8 @@ class Testscreenview extends GetView<Testscreencontroller> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade100,
-                              foregroundColor: Colors.grey.shade800,
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade100,
+                              foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade100 : Colors.grey.shade800,
                               elevation: 0,
                               padding: EdgeInsets.symmetric(vertical: 12.h),
                               shape: RoundedRectangleBorder(
@@ -563,9 +563,9 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,13 +583,13 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             style: TextStyle(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
                       ),
                       SizedBox(height: 12.h),
-                      Divider(color: Colors.grey.shade200, height: 1),
+                      Divider(color: Theme.of(context).dividerColor, height: 1),
                       SizedBox(height: 12.h),
                       Obx(() {
                         final questions = controller.currentQuestions;

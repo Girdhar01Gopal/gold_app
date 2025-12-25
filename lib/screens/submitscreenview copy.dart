@@ -10,9 +10,6 @@ import 'package:get/get.dart';
 import 'package:gold_app/infrastructure/routes/admin_routes.dart';
 import 'package:gold_app/utils/constants/color_constants.dart';
 
-// removed duplicate/unused imports
-import 'package:flutter/services.dart';
-
 class ResultScreen extends StatelessWidget {
   final int total;
   final int attempted;
@@ -35,12 +32,17 @@ class ResultScreen extends StatelessWidget {
 
   final GlobalKey _repaintKey = GlobalKey();
   var isOnline = false.obs;
-@override
-void initState() async{
-   final connectivityResult = await Connectivity().checkConnectivity();
-    isOnline.value = connectivityResult != ConnectivityResult.none;}
+
+  @override
+  void initState() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    isOnline.value = connectivityResult != ConnectivityResult.none;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     final double attemptedPercent = (attempted / total) * 100;
     final double reviewedPercent = (reviewed / total) * 100;
     final double notAttemptedPercent = (notAttempted / total) * 100;
@@ -56,17 +58,21 @@ void initState() async{
             ?.where((q) => q['studentAnswer'] == '—')
             .length ??
         0;
-final wrong = total - correct - skipped;
+    final wrong = total - correct - skipped;
 
-return Scaffold(
-      backgroundColor: const Color(0xFFF4F5F9),
+    return Scaffold(
+      backgroundColor: isDarkMode ? Colors.black87 : const Color(0xFFF4F5F9),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         centerTitle: true,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColor.MAHARISHI_GOLD, AppColor.MAHARISHI_AMBER, AppColor.MAHARISHI_BRONZE],
+              colors: [
+                AppColor.MAHARISHI_GOLD,
+                AppColor.MAHARISHI_AMBER,
+                AppColor.MAHARISHI_BRONZE
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -93,14 +99,14 @@ return Scaffold(
                 // ---------- Main Result Card (Assignment Style)
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.grey.shade800 : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.grey.shade200),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.08),
                         blurRadius: 12,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -140,7 +146,7 @@ return Scaffold(
                                   style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
+                                    color: isDarkMode ? Colors.white : Colors.black87,
                                   ),
                                 ),
                                 SizedBox(height: 4.h),
@@ -148,7 +154,9 @@ return Scaffold(
                                   "Your Performance Summary",
                                   style: TextStyle(
                                     fontSize: 13.sp,
-                                    color: Colors.grey.shade600,
+                                    color: isDarkMode
+                                        ? Colors.white.withOpacity(0.8)
+                                        : Colors.grey.shade600,
                                   ),
                                 ),
                               ],
@@ -157,7 +165,7 @@ return Scaffold(
                         ],
                       ),
                       SizedBox(height: 20.h),
-                      
+
                       // Score Display
                       Container(
                         padding: EdgeInsets.all(16.w),
@@ -182,7 +190,7 @@ return Scaffold(
                         ),
                       ),
                       SizedBox(height: 16.h),
-                      
+
                       // Info Chips Row
                       Wrap(
                         spacing: 8.w,
@@ -195,7 +203,7 @@ return Scaffold(
                         ],
                       ),
                       SizedBox(height: 16.h),
-                      
+
                       // Questions Summary
                       Container(
                         padding: EdgeInsets.all(12.w),
@@ -224,7 +232,7 @@ return Scaffold(
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
                 SizedBox(height: 20.h),
@@ -235,12 +243,9 @@ return Scaffold(
                       centerSpaceRadius: 40,
                       sectionsSpace: 4,
                       sections: [
-                        _chartSection(
-                            Colors.green, attemptedPercent, "Attempted"),
-                        _chartSection(
-                            Colors.purple, reviewedPercent, "Marked"),
-                        _chartSection(Colors.grey, notAttemptedPercent,
-                            "Unattempted"),
+                        _chartSection(Colors.green, attemptedPercent, "Attempted"),
+                        _chartSection(Colors.purple, reviewedPercent, "Marked"),
+                        _chartSection(Colors.grey, notAttemptedPercent, "Unattempted"),
                       ],
                     ),
                   ),
@@ -261,7 +266,7 @@ return Scaffold(
                   ...subjectStats.entries.map((e) {
                     final subject = e.key;
                     final stats = e.value;
-                    return _subjectStatCard(subject, stats);
+                    return _subjectStatCard(subject, stats, isDarkMode);
                   }),
                 ],
                 SizedBox(height: 25.h),
@@ -283,14 +288,14 @@ return Scaffold(
                     return ExpansionTile(
                       collapsedShape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Colors.black12)),
+                          side:  BorderSide(color: isDarkMode ? Colors.white54 : Colors.grey)),
                       title: Text(
                         subject,
                         style: TextStyle(
                             color: AppColor.MAHARISHI_BRONZE,
                             fontWeight: FontWeight.bold),
                       ),
-                      children: questions.map((q) => _questionCard(q)).toList(),
+                      children: questions.map((q) => _questionCard(q, isDarkMode)).toList(),
                     );
                   }),
                 ],
@@ -301,7 +306,6 @@ return Scaffold(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    
                     _bottomButton(
                       label: "Dashboard",
                       icon: Icons.home_outlined,
@@ -323,9 +327,6 @@ return Scaffold(
       ),
     );
   }
-
-  // ---------- Capture and share the screen
-
 
   // ---------- Group by subject
   Map<String, List<Map<String, dynamic>>> _groupedQuestions() {
@@ -357,103 +358,103 @@ return Scaffold(
     return result;
   }
 
-// ---------- Subject stat card (Gradient Style)
-Widget _subjectStatCard(String subject, Map<String, int> stats) {
-  final total = stats['correct']! + stats['wrong']! + stats['skipped']!;
-  final String accuracy =
-      total == 0 ? '0' : (stats['correct']! / total * 100).toStringAsFixed(1);
+  // ---------- Subject stat card (Gradient Style)
+  Widget _subjectStatCard(String subject, Map<String, int> stats, bool isDarkMode) {
+    final total = stats['correct']! + stats['wrong']! + stats['skipped']!;
+    final String accuracy =
+        total == 0 ? '0' : (stats['correct']! / total * 100).toStringAsFixed(1);
 
-  // Choose gradient color based on performance
-  final double accuracyValue = double.tryParse(accuracy) ?? 0;
-  final List<Color> gradientColors = accuracyValue >= 70
-      ? [const Color(0xFF4CAF50), const Color(0xFF81C784)] // Green tone
-      : accuracyValue >= 40
-          ? [const Color(0xFFFFA726), const Color(0xFFFFCC80)] // Orange tone
-          : [const Color(0xFFE53935), const Color(0xFFFF8A80)]; // Red tone
+    // Choose gradient color based on performance
+    final double accuracyValue = double.tryParse(accuracy) ?? 0;
+    final List<Color> gradientColors = accuracyValue >= 70
+        ? [const Color(0xFF4CAF50), const Color(0xFF81C784)] // Green tone
+        : accuracyValue >= 40
+            ? [const Color(0xFFFFA726), const Color(0xFFFFCC80)] // Orange tone
+            : [const Color(0xFFE53935), const Color(0xFFFF8A80)]; // Red tone
 
-  return Card(
-    margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-    elevation: 5,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    child: Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors.last.withOpacity(0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      padding: EdgeInsets.all(14.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Subject Title
-          Text(
-            subject,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 0.5,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors.last.withOpacity(0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-          ),
-          SizedBox(height: 8.h),
+          ],
+        ),
+        padding: EdgeInsets.all(14.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Subject Title
+            Text(
+              subject,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+                letterSpacing: 0.5,
+              ),
+            ),
+            SizedBox(height: 8.h),
 
-          // Stats Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _statItem("✅", "Correct", stats['correct']!, Colors.white),
-              _statItem("❌", "Wrong", stats['wrong']!, Colors.white),
-              _statItem("➖", "Skipped", stats['skipped']!, Colors.white70),
-              _statItem("🎯", "Accuracy", double.parse(accuracy), Colors.white,
-                  suffix: "%"),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-// ---------- Helper for stat item
-Widget _statItem(String emoji, String label, dynamic value, Color color,
-    {String suffix = ""}) {
-  return Column(
-    children: [
-      Text(
-        emoji,
-        style: TextStyle(fontSize: 18.sp, color: color),
-      ),
-      Text(
-        "$value$suffix",
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 14.sp,
-          color: color,
+            // Stats Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _statItem("✅", "Correct", stats['correct']!, Colors.white),
+                _statItem("❌", "Wrong", stats['wrong']!, Colors.white),
+                _statItem("➖", "Skipped", stats['skipped']!, Colors.white70),
+                _statItem("🎯", "Accuracy", double.parse(accuracy), Colors.white,
+                    suffix: "%"),
+              ],
+            ),
+          ],
         ),
       ),
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 11.sp,
-          color: color.withOpacity(0.9),
+    );
+  }
+
+  // ---------- Helper for stat item
+  Widget _statItem(String emoji, String label, dynamic value, Color color,
+      {String suffix = ""}) {
+    return Column(
+      children: [
+        Text(
+          emoji,
+          style: TextStyle(fontSize: 18.sp, color: color),
         ),
-      ),
-    ],
-  );
-}
+        Text(
+          "$value$suffix",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14.sp,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: color.withOpacity(0.9),
+          ),
+        ),
+      ],
+    );
+  }
 
   // ---------- Question card
-  Widget _questionCard(Map<String, dynamic> q) {
+  Widget _questionCard(Map<String, dynamic> q, bool isDarkMode) {
     final isCorrect = q['isCorrect'] ?? false;
     final studentAnswer = q['studentAnswer'] ?? '—';
     final correctAnswer = q['correctAnswer'] ?? '—';
@@ -481,7 +482,7 @@ Widget _statItem(String emoji, String label, dynamic value, Color color,
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: isDarkMode ? Colors.white : Colors.black87,
               ),
             ),
             SizedBox(height: 6.h),

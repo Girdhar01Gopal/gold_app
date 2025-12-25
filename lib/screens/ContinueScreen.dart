@@ -21,9 +21,9 @@ class ContinueScreen extends StatefulWidget {
 class _ContinueScreenState extends State<ContinueScreen> {
   var allAssignments = <String, Map<String, AssignmentChapters>>{}; // Store all assignments by exam type
   var selectedExam = 'JEE Advanced'.obs; // Default selected exam
-    var schoolid = ''.obs;
-          var studentid = ''.obs; 
-          var subjectId = ''.obs;
+  var schoolid = ''.obs;
+  var studentid = ''.obs; 
+  var subjectId = ''.obs;
 
   // Define color constants
   final Color primary = ColorPainter.primaryColor;
@@ -31,24 +31,24 @@ class _ContinueScreenState extends State<ContinueScreen> {
   final Color bronze = const Color(0xFFCD7F32);
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-@override
-void initState() {
-  super.initState();
-  _initialize();
-}
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
 
-Future<void> _initialize() async {
-  subjectId.value = Get.arguments['subjectId'] ?? '';
-  schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
-  studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
-  // Fetch assignments on screen load
-  await assignment();
-}
+  Future<void> _initialize() async {
+    subjectId.value = Get.arguments['subjectId'] ?? '';
+    schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
+    studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
+    // Fetch assignments on screen load
+    await assignment();
+  }
 
   Future<void> assignment() async {
     try {
       final response = await http.get(Uri.parse("${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}"));
-print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}");
+      print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}");
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
         print("API Response: $jsonResponse");
@@ -127,7 +127,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: selected ? primary : Colors.grey.shade300),
                   boxShadow: selected
-                      ? [BoxShadow(color: primary.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 3))]
+                      ? [BoxShadow(color: primary.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 3))] 
                       : null,
                 ),
                 child: Text(
@@ -184,14 +184,17 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: AdminDrawer2(),
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
+          height: 200.h,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [primary, accent],
@@ -208,27 +211,16 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Assignments',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+        title: Center(
+              child: Text(
+                'Assignments',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
-            Text(
-              'Select exam type below',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.white.withOpacity(0.9),
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
       ),
       body: SafeArea(
         child: Column(
@@ -236,20 +228,22 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
             // Exam Selector Section
             Container(
               padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-              color: Colors.white,
+              color: Colors.transparent,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Select Exam Type',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                  Center(
+                    child: Text(
+                      'Select Exam Type',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? Colors.white : Colors.grey.shade700,
+                      ),
                     ),
                   ),
                   SizedBox(height: 10.h),
-                  buildExamSelector(),
+                  Center(child: buildExamSelector()),
                 ],
               ),
             ),
@@ -276,7 +270,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                           SizedBox(height: 16.h),
                           Text(
                             'No assignments found for ${selectedExam.value}',
-                            style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade600),
+                            style: TextStyle(fontSize: 16.sp, color: isDarkMode ? Colors.white : Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -289,10 +283,11 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                     itemBuilder: (context, index) {
                       String chapterName = filteredAssignments.keys.elementAt(index);
                       AssignmentChapters chapters = filteredAssignments[chapterName]!;
+
                       return Container(
                         margin: EdgeInsets.only(bottom: 16.h),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDarkMode ? Colors.grey[800] : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.grey.shade200),
                           boxShadow: [
@@ -345,7 +340,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                           style: TextStyle(
                                             fontSize: 16.sp,
                                             fontWeight: FontWeight.w700,
-                                            color: Colors.black87,
+                                            color: isDarkMode ? Colors.white : Colors.black87,
                                           ),
                                         ),
                                         SizedBox(height: 2.h),
@@ -353,7 +348,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                           '${chapters.assignments?.length ?? 0} Assignments',
                                           style: TextStyle(
                                             fontSize: 12.sp,
-                                            color: Colors.grey.shade600,
+                                            color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -378,7 +373,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                   return Container(
                                     margin: EdgeInsets.only(bottom: 12.h),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: isDarkMode ? Colors.grey[850] : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: Colors.grey.shade200),
                                       boxShadow: [
@@ -423,7 +418,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                                       style: TextStyle(
                                                         fontSize: 15.sp,
                                                         fontWeight: FontWeight.w700,
-                                                        color: Colors.black87,
+                                                        color: isDarkMode ? Colors.white : Colors.black87,
                                                       ),
                                                     ),
                                                     SizedBox(height: 4.h),
@@ -431,7 +426,7 @@ print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/
                                                       assignment.assignmentTopic ?? 'N/A',
                                                       style: TextStyle(
                                                         fontSize: 12.sp,
-                                                        color: Colors.grey.shade600,
+                                                        color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                                                       ),
                                                     ),
                                                   ],
@@ -544,37 +539,36 @@ class ColorPainter {
   static const Color accentColor = Color(0xFF4CA1AF);
 
   static LinearGradient get gradientBackground => LinearGradient(
-        colors: [primaryColor, secondaryColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [primaryColor, secondaryColor],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static LinearGradient get buttonGradient => LinearGradient(
-        colors: [primaryColor, accentColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [primaryColor, accentColor],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static BoxDecoration get boxDecoration => BoxDecoration(
-        gradient: gradientBackground,
-        borderRadius: BorderRadius.circular(25),
-      );
+    gradient: gradientBackground,
+    borderRadius: BorderRadius.circular(25),
+  );
 
   static BoxDecoration get cardDecoration => BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            offset: Offset(0, 6),
-            blurRadius: 12,
-            color: Colors.black.withOpacity(0.15),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(20),
-      );
+    color: Colors.white,
+    boxShadow: [
+      BoxShadow(
+        offset: Offset(0, 6),
+        blurRadius: 12,
+        color: Colors.black.withOpacity(0.15),
+      ),
+    ],
+    borderRadius: BorderRadius.circular(20),
+  );
 
   static BoxDecoration get buttonBoxDecoration => BoxDecoration(
-        gradient: buttonGradient,
-        borderRadius: BorderRadius.circular(30),
-      );
+    gradient: buttonGradient,
+    borderRadius: BorderRadius.circular(30),
+  );
 }
-

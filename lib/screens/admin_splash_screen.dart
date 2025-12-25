@@ -10,12 +10,16 @@ class AdminSplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Get.put(AdminSplashController());
 
+    // Get the current theme brightness
+    var isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? Colors.black : Colors.white, // Adjust background based on theme
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+           
             children: [
               // Ensures the image is centered vertically and horizontally
               Image.asset(
@@ -23,6 +27,17 @@ class AdminSplashScreen extends StatelessWidget {
                 height: 250.h,
               ),
               SizedBox(height: 20.h),  // Optional: Add space below the logo if needed
+              // You can add a text to indicate which theme is active for debugging purposes
+              // if (isDarkMode)
+              //   Text(
+              //     'Dark Mode',
+              //     style: TextStyle(color: Colors.white, fontSize: 18.sp),
+              //   )
+              // else
+              //   Text(
+              //     'Light Mode',
+              //     style: TextStyle(color: Colors.black, fontSize: 18.sp),
+              //   ),
             ],
           ),
         ),

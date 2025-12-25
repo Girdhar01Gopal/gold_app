@@ -5,14 +5,17 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:path/path.dart';
 import '../controllers/dashboard_controller.dart';
 import '../infrastructure/routes/admin_routes.dart';
+
 class HomeScreen extends StatelessWidget {
   final HomeController controller = Get.put(HomeController());
   String? selectedYear = '2025'; // Default selected year
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(180.h),
         child: AppBar(
@@ -22,7 +25,7 @@ class HomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                 Color(0xFF0D47A1), // Assignment primary color
+                  Color(0xFF0D47A1), // Assignment primary color
                   Color(0xFF4CA1AF),
                 ],
                 begin: Alignment.topLeft,
@@ -44,7 +47,7 @@ class HomeScreen extends StatelessWidget {
                       width: 50.w,
                       height: 50.h,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -128,6 +131,7 @@ class HomeScreen extends StatelessWidget {
                       },
                       context,
                       index,
+                      isDarkMode, // Pass dark mode info
                     );
                   },
                 ),
@@ -141,6 +145,7 @@ class HomeScreen extends StatelessWidget {
     VoidCallback onPressed,
     BuildContext context,
     int index,
+    bool isDarkMode, // Get the dark mode status
   ) {
     // Icon selection based on subject
     IconData getSubjectIcon(String subjectName) {
@@ -170,7 +175,7 @@ class HomeScreen extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -232,7 +237,7 @@ class HomeScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 17.sp,
                           fontWeight: FontWeight.w700,
-                          color: Colors.black87,
+                          color: isDarkMode ? Colors.white : Colors.black87,
                         ),
                       ),
                       SizedBox(height: 4.h),
@@ -240,7 +245,7 @@ class HomeScreen extends StatelessWidget {
                         'View Assignments',
                         style: TextStyle(
                           fontSize: 13.sp,
-                          color: Colors.grey.shade600,
+                          color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

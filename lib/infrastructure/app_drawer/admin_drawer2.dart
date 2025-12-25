@@ -39,150 +39,150 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
   @override
   Widget build(BuildContext context) {
     final currentRoute = Get.currentRoute;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Drawer(
-      elevation: 4,
-      backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          // ---------- Header Section ----------
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF0D47A1), // Assignment primary color
-                  Color(0xFF4CA1AF), // Assignment accent color
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            padding: EdgeInsets.only(top: 50.h, bottom: 24.h, left: 20.w, right: 20.w),
-            child: Column(
-              children: [
-                // Profile Circle
-                Container(
-                  width: 80.w,
-                  height: 80.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.person_fill,
-                    size: 40,
-                    color: Colors.white,
-                  ),
+    return SizedBox(
+      width: 280.w,
+      child: Drawer(
+        elevation: 5,
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        child: Column(
+          children: [
+            // ---------- Header Section ----------
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF0D47A1), // Assignment primary color
+                    Color(0xFF4CA1AF), // Assignment accent color
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                SizedBox(height: 12.h),
-                // Student Info
-                Obx(() => Text(
-                  studentname.value.replaceAll('"', '').trim(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              padding: EdgeInsets.only(top: 50.h, bottom: 24.h, left: 20.w, right: 20.w),
+              child: Column(
+                children: [
+                  // Profile Circle
+                  Container(
+                    width: 80.w,
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.person_fill,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )),
-                SizedBox(height: 4.h),
-                Obx(() => Text(
-                  '${className.value.replaceAll('"', '').trim()} • ${session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )),
-                SizedBox(height: 4.h),
-                Obx(() => Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    enrollmentNo.value.replaceAll('"', '').trim(),
+                  SizedBox(height: 12.h),
+                  // Student Info
+                  Obx(() => Text(
+                    studentname.value.replaceAll('"', '').trim(),
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ),
-                )),
-              ],
-            ),
-          ),
-
-          // ---------- Drawer Items ----------
-          Expanded(
-            child: Container(
-              color: Color(0xFFF5F6FA),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-                child: Column(
-                  children: [
-                    _drawerItem(
-                      title: "Dashboard",
-                      icon: Icons.home_rounded,
-                      route: AdminRoutes.homeScreen,
-                      currentRoute: currentRoute,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )),
+                  SizedBox(height: 4.h),
+                  Obx(() => Text(
+                    '${className.value.replaceAll('"', '').trim()} • ${session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
                     ),
-                    // _drawerItem(
-                    //   title: "Usage",
-                    //   icon: Icons.insert_chart_outlined_rounded,
-                    //   route: AdminRoutes.usageScreen,
-                    //   currentRoute: currentRoute,
-                    // ),
-                    _drawerItem(
-                      title: "Reset System",
-                      icon: Icons.settings_backup_restore_rounded,
-                      route: AdminRoutes.LOADING_SCREEN,
-                      currentRoute: currentRoute,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )),
+                  SizedBox(height: 4.h),
+                  Obx(() => Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // ---------- Footer ----------
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF0D47A1),
-                  Color(0xFF4CA1AF),
+                    child: Text(
+                      enrollmentNo.value.replaceAll('"', '').trim(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )),
                 ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
               ),
             ),
-            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-            width: double.infinity,
-            child: Center(
-              child: Text(
-                "© MGEPL",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
+
+            // ---------- Drawer Items ----------
+            Expanded(
+              child: Container(
+                color: isDarkMode ? Colors.black87 : Color(0xFFF5F6FA),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
+                  child: Column(
+                    children: [
+                      _drawerItem(
+                        title: "Dashboard",
+                        icon: Icons.home_rounded,
+                        route: AdminRoutes.homeScreen,
+                        currentRoute: currentRoute,
+                        isDarkMode: isDarkMode,
+                      ),
+                      _drawerItem(
+                        title: "Reset System",
+                        icon: Icons.settings_backup_restore_rounded,
+                        route: AdminRoutes.LOADING_SCREEN,
+                        currentRoute: currentRoute,
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            // ---------- Footer ----------
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF0D47A1),
+                    Color(0xFF4CA1AF),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+              width: double.infinity,
+              child: Center(
+                child: Text(
+                  "© MGEPL",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -193,6 +193,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
     required String route,
     required String currentRoute,
     bool isLogout = false,
+    bool isDarkMode = false,
     Future<void> Function()? onTap,
   }) {
     final isSelected = currentRoute == route;
@@ -232,7 +233,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                 bool confirm = await showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    backgroundColor: Colors.white,
+                    backgroundColor: isDarkMode ? Colors.black : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     title: Text(
@@ -253,7 +254,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                         onPressed: () async {
                           GetStorage().erase();
                           Navigator.pop(context, true);
-                          Get.offAllNamed(AdminRoutes.LOADING_SCREEN);
+                          Get.offAllNamed(AdminRoutes.login);
                         },
                         child: Text("Yes",
                             style: TextStyle(color: Colors.red)),
@@ -298,7 +299,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                       title,
                       style: TextStyle(
                         fontSize: 15.sp,
-                        color: isSelected ? primaryColor : Colors.black87,
+                        color: isSelected ? primaryColor : (isDarkMode ? Colors.white : Colors.black87),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),

@@ -27,7 +27,15 @@ class AdminApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  
+   final ThemeData lightTheme = ThemeData.light().copyWith(
+      primaryColor: Colors.blue,
+      appBarTheme: AppBarTheme(color: Colors.blue),
+    );
+
+    final ThemeData darkTheme = ThemeData.dark().copyWith(
+      primaryColor: Colors.grey[600],
+      appBarTheme: AppBarTheme(color: Colors.grey[900]!),
+    );
 
     return ScreenUtilInit(
       splitScreenMode: false,
@@ -37,8 +45,10 @@ class AdminApp extends StatelessWidget {
           title: 'Maharishi Learn',
           debugShowCheckedModeBanner: false,
           getPages: AdminRoutes.routes,
+           theme: lightTheme,
+          darkTheme: darkTheme,
           initialRoute: AdminRoutes.ADMIN_SPLASH, // Same route for now
-           theme: ThemeData(useMaterial3: true), // Auto switch based on system theme
+           themeMode: ThemeMode.system, // Auto switch based on system theme
         );
       },
     );
