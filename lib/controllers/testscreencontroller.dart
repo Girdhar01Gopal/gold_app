@@ -365,91 +365,106 @@ class Testscreencontroller extends GetxController {
     }
   }
 
-  // ===================================================
-  // LOAD QUESTIONS FROM OFFLINE HIVE
-  // ===================================================
-  Future<void> _loadFromOffline() async {
-    try {
-      // ✅ Check if box is already open, if not open it
-      Box<Hivemodel> questionBox;
-      if (Hive.isBoxOpen('offlineexam${testId.value}')) {
-        questionBox = Hive.box<Hivemodel>('offlineexam${testId.value}');
-      } else {
-        questionBox = await Hive.openBox<Hivemodel>(
-          'offlineexam${testId.value}',
-        );
-      }
+// ===================================================
+// LOAD QUESTIONS FROM OFFLINE HIVE
+// ===================================================
+Future<void> _loadFromOffline() async {
+  try {
+    // ✅ Check if box is already open, if not open it
+    Box<Hivemodel> questionBox;
+    final boxName = 'offlineexam${testId.value}';
 
-      if (questionBox.isEmpty) {
-        Get.snackbar("Error", "No offline questions available");
-        return;
-      }
-
-      allQuestions.clear();
-
-      int fallbackId = 1; // ✅ ensures unique IDs
-
-      for (final q in questionBox.values) {
-        final subject = q.subjectName ?? 'General';
-        allQuestions.putIfAbsent(subject, () => []);
-
-        // store ids for submit
-        batchid.value = (q.batchId ?? 0).toString();
-        examtestid.value = (q.examTestId ?? 0).toString();
-
-        // ✅ FIX: QuestionId from API is 0, so generate unique id
-        int id = (q.questionId ?? 0);
-        if (id == 0) id = fallbackId++;
-
-        allQuestions[subject]!.add({
-          // ✅ normalized keys (USE THESE IN VIEW)
-          'id': id,
-          'question': q.questions ?? '',
-
-          // ✅ normalized options list used by view
-          'options':
-              [
-                    {'key': 'A', 'text': q.optionA ?? q.ansOptionA ?? ''},
-                    {'key': 'B', 'text': q.optionB ?? q.ansOptionB ?? ''},
-                    {'key': 'C', 'text': q.optionC ?? q.ansOptionC ?? ''},
-                    {'key': 'D', 'text': q.optionD ?? q.ansOptionD ?? ''},
-                  ]
-                  .where((e) => (e['text'] ?? '').toString().trim().isNotEmpty)
-                  .toList(),
-
-          // ✅ normalized correct option (the API uses "D", you want just key)
-          'correctKey': (q.optionCorrect ?? '').toString().trim(),
-
-          'viewsecond': q.totalMinutes ?? 0,
-          'rating': int.tryParse(q.questionRating ?? '0') ?? 0,
-
-          'marks': q.questionMarks ?? 0,
-
-          // keep server ids separately if needed later
-          'serverQuestionId': q.questionId ?? 0,
-          'batchId': q.batchId ?? 0,
-          'examTestId': q.examTestId ?? 0,
-        });
-      }
-
-      subjects.value = allQuestions.keys.toList();
-      if (subjects.isNotEmpty) {
-        selectedSubject.value = subjects.first;
-      }
-
-      // visited
-      final list = currentQuestions;
-      if (list.isNotEmpty) {
-        visitedQuestions.add(list.first['id'] as int);
-      }
-
-      allQuestions.refresh();
-      print("✅ Loaded questions from offline Hive.");
-    } catch (e) {
-      print("❌ Error loading from offline Hive: $e");
-      Get.snackbar("Error", "Failed to load offline questions");
+    if (Hive.isBoxOpen(boxName)) {
+      questionBox = Hive.box<Hivemodel>(boxName);
+    } else {
+      questionBox = await Hive.openBox<Hivemodel>(boxName);
     }
+
+    if (questionBox.isEmpty) {
+      Get.snackbar("Error", "No offline questions available");
+      return;
+    }
+
+    allQuestions.clear();
+
+    int fallbackLocalId = 1; // ✅ ensures local unique IDs for UI
+
+    for (final q in questionBox.values) {
+      final subject = (q.subjectName ?? 'General').trim();
+      allQuestions.putIfAbsent(subject, () => []);
+
+      // store ids for submit
+      batchid.value = (q.batchId ?? 0).toString();
+      examtestid.value = (q.examTestId ?? 0).toString();
+
+      // ✅ local id for UI (must never be 0)
+      int localId = (q.questionId ?? 0);
+      if (localId == 0) localId = fallbackLocalId++;
+
+      // ✅ server id (can be 0 if API is trash)
+      final int serverQid = (q.questionId ?? 0);
+
+      // ✅ REAL option text first (AnsOptionX), fallback to OptionX
+      final options = <Map<String, String>>[
+        {
+          'key': 'A',
+          'text': (q.ansOptionA ?? q.optionA ?? '').trim(),
+        },
+        {
+          'key': 'B',
+          'text': (q.ansOptionB ?? q.optionB ?? '').trim(),
+        },
+        {
+          'key': 'C',
+          'text': (q.ansOptionC ?? q.optionC ?? '').trim(),
+        },
+        {
+          'key': 'D',
+          'text': (q.ansOptionD ?? q.optionD ?? '').trim(),
+        },
+      ].where((e) => (e['text'] ?? '').trim().isNotEmpty).toList();
+
+      allQuestions[subject]!.add({
+        // ✅ UI/local id
+        'id': localId,
+
+        'question': (q.questions ?? '').trim(),
+
+        // ✅ used by view
+        'options': options,
+
+        // ✅ correct key usually "A"/"B"/"C"/"D"
+        'correctKey': (q.optionCorrect ?? '').toString().trim(),
+
+        'viewsecond': q.totalMinutes ?? 0,
+        'rating': int.tryParse(q.questionRating ?? '0') ?? 0,
+        'marks': q.questionMarks ?? 0,
+
+        // ✅ keep server ids separately
+        'serverQuestionId': serverQid,
+        'batchId': q.batchId ?? 0,
+        'examTestId': q.examTestId ?? 0,
+      });
+    }
+
+    subjects.value = allQuestions.keys.toList();
+    if (subjects.isNotEmpty) {
+      selectedSubject.value = subjects.first;
+    }
+
+    // visited
+    final list = currentQuestions;
+    if (list.isNotEmpty) {
+      visitedQuestions.add(list.first['id'] as int);
+    }
+
+    allQuestions.refresh();
+    print("✅ Loaded questions from offline Hive.");
+  } catch (e) {
+    print("❌ Error loading from offline Hive: $e");
+    Get.snackbar("Error", "Failed to load offline questions");
   }
+}
 
   // ===================================================
   // CONNECTIVITY MONITORING

@@ -295,73 +295,68 @@ class Testscreenview extends GetView<Testscreencontroller> {
                 SizedBox(height: 20.h),
 
                 // ✅ OPTIONS (single select)
-                ...List.generate(options.length, (index) {
-                  final opt = options[index] as Map;
-                  final String key = asString(opt['key']);
-                  final String text = asString(opt['text']);
+             // ✅ OPTIONS (single select) - show ONLY real option text
+...List.generate(options.length, (index) {
+  final opt = options[index] as Map;
+  final String key = asString(opt['key']);   // still used internally
+  final String text = asString(opt['text']); // real option text
 
-                  final selected = controller.selectedAnswers[qid];
-                  final bool isSelected = selected == key;
+  final selected = controller.selectedAnswers[qid];
+  final bool isSelected = selected == key;
 
-                  return GestureDetector(
-                    onTap: () => controller.selectOption(qid, key),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      margin: EdgeInsets.symmetric(vertical: 6.h),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 12.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
-                            : Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColor.MAHARISHI_BRONZE
-                              : Theme.of(context).dividerColor,
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          if (isSelected)
-                            const BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 3,
-                              offset: Offset(0, 2),
-                            ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isSelected
-                                ? Icons.check_circle_rounded
-                                : Icons.circle_outlined,
-                            color: isSelected
-                                ? AppColor.MAHARISHI_BRONZE
-                                : Colors.grey,
-                            size: 20,
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Text(
-                              ' $text',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+  return GestureDetector(
+    onTap: () => controller.selectOption(qid, key),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      margin: EdgeInsets.symmetric(vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
+            : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isSelected
+              ? AppColor.MAHARISHI_BRONZE
+              : Theme.of(context).dividerColor,
+          width: 1.2,
+        ),
+        boxShadow: [
+          if (isSelected)
+            const BoxShadow(
+              color: Colors.black12,
+              blurRadius: 3,
+              offset: Offset(0, 2),
+            ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+            color: isSelected ? AppColor.MAHARISHI_BRONZE : Colors.grey,
+            size: 20,
+          ),
+          SizedBox(width: 10.w),
 
-                SizedBox(height: 20.h),
+          // ✅ show ONLY real text (no A/B/C/D)
+          Expanded(
+            child: Text(
+              text.isEmpty ? "-" : text,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}),
+    SizedBox(height: 20.h),
 
                 // 🔹 Action Buttons
                 Container(
