@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../controllers/Loading_Controller.dart';
 import '../utils/constants/color_constants.dart'; // Your color definitions
 
-class LoadingScreen extends StatelessWidget {
+class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
+
+  @override
+  State<LoadingScreen> createState() => _LoadingScreenState();
+}
+
+class _LoadingScreenState extends State<LoadingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +57,7 @@ class LoadingScreen extends StatelessWidget {
             // Logo Section
             Image.asset(
               'assets/images/FIITJEE_Logo.png',
-              height: 160.h,
+              height: 120.h,
               fit: BoxFit.contain,
             ),
             SizedBox(height: 40.h),
@@ -45,9 +66,9 @@ class LoadingScreen extends StatelessWidget {
             Text(
               "Maharishi Learn",
               style: TextStyle(
-                fontSize: 28.sp,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black, // Text color for dark mode
+                color: isDarkMode ? Colors.white : Colors.white, // Text color for dark mode
                 letterSpacing: 1.0,
               ),
             ),
@@ -57,19 +78,19 @@ class LoadingScreen extends StatelessWidget {
             Text(
               "Loading, please wait...",
               style: TextStyle(
-                fontSize: 16.sp,
-                color: isDarkMode ? Colors.white.withOpacity(0.85) : Colors.black.withOpacity(0.85), // Adjust text color for dark mode
+                fontSize: 12.sp,
+                color: isDarkMode ? Colors.white.withOpacity(0.85) : Colors.white.withOpacity(0.85), // Adjust text color for dark mode
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 40.h),
+            SizedBox(height: 20.h),
 
             // Circular Progress Indicator
             SizedBox(
               height: 10.h,
               width: 10.h,
               child: LoadingAnimationWidget.fourRotatingDots(
-                color: isDarkMode ? Colors.white : Colors.black, // Color for the loading animation
+                color: isDarkMode ? Colors.white : Colors.white, // Color for the loading animation
                 size: 120,
               ),
             ),
@@ -80,7 +101,7 @@ class LoadingScreen extends StatelessWidget {
             Text(
               "© MGEPL",
               style: TextStyle(
-                color: isDarkMode ? Colors.white.withOpacity(0.7) : Colors.black.withOpacity(0.7),
+                color: isDarkMode ? Colors.white.withOpacity(0.7) : Colors.white.withOpacity(0.7),
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w400,
               ),

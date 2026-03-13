@@ -126,6 +126,7 @@ class Assignment {
   int? subjectId;
   String? assignmentChapter;
   String? subjectName;
+  int? QuestionTestId;
 
   Assignment({
     this.assignmentTopic,
@@ -140,6 +141,7 @@ class Assignment {
     this.subjectId,
     this.assignmentChapter,
     this.subjectName,
+    this.QuestionTestId,
   });
 
   Assignment.fromJson(Map<String, dynamic> json) {
@@ -155,6 +157,7 @@ class Assignment {
     subjectId = json['SubjectId'];
     assignmentChapter = json['AssignmentChapter'];
     subjectName = json['SubjectName'];
+    QuestionTestId = json['QuestionTestId'];
   }
 
   Map<String, dynamic> toJson() {
@@ -171,6 +174,7 @@ class Assignment {
     data['SubjectId'] = this.subjectId;
     data['AssignmentChapter'] = this.assignmentChapter;
     data['SubjectName'] = this.subjectName;
+    data['QuestionTestId'] = this.QuestionTestId;
     return data;
   }
 }

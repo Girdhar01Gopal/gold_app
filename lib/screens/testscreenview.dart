@@ -187,7 +187,7 @@ class Testscreenview extends GetView<Testscreencontroller> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: [
+                        children: [ 
                           Container(
                             width: 48.w,
                             height: 48.h,
@@ -588,7 +588,6 @@ class Testscreenview extends GetView<Testscreencontroller> {
                       SizedBox(height: 12.h),
                       Obx(() {
                         final questions = controller.currentQuestions;
-
                         return Wrap(
                           spacing: 10.w,
                           runSpacing: 10.h,
@@ -606,15 +605,20 @@ class Testscreenview extends GetView<Testscreencontroller> {
                             final marked = controller.markedForReview.contains(
                               id,
                             );
-                            final visited = controller.visitedQuestions
-                                .contains(id);
+                            final isCurrent =
+                              controller.currentIndex.value == qIndex;
+                            final isSkipped =
+                              qIndex < controller.currentIndex.value &&
+                              !answered;
 
                             Color color;
-                            if (marked) {
+                            if (isCurrent) {
+                              color = AppColor.MAHARISHI_GOLD;
+                            } else if (marked) {
                               color = Colors.purple;
                             } else if (answered) {
                               color = Colors.green;
-                            } else if (visited) {
+                            } else if (isSkipped) {
                               color = Colors.red;
                             } else {
                               color = Colors.grey;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -6,9 +7,31 @@ import 'package:path/path.dart';
 import '../controllers/dashboard_controller.dart';
 import '../infrastructure/routes/admin_routes.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final HomeController controller = Get.put(HomeController());
   String? selectedYear = '2025'; // Default selected year
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                 bottomRight: Radius.circular(24),
               ),
             ),
-            padding: EdgeInsets.only(top: 50.h, left: 20.w, right: 20.w, bottom: 20.h),
+            padding: EdgeInsets.only(top: 40.h, left: 20.w, right: 20.w, bottom: 20.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -44,8 +67,8 @@ class HomeScreen extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 50.w,
-                      height: 50.h,
+                      width: 30.w,
+                      height: 60.h,
                       decoration: BoxDecoration(
                         color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -53,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                       child: Icon(
                         Icons.school,
                         color: Colors.white,
-                        size: 28,
+                        size: 40,
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -65,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                             () => Text(
                               controller.studentname.value.replaceAll('"', '').trim(),
                               style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -78,7 +101,7 @@ class HomeScreen extends StatelessWidget {
                             () => Text(
                               '${controller.className.value.replaceAll('"', '').trim()} • ${controller.session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
                               style: TextStyle(
-                                fontSize: 13.sp,
+                                fontSize: 9.sp,
                                 color: Colors.white.withOpacity(0.9),
                                 fontWeight: FontWeight.w500,
                               ),
@@ -95,7 +118,7 @@ class HomeScreen extends StatelessWidget {
                 Text(
                   'Select Your Subject',
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 9.sp,
                     color: Colors.white.withOpacity(0.85),
                     fontWeight: FontWeight.w500,
                   ),
@@ -203,7 +226,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 // Gradient Icon Container
                 Container(
-                  width: 60.w,
+                  width: 30.w,
                   height: 60.h,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -235,7 +258,7 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         subject,
                         style: TextStyle(
-                          fontSize: 17.sp,
+                          fontSize: 11.sp,
                           fontWeight: FontWeight.w700,
                           color: isDarkMode ? Colors.white : Colors.black87,
                         ),
@@ -244,7 +267,7 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         'View Assignments',
                         style: TextStyle(
-                          fontSize: 13.sp,
+                          fontSize: 9.sp,
                           color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
@@ -332,7 +355,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: LoadingAnimationWidget.inkDrop(
                     color: Colors.white,
-                    size: 50.w,
+                    size: 30.w,
                   ),
                 ),
                 SizedBox(height: 25.h),

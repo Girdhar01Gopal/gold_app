@@ -211,16 +211,14 @@ class _ContinueScreenState extends State<ContinueScreen> {
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        title: Center(
-              child: Text(
-                'Assignments',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+        title: Text(
+          '\t\t\t\t\t\t\t\t\t\t\tAssignments',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(
@@ -482,6 +480,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                                   'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
                                                   'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
                                                   'timelimit': assignment.totalMinutes?.toString() ?? '',
+                                                  'questiontestid': assignment.QuestionTestId.toString() ?? '',
                                                 });
                                               },
                                               style: ElevatedButton.styleFrom(
@@ -512,6 +511,52 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                               ),
                                             ),
                                           ),
+                                          SizedBox(height: 12.h),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                // Handle test start/continue
+                                                print('view result Test: ${assignment.testName}');
+                                                
+                                                Get.toNamed(AdminRoutes.resultview, arguments: {
+                                                    'testId': assignment.testId,
+                                               
+                                                 'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
+                                                  'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
+                                                
+                                                   'questiontestid': assignment.QuestionTestId.toString() ?? '',
+                                                });
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: isAttempted ? accent : primary,
+                                                foregroundColor: Colors.white,
+                                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                elevation: 2,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.grade,
+                                                    size: 20,
+                                                  ),
+                                                  SizedBox(width: 8.w),
+                                                  Text(
+                                                    'View Result',
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                       
                                         ],
                                       ),
                                     ),

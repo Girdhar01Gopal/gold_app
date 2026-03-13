@@ -56,6 +56,7 @@ class Testscreencontroller extends GetxController {
   var assignmenttopicid = ''.obs;
   var assignmentchapterid = ''.obs;
   Timer? quizTimer;
+  var questionidd = ''.obs;
 
   // ------------ QUESTION STATE ------------
   final currentIndex = 0.obs;
@@ -106,6 +107,8 @@ class Testscreencontroller extends GetxController {
     time.value = Get.arguments['timelimit'] ?? '';
     assignmenttopicid.value = Get.arguments['assignmenttopicid'] ?? '';
     assignmentchapterid.value = Get.arguments['assignmentchapterid'] ?? '';
+    questionidd.value = Get.arguments['questiontestid'] ?? '';
+print("questionidd.value ${questionidd.value}");
 
     // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
     testId.value = Get.arguments['testId'] ?? '';

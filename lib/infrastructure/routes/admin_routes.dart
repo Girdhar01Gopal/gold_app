@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import 'package:gold_app/bindings/loginbinding.dart';
 import 'package:gold_app/bindings/mathscreenbinding.dart';
 import 'package:gold_app/bindings/physicsbinding.dart';
+import 'package:gold_app/bindings/resultbinding.dart';
 import 'package:gold_app/bindings/testscreenbinding.dart';
 import 'package:gold_app/screens/login.dart';
 import 'package:gold_app/screens/mathscreen.dart';
 import 'package:gold_app/screens/physicsscreen.dart';
+import 'package:gold_app/screens/resultview.dart';
 import 'package:gold_app/screens/testscreenview.dart';
 import '../../bindings/Loading_Binding.dart';
 import '../../bindings/MainScreenBinding.dart';
@@ -30,10 +32,11 @@ class AdminRoutes {
   static const MAIN_SCREEN = '/mainScreen';
   static const CONTINUE_SCREEN = '/continue';
   static const usageScreen = '/usageScreen';
-    static const mathscreen = '/mathscreen';
-        static const physics = '/physics';
-          static const testscreen = '/testscreen';
-                    static const login = '/login';
+  static const mathscreen = '/mathscreen';
+  static const physics = '/physics';
+  static const testscreen = '/testscreen';
+  static const login = '/login';
+  static const resultview = '/resultview';
 
 
 
@@ -72,7 +75,12 @@ class AdminRoutes {
       page: () => LoadingScreen(),
       binding: LoadingBinding(),
     ),
-
+GetPage(
+      name: resultview,
+      page: () => Resultview(),
+      transition: Transition.fadeIn,
+       binding: Resultbinding(),
+    ),
     // Home Screen
     GetPage(
       name: homeScreen,
