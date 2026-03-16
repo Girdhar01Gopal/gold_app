@@ -42,7 +42,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
-      width: 280.w,
+      width: 200.w,
       child: Drawer(
         elevation: 5,
         backgroundColor: isDarkMode ? Colors.black : Colors.white,
@@ -65,13 +65,13 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                   bottomRight: Radius.circular(24),
                 ),
               ),
-              padding: EdgeInsets.only(top: 50.h, bottom: 24.h, left: 20.w, right: 20.w),
+              padding: EdgeInsets.only(top: 30.h, bottom: 24.h, left: 20.w, right: 20.w),
               child: Column(
                 children: [
                   // Profile Circle
                   Container(
-                    width: 80.w,
-                    height: 80.h,
+                    width: 60.w,
+                    height: 60.h,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
@@ -79,7 +79,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     ),
                     child: Icon(
                       CupertinoIcons.person_fill,
-                      size: 40,
+                      size:33,
                       color: Colors.white,
                     ),
                   ),
@@ -89,7 +89,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     studentname.value.replaceAll('"', '').trim(),
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                     ),
                     textAlign: TextAlign.center,
@@ -101,7 +101,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     '${className.value.replaceAll('"', '').trim()} • ${session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: 13.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
@@ -119,7 +119,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                       enrollmentNo.value.replaceAll('"', '').trim(),
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12.sp,
+                        fontSize: 9.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -290,7 +290,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     child: Icon(
                       icon,
                       color: isSelected ? Colors.white : (isHovered ? primaryColor : Colors.grey.shade600),
-                      size: 22,
+                      size: 35,
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -298,7 +298,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
                     child: Text(
                       title,
                       style: TextStyle(
-                        fontSize: 15.sp,
+                        fontSize: 10.sp,
                         color: isSelected ? primaryColor : (isDarkMode ? Colors.white : Colors.black87),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),

@@ -121,7 +121,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 margin: EdgeInsets.symmetric(horizontal: 6.w),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal:6.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: selected ? primary : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -132,7 +132,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 ),
                 child: Text(
                   e,
-                  style: TextStyle(color: selected ? Colors.white : Colors.black87, fontSize: 14.sp, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: selected ? Colors.white : Colors.black87, fontSize: 10.sp, fontWeight: FontWeight.w600),
                 ),
               ),
             );
@@ -172,7 +172,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
           Text(
             text,
             style: TextStyle(
-              fontSize: 8.sp,
+              fontSize: 4.sp,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
@@ -191,36 +191,37 @@ class _ContinueScreenState extends State<ContinueScreen> {
       drawer: AdminDrawer2(),
       backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          height: 200.h,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [primary, accent],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: Text(
-          '\t\t\t\t\t\t\t\t\t\t\tAssignments',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
+  elevation: 0,
+  backgroundColor: Colors.transparent,
+  flexibleSpace: Container(
+    height: 120, // Set the height you prefer for the top container
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [primary, accent],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-      body: SafeArea(
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(20),
+        bottomRight: Radius.circular(20),
+      ),
+    ),
+  ),
+  leading: IconButton(
+    icon: const Icon(Icons.menu, color: Colors.white),
+    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+  ),
+  title: Center(
+    child: Text(
+      'Assignments\t\t\t\t\t\t\t\t',
+      style: TextStyle(
+        fontSize: 10.sp,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),  body: SafeArea(
         child: Column(
           children: [
             // Exam Selector Section
@@ -234,7 +235,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                     child: Text(
                       'Select Exam Type',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w600,
                         color: isDarkMode ? Colors.white : Colors.grey.shade700,
                       ),
@@ -301,7 +302,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                           children: [
                             // Chapter Header
                             Container(
-                              padding: EdgeInsets.all(16.w),
+                              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -317,18 +318,18 @@ class _ContinueScreenState extends State<ContinueScreen> {
                               child: Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.all(10.w),
+                                    padding: EdgeInsets.all(12.w),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [primary, accent],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Icon(Icons.library_books, color: Colors.white, size: 22),
+                                    child: Icon(Icons.library_books, color: Colors.white, size: 16),
                                   ),
-                                  SizedBox(width: 12.w),
+                                  SizedBox(width: 14.w),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,16 +337,16 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                         Text(
                                           chapterName,
                                           style: TextStyle(
-                                            fontSize: 16.sp,
+                                            fontSize: 11.sp,
                                             fontWeight: FontWeight.w700,
                                             color: isDarkMode ? Colors.white : Colors.black87,
                                           ),
                                         ),
-                                        SizedBox(height: 2.h),
+                                        SizedBox(height: 4.h),
                                         Text(
                                           '${chapters.assignments?.length ?? 0} Assignments',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
+                                            fontSize: 9.sp,
                                             color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -390,8 +391,8 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                           Row(
                                             children: [
                                               Container(
-                                                width: 48.w,
-                                                height: 48.h,
+                                                width: 30.w,
+                                                height: 60.h,
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                     colors: [primary.withOpacity(0.8), accent],
@@ -403,7 +404,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                                 child: Icon(
                                                   isAttempted ? Icons.check_circle : Icons.play_arrow_rounded,
                                                   color: Colors.white,
-                                                  size: 24,
+                                                  size: 30,
                                                 ),
                                               ),
                                               SizedBox(width: 12.w),
@@ -414,7 +415,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                                     Text(
                                                       assignment.testName ?? '',
                                                       style: TextStyle(
-                                                        fontSize: 15.sp,
+                                                        fontSize: 9.sp,
                                                         fontWeight: FontWeight.w700,
                                                         color: isDarkMode ? Colors.white : Colors.black87,
                                                       ),
@@ -423,7 +424,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                                     Text(
                                                       assignment.assignmentTopic ?? 'N/A',
                                                       style: TextStyle(
-                                                        fontSize: 12.sp,
+                                                        fontSize: 7.sp,
                                                         color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
                                                       ),
                                                     ),
@@ -458,7 +459,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                                 child: Text(
                                                   assignment.aStatus ?? 'Not Started',
                                                   style: TextStyle(
-                                                    fontSize: 8.sp,
+                                                    fontSize: 4.sp,
                                                     fontWeight: FontWeight.w600,
                                                     color: statusColor,
                                                   ),
@@ -467,97 +468,99 @@ class _ContinueScreenState extends State<ContinueScreen> {
                                             ],
                                           ),
                                           SizedBox(height: 12.h),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                // Handle test start/continue
-                                                print('${isAttempted ? 'Continue' : 'Start'} Test: ${assignment.testName}');
-                                                // Add your navigation logic here
-                                                Get.offAllNamed(AdminRoutes.testscreen, arguments: {
-                                                  'testId': assignment.testId,
-                                                  'passcode': "1",
-                                                  'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
-                                                  'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
-                                                  'timelimit': assignment.totalMinutes?.toString() ?? '',
-                                                  'questiontestid': assignment.QuestionTestId.toString() ?? '',
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: isAttempted ? accent : primary,
-                                                foregroundColor: Colors.white,
-                                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                elevation: 2,
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    isAttempted ? Icons.refresh : Icons.play_arrow_rounded,
-                                                    size: 20,
-                                                  ),
-                                                  SizedBox(width: 8.w),
-                                                  Text(
-                                                    isAttempted ? 'Try Again' : 'Start Test',
-                                                    style: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(height: 12.h),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                // Handle test start/continue
-                                                print('view result Test: ${assignment.testName}');
-                                                
-                                                Get.toNamed(AdminRoutes.resultview, arguments: {
-                                                    'testId': assignment.testId,
-                                               
-                                                 'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
-                                                  'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
-                                                
-                                                   'questiontestid': assignment.QuestionTestId.toString() ?? '',
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: isAttempted ? accent : primary,
-                                                foregroundColor: Colors.white,
-                                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                elevation: 2,
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.grade,
-                                                    size: 20,
-                                                  ),
-                                                  SizedBox(width: 8.w),
-                                                  Text(
-                                                    'View Result',
-                                                    style: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                       
-                                        ],
+                                      Row(
+  children: [
+    // First ElevatedButton (Start or Continue Test)
+    Expanded(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            print('${isAttempted ? 'Continue' : 'Start'} Test: ${assignment.testName}');
+            Get.offAllNamed(AdminRoutes.testscreen, arguments: {
+              'testId': assignment.testId,
+              'passcode': "1",
+              'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
+              'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
+              'timelimit': assignment.totalMinutes?.toString() ?? '',
+              'questiontestid': assignment.QuestionTestId.toString() ?? '',
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isAttempted ? accent : primary,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 2,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isAttempted ? Icons.refresh : Icons.play_arrow_rounded,
+                size: 20,
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                isAttempted ? 'Try Again' : 'Start Test',
+                style: TextStyle(
+                  fontSize: 4.sp, // Increased font size for better readability
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+    SizedBox(width: 12.w), // Add space between buttons
+    // Second ElevatedButton (View Result)
+    Expanded(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            print('view result Test: ${assignment.testName}');
+            Get.toNamed(AdminRoutes.resultview, arguments: {
+              'testId': assignment.testId,
+              'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
+              'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
+              'questiontestid': assignment.QuestionTestId.toString() ?? '',
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isAttempted ? accent : primary,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 2,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.grade,
+                size: 20,
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                'View Result',
+                style: TextStyle(
+                  fontSize: 4.sp, // Increased font size for better readability
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  ],
+)   ],
                                       ),
                                     ),
                                   );

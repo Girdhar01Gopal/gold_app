@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 bottomRight: Radius.circular(24),
               ),
             ),
-            padding: EdgeInsets.only(top: 40.h, left: 20.w, right: 20.w, bottom: 20.h),
+            padding: EdgeInsets.only(top: 30.h, left: 20.w, right: 20.w, bottom: 20.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             () => Text(
                               controller.studentname.value.replaceAll('"', '').trim(),
                               style: TextStyle(
-                                fontSize: 11.sp,
+                                fontSize: 10.sp,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Select Your Subject',
                   style: TextStyle(
-                    fontSize: 9.sp,
+                    fontSize: 7.sp,
                     color: Colors.white.withOpacity(0.85),
                     fontWeight: FontWeight.w500,
                   ),
@@ -221,12 +221,12 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(4.w),
             child: Row(
               children: [
                 // Gradient Icon Container
                 Container(
-                  width: 30.w,
+                  width: 20.w,
                   height: 60.h,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
