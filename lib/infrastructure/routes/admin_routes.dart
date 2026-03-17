@@ -101,11 +101,11 @@ GetPage(
       page: () => ContinueScreen(), // New screen to display
       binding: ContinueScreenBinding(), // Binding for ContinueScreen
     ),
-    GetPage(
-      name: usageScreen,
-      page: () => UsageScreen(),
-      binding: UsageBinding(),
-    ),
+    // GetPage(
+    //   name: usageScreen,
+    //   page: () => UsageScreen(),
+    //   binding: UsageBinding(),
+    // ),
     GetPage(
       name: login,
       page: () => LoginScreen(),

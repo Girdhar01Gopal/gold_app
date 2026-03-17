@@ -4,7 +4,7 @@ class Adminurl {
   static const String loginurl =
       "$baseurl/MobApp/StdLogins"; // Admin App URL
   static const String testurl =
-      "$baseurl/MobApp/ViewAssigmentQuestions";
+      "$baseurl/MobApp/ViewExamQuestions";
   static const String allsubject =
       "$baseurl/MobApp/AppViewAllAssigmnent";
   static const String assignment=

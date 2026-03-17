@@ -1,660 +1,1545 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:gold_app/utils/constants/color_constants.dart';
 import '../controllers/testscreencontroller.dart';
 
-class Testscreenview extends GetView<Testscreencontroller> {
+class Testscreenview extends StatefulWidget {
   const Testscreenview({super.key});
 
-  // ✅ Safe converters (kills the "double is not a subtype of int" crash)
-  int asInt(dynamic v, {int fallback = 0}) {
-    if (v == null) return fallback;
-    if (v is int) return v;
-    if (v is double) return v.toInt();
-    if (v is num) return v.toInt();
-    return int.tryParse(v.toString()) ?? fallback;
+  @override
+  State<Testscreenview> createState() => _TestscreenviewState();
+}
+
+class _TestscreenviewState extends State<Testscreenview> {
+  late final Testscreencontroller controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(Testscreencontroller());
   }
 
-  String asString(dynamic v, {String fallback = ''}) {
-    if (v == null) return fallback;
-    return v.toString();
+  Widget _buildOption({
+    required Testscreencontroller controller,
+    required Map<String, dynamic> question,
+    required Map<String, dynamic> option,
+    required bool isDarkMode,
+    required double fs,
+  }) {
+    final qid = question['id'];
+    final optionKey = option['key'];
+    final optionValue = option['value'];
+    final rawImg = option['img'];
+    final optionImg = controller.hasValidImage(rawImg)
+        ? controller.buildImgUrl(rawImg)
+        : '';
+    // Debug print to verify image URL
+    // ignore: avoid_print
+    print('Option $optionKey image URL: $optionImg');
+    final questionType = (question['questionType'] ?? '')
+        .toString()
+        .toLowerCase();
+    final isMultiSelect =
+        questionType.contains('ismcq') || questionType.contains('M.C.Q');
+    return Obx(() {
+      final selectedSet = controller.selectedAnswers[qid] ?? <String>{};
+      final selected = selectedSet.contains(optionKey);
+      return GestureDetector(
+        onTap: () {
+          controller.selectOption(qid, optionKey);
+          if (questionType.contains('comprehension') &&
+              !controller.visitedQuestions.contains(qid)) {
+            controller.visitedQuestions.add(qid);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          margin: EdgeInsets.symmetric(vertical: 3.h),
+          padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: selected
+                ? (isDarkMode ? Colors.green[800] : Colors.green.shade100)
+                : (isDarkMode ? Colors.grey[850] : Colors.white),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: selected
+                  ? (isDarkMode ? Colors.green[600]! : const Color(0xFF8B2D28))
+                  : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
+              width: 1.1,
+            ),
+            boxShadow: [
+              if (selected)
+                const BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 3,
+                  offset: Offset(0, 2),
+                ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isMultiSelect)
+                Checkbox(
+                  value: selected,
+                  onChanged: (_) => controller.selectOption(qid, optionKey),
+                  activeColor: isDarkMode ? Colors.green[400] : Colors.green,
+                )
+              else
+                Radio<String>(
+                  value: optionKey,
+                  groupValue: selectedSet.isNotEmpty ? selectedSet.first : null,
+                  onChanged: (_) => controller.selectOption(qid, optionKey),
+                  activeColor: isDarkMode
+                      ? Colors.grey[400]
+                      : const Color(0xFF8B2D28),
+                ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "$optionKey.  $optionValue",
+                      style: TextStyle(
+                        fontSize: 7.sp * fs,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode ? Colors.grey[300] : Colors.black87,
+                        height: 1.1,
+                        fontFamily: null, // Use default font (same as question)
+                      ),
+                    ),
+                    if (optionImg.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: Image.network(
+                          optionImg,
+                          height: 80,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildPaletteBox({
+    required int i,
+    required Map<String, dynamic> q,
+    required Testscreencontroller controller,
+    required double fs,
+    required bool isDarkMode,
+  }) {
+    final id = q['id'];
+    return Obx(() {
+      final selectedAnswers = controller.selectedAnswers;
+      final selectedIntegerAnswers = controller.selectedIntegerAnswers;
+      final markedForReview = controller.markedForReview;
+      final visitedQuestions = controller.visitedQuestions;
+      // Determine if this is an integer type question
+      final questionType = (q['questionType'] ?? '').toString().toLowerCase();
+      final isIntegerType = questionType.contains('integer');
+      // Consider answered if: normal answered, or integer type and a digit is selected
+      final isNumericRange = questionType.contains('numeric range');
+      final isComprehension = questionType.contains('comprehension');
+      final isMatch = questionType.contains('match');
+      final answered = isIntegerType
+          ? (selectedIntegerAnswers.containsKey(id) &&
+                selectedIntegerAnswers[id] != null &&
+                selectedIntegerAnswers[id] != -1 &&
+                selectedIntegerAnswers[id].toString().isNotEmpty)
+          : isNumericRange
+          ? controller.hasNumericRangeAnswer(
+              id,
+              subject: controller.selectedSubject.value,
+            )
+          : isComprehension || isMatch
+          ? (selectedAnswers.containsKey(id) &&
+                (selectedAnswers[id]?.isNotEmpty ?? false))
+          : (selectedAnswers.containsKey(id) &&
+                (selectedAnswers[id]?.isNotEmpty ?? false));
+      final marked = markedForReview.contains(id);
+      final visited = visitedQuestions.contains(id);
+      final displayIndex = i + 1;
+      Widget paletteBox;
+      if (answered && marked) {
+        paletteBox = Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 28.w,
+              height: 28.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.purple,
+                borderRadius: BorderRadius.circular(6.r),
+                border: Border.all(color: Colors.purple, width: 2),
+              ),
+              child: Text(
+                displayIndex.toString().padLeft(2, '0'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 4.5.sp,
+                ),
+              ),
+            ),
+            Positioned(
+              right: -3,
+              bottom: -3,
+              child: Container(
+                width: 5.w,
+                height: 5.w,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        );
+      } else if (marked) {
+        paletteBox = Container(
+          width: 28.w,
+          height: 28.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.purple,
+            borderRadius: BorderRadius.circular(6.r),
+            border: Border.all(color: Colors.purple, width: 2),
+          ),
+          child: Text(
+            displayIndex.toString().padLeft(2, '0'),
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 4.5.sp,
+            ),
+          ),
+        );
+      } else if (answered) {
+        paletteBox = Container(
+          width: 28.w,
+          height: 28.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(6.r),
+            border: Border.all(color: Colors.green, width: 2),
+          ),
+          child: Text(
+            displayIndex.toString().padLeft(2, '0'),
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 4.5.sp,
+            ),
+          ),
+        );
+      } else if (visited && !answered) {
+        paletteBox = Container(
+          width: 28.w,
+          height: 28.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.orange,
+            borderRadius: BorderRadius.circular(6.r),
+            border: Border.all(color: Colors.orange, width: 2),
+          ),
+          child: Text(
+            displayIndex.toString().padLeft(2, '0'),
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 4.5.sp,
+            ),
+          ),
+        );
+      } else {
+        paletteBox = Container(
+          width: 28.w,
+          height: 28.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(6.r),
+            border: Border.all(color: Colors.grey, width: 2),
+          ),
+          child: Text(
+            displayIndex.toString().padLeft(2, '0'),
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 4.5.sp,
+            ),
+          ),
+        );
+      }
+      return GestureDetector(
+        onTap: () {
+          controller.discardUnsavedSelectionForCurrentQuestion();
+          controller.currentIndex.value = i;
+          controller.visitedQuestions.add(id);
+        },
+        child: paletteBox,
+      );
+    });
+  }
+
+  // Small square-like indicator + count inside (legend)
+  Widget _legendBox({
+    required int count,
+    required Color color,
+    bool outlined = false,
+    bool circle = false,
+    bool badge = false, // for Answered & Marked
+  }) {
+    final base = Container(
+      width: 17.w,
+      height: 25.h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: outlined ? Colors.transparent : color,
+        shape: circle ? BoxShape.rectangle : BoxShape.rectangle,
+        borderRadius: circle ? null : BorderRadius.circular(6.r),
+        border: outlined ? Border.all(color: color, width: 2) : null,
+      ),
+      child: Text(
+        count.toString(),
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 4.sp,
+          color: outlined ? color : Colors.white,
+        ),
+      ),
+    );
+
+    if (!badge) return base;
+
+    // Purple circle + smaller green badge (Answered & Marked)
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 17.w,
+          height: 8.w,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(6.r)),
+            color: Colors.purple,
+            shape: BoxShape.rectangle,
+          ),
+          child: Text(
+            count.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 4.sp,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        Positioned(
+          right: -1,
+          bottom: -1,
+          child: Container(
+            width: 5.w,
+            height: 5.w,
+            decoration: BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _legendRow({
+    required Widget iconBox,
+    required String label,
+    required bool isDarkMode,
+    double gap = 10,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        iconBox,
+        SizedBox(width: gap.w),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 3.sp,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.grey[200] : Colors.grey.shade900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusLegend({
+    required Testscreencontroller controller,
+    required bool isDarkMode,
+    required double fs,
+  }) {
+    return Obx(() {
+      final questions = controller.currentQuestions;
+      if (questions.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.grey[850] : Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: isDarkMode ? Colors.grey[700]! : Colors.grey.shade300,
+            ),
+          ),
+          child: Text(
+            "No questions loaded.",
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: isDarkMode ? Colors.grey[300] : Colors.grey.shade800,
+            ),
+          ),
+        );
+      }
+
+      int notVisited = 0;
+      int notAnswered = 0;
+      int answered = 0;
+      int markedOnly = 0;
+      int answeredAndMarked = 0;
+
+      final selectedAnswers = controller.selectedAnswers;
+      final selectedIntegerAnswers = controller.selectedIntegerAnswers;
+      final markedIds = controller.markedForReview;
+      final visitedIds = controller.visitedQuestions;
+
+      bool isAnsweredQ(Map<String, dynamic> q) {
+        final int id = (q['id'] as num).toInt();
+        final type = (q['questionType'] ?? '').toString().toLowerCase();
+
+        if (type.contains('integer type')) {
+          final v = selectedIntegerAnswers[id];
+          return v != null && v != -1;
+        }
+
+        if (type.contains('numeric range')) {
+          return controller.hasNumericRangeAnswer(
+            id,
+            subject: controller.selectedSubject.value,
+          );
+        }
+
+        // numeric range, scq, mcq, match, comprehension all stored in selectedAnswers
+        final set = selectedAnswers[id];
+        return set != null && set.isNotEmpty;
+      }
+
+      for (final q in questions) {
+        final int id = (q['id'] as num).toInt();
+
+        final bool visited = visitedIds.contains(id);
+        final bool marked = markedIds.contains(id);
+        final bool answeredQ = isAnsweredQ(q);
+
+        if (answeredQ && marked) {
+          answeredAndMarked++;
+        } else if (answeredQ && !marked) {
+          answered++;
+        } else if (!answeredQ && marked) {
+          markedOnly++;
+        } else if (!visited) {
+          notVisited++;
+        } else {
+          notAnswered++;
+        }
+      }
+
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmall = constraints.maxWidth < 350;
+          return Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(isSmall ? 3.w : 6.w),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[850] : Colors.white,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(
+                color: isDarkMode ? Colors.grey[700]! : Colors.grey.shade300,
+                width: 1.2,
+              ),
+            ),
+            child: Column(
+              children: [
+                _legendRow(
+                  iconBox: _legendBox(
+                    count: notVisited,
+                    color: isDarkMode
+                        ? Colors.grey.shade400
+                        : Colors.grey.shade700,
+                    outlined: true,
+                  ),
+                  label: "Not Visited",
+                  isDarkMode: isDarkMode,
+                  gap: isSmall ? 2 : 6,
+                ),
+                SizedBox(height: isSmall ? 2.h : 5.h),
+                _legendRow(
+                  iconBox: _legendBox(count: notAnswered, color: Colors.orange),
+                  label: "Not Answered",
+                  isDarkMode: isDarkMode,
+                  gap: isSmall ? 2 : 6,
+                ),
+                SizedBox(height: isSmall ? 2.h : 5.h),
+                _legendRow(
+                  iconBox: _legendBox(count: answered, color: Colors.green),
+                  label: "Answered",
+                  isDarkMode: isDarkMode,
+                  gap: isSmall ? 2 : 6,
+                ),
+                SizedBox(height: isSmall ? 2.h : 5.h),
+                _legendRow(
+                  iconBox: _legendBox(count: markedOnly, color: Colors.purple),
+                  label: "Marked for Review",
+                  isDarkMode: isDarkMode,
+                  gap: isSmall ? 2 : 6,
+                ),
+                SizedBox(height: isSmall ? 2.h : 5.h),
+                _legendRow(
+                  iconBox: _legendBox(
+                    count: answeredAndMarked,
+                    color: Colors.purple,
+                    badge: true,
+                  ),
+                  label:
+                      "Answered & Marked for Review (will be considered for evaluation)",
+                  isDarkMode: isDarkMode,
+                  gap: isSmall ? 2 : 6,
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ DO NOT create controller in build
-    final controller = Get.find<Testscreencontroller>();
-
     ScreenUtil.init(
       context,
       designSize: const Size(375, 812),
       minTextAdapt: true,
     );
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 3,
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColor.MAHARISHI_GOLD,
-                AppColor.MAHARISHI_AMBER,
-                AppColor.MAHARISHI_BRONZE,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.timerStarted.value) {
+        controller.timerStarted.value = true;
+        controller.startTimer(controller.viewsecond.value);
+      }
+    });
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Obx(() {
+      final fs = controller.fontScale.value * 0.7;
+      final currentQuestions = controller.currentQuestions;
+      final currentIndex = controller.currentIndex.value;
+      final question = currentQuestions.isNotEmpty
+          ? currentQuestions[currentIndex]
+          : <String, dynamic>{
+              'question': '',
+              'questionImg': '',
+              'options': [],
+              'id': '',
+              'questionType': '',
+            };
+      final questionType = (question['questionType'] ?? '').toString();
+      final isNumeric = questionType.toLowerCase().contains('numeric range');
+      final isinteger = questionType.toLowerCase().contains('integer type');
+      final iscomprehnsion = questionType.toLowerCase().contains(
+        'comprehension',
+      );
+      final isscq = questionType.toLowerCase().contains('S.C.Q');
+      final ismatch = questionType.toLowerCase().contains('match');
+
+      return WillPopScope(
+        onWillPop: () async {
+          return false; // deny back button
+        },
+        child: Scaffold(
+          backgroundColor: isDarkMode
+              ? Colors.grey[900]
+              : const Color(0xFFF5F6FA),
+          appBar: AppBar(
+            backgroundColor: isDarkMode
+                ? Colors.grey[850]
+                : const Color(0xFF8B2D28),
+            elevation: 3,
+            centerTitle: true,
+            title: const Text(
+              "Meritova",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ),
-        title: const Text(
-          "Maharishi Learn Assignment",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.0,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 12.w),
-            child: Obx(() {
-              final isLowTime = controller.remainingSeconds.value < 300;
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: isLowTime
-                      ? Colors.red.shade700
-                      : Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 120.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.timer_outlined,
-                      color: Colors.white,
-                      size: 18,
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.remove, color: Colors.white),
+                      onPressed: controller.decreaseFont,
                     ),
-                    SizedBox(width: 6.w),
+                    SizedBox(width: 3.w),
                     Text(
-                      controller.formattedTime,
+                      "${(controller.fontScale.value * 100).round()}%",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 8.sp,
+                      ),
+                    ),
+                    SizedBox(width: 3.w),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: controller.increaseFont,
+                    ),
+                    SizedBox(width: 10.w),
+                    Obx(
+                      () => Text(
+                        controller.formattedTime,
+                        style: TextStyle(
+                          color: controller.remainingSeconds.value < 600
+                              ? const Color.fromARGB(255, 249, 20, 20)
+                              : Colors.white,
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Obx(() {
-          final currentQuestions = controller.currentQuestions;
-
-          if (currentQuestions.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (controller.currentIndex.value >= currentQuestions.length) {
-            controller.currentIndex.value = 0;
-          }
-
-          final question = currentQuestions[controller.currentIndex.value];
-
-          // ✅ NO hard casts
-          final int qid = asInt(question['id']);
-          final String qText = asString(question['question']);
-          final int rating = asInt(question['rating']);
-          final List options = (question['options'] ?? []) as List;
-
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 🔹 Subject Tabs
-                Center(
-                  child: Obx(
-                    () => Wrap(
-                      spacing: 8.w,
-                      runSpacing: 6.h,
-                      alignment: WrapAlignment.center,
-                      children: controller.subjects.map((subject) {
-                        final isSelected =
-                            controller.selectedSubject.value == subject;
-                        return ChoiceChip(
-                          checkmarkColor: Colors.white,
-                          label: Text(
-                            subject,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.grey.shade800,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          selected: isSelected,
-                          selectedColor: AppColor.MAHARISHI_BRONZE,
-                          backgroundColor: Theme.of(context).cardColor,
-                          elevation: 2,
-                          pressElevation: 4,
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppColor.MAHARISHI_BRONZE
-                                : Colors.grey.shade300,
-                          ),
-                          onSelected: (selected) {
-                            if (selected) {
-                              controller.selectedSubject.value = subject;
-                              controller.currentIndex.value = 0;
-                            }
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20.h),
-
-                // 🔹 Question Card
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [ 
-                          Container(
-                            width: 48.w,
-                            height: 48.h,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColor.MAHARISHI_GOLD.withOpacity(0.8),
-                                  AppColor.MAHARISHI_AMBER,
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Exam content (left)
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    // Main scrollable content (question + options)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 8.h,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 2.h),
+                            Center(
+                              child: Column(
+                                children: [
+                                  // Subject chips
+                                  Obx(
+                                    () => Wrap(
+                                      spacing: 5.w,
+                                      runSpacing: 3.h,
+                                      alignment: WrapAlignment.center,
+                                      children: controller.subjects.map((
+                                        subject,
+                                      ) {
+                                        final isSelected =
+                                            controller.selectedSubject.value ==
+                                            subject;
+                                        return ChoiceChip(
+                                          checkmarkColor: Colors.white,
+                                          label: Text(
+                                            subject,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : (isDarkMode
+                                                        ? Colors.grey[300]
+                                                        : Colors.grey.shade800),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 4.sp,
+                                            ),
+                                          ),
+                                          selected: isSelected,
+                                          selectedColor: isDarkMode
+                                              ? Colors.grey[700]
+                                              : const Color(0xFF8B2D28),
+                                          backgroundColor: isDarkMode
+                                              ? Colors.grey[850]
+                                              : Colors.white,
+                                          elevation: 2,
+                                          pressElevation: 4,
+                                          side: BorderSide(
+                                            color: isSelected
+                                                ? (isDarkMode
+                                                      ? Colors.grey[600]!
+                                                      : const Color(0xFF8B2D28))
+                                                : (isDarkMode
+                                                      ? Colors.grey[700]!
+                                                      : Colors.grey.shade300),
+                                          ),
+                                          onSelected: (selected) {
+                                            if (selected) {
+                                              controller
+                                                  .discardUnsavedSelectionForCurrentQuestion();
+                                              controller.selectedSubject.value =
+                                                  subject;
+                                              controller.currentIndex.value = 0;
+                                              controller
+                                                  .resetNumericController();
+                                            }
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  // Question type chips
+                                  Obx(
+                                    () => Wrap(
+                                      spacing: 5.w,
+                                      runSpacing: 3.h,
+                                      alignment: WrapAlignment.center,
+                                      children: controller.questionTypes.map((
+                                        type,
+                                      ) {
+                                        final isSelected =
+                                            controller
+                                                .selectedQuestionType
+                                                .value ==
+                                            type;
+                                        return ChoiceChip(
+                                          checkmarkColor: Colors.white,
+                                          label: Text(
+                                            type.isNotEmpty ? type : 'No Type',
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : (isDarkMode
+                                                        ? Colors.grey[300]
+                                                        : Colors.grey.shade800),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 4.sp,
+                                            ),
+                                          ),
+                                          selected: isSelected,
+                                          selectedColor: isDarkMode
+                                              ? Colors.amber[800]
+                                              : Colors.deepPurple,
+                                          backgroundColor: isDarkMode
+                                              ? Colors.grey[850]
+                                              : Colors.white,
+                                          elevation: 2,
+                                          pressElevation: 4,
+                                          side: BorderSide(
+                                            color: isSelected
+                                                ? (isDarkMode
+                                                      ? Colors.amber[700]!
+                                                      : Colors.deepPurple)
+                                                : (isDarkMode
+                                                      ? Colors.grey[700]!
+                                                      : Colors.grey.shade300),
+                                          ),
+                                          onSelected: (selected) {
+                                            if (selected) {
+                                              controller
+                                                  .discardUnsavedSelectionForCurrentQuestion();
+                                              controller
+                                                      .selectedQuestionType
+                                                      .value =
+                                                  type;
+                                              controller.currentIndex.value = 0;
+                                              controller
+                                                  .resetNumericController();
+                                            }
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
                                 ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
                               ),
-                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
-                              Icons.quiz_outlined,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            SizedBox(height: 2.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "Question ${controller.currentIndex.value + 1}",
+                                  "Q${controller.currentIndex.value + 1} / ${currentQuestions.length}",
                                   style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  "${currentQuestions.length} Total Questions",
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                    fontSize: 6.sp * fs,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.black87,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12.w,
-                              vertical: 6.h,
+                            const SizedBox(height: 3),
+                            Divider(
+                              color: isDarkMode
+                                  ? Colors.grey[700]
+                                  : Colors.grey.shade300,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColor.MAHARISHI_BRONZE.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              controller.selectedSubject.value,
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColor.MAHARISHI_BRONZE,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 12.h),
-
-                      // ⭐ Rating
-                      Row(
-                        children: [
-                          Text(
-                            'Difficulty: ',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          ...List.generate(5, (i) {
-                            return Icon(
-                              i < rating ? Icons.star : Icons.star_border,
-                              color: Colors.amber.shade600,
-                              size: 16,
-                            );
-                          }),
-                        ],
-                      ),
-
-                      SizedBox(height: 16.h),
-                      Divider(color: Theme.of(context).dividerColor, height: 1),
-                      SizedBox(height: 16.h),
-
-                      Text(
-                        qText.isEmpty ? "No question text" : qText,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                          height: 1.6,
-                        ),
-                        textAlign: TextAlign.justify,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20.h),
-
-                // ✅ OPTIONS (single select)
-             // ✅ OPTIONS (single select) - show ONLY real option text
-...List.generate(options.length, (index) {
-  final opt = options[index] as Map;
-  final String key = asString(opt['key']);   // still used internally
-  final String text = asString(opt['text']); // real option text
-
-  final selected = controller.selectedAnswers[qid];
-  final bool isSelected = selected == key;
-
-  return GestureDetector(
-    onTap: () => controller.selectOption(qid, key),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-      margin: EdgeInsets.symmetric(vertical: 6.h),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColor.MAHARISHI_AMBER.withOpacity(0.12)
-            : Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isSelected
-              ? AppColor.MAHARISHI_BRONZE
-              : Theme.of(context).dividerColor,
-          width: 1.2,
-        ),
-        boxShadow: [
-          if (isSelected)
-            const BoxShadow(
-              color: Colors.black12,
-              blurRadius: 3,
-              offset: Offset(0, 2),
-            ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
-            color: isSelected ? AppColor.MAHARISHI_BRONZE : Colors.grey,
-            size: 20,
-          ),
-          SizedBox(width: 10.w),
-
-          // ✅ show ONLY real text (no A/B/C/D)
-          Expanded(
-            child: Text(
-              text.isEmpty ? "-" : text,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}),
-    SizedBox(height: 20.h),
-
-                // 🔹 Action Buttons
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () =>
-                              controller.reportQuestion(context, qText, qid),
-                          icon: Icon(
-                            Icons.report_problem_outlined,
-                            color: Colors.red.shade600,
-                            size: 18,
-                          ),
-                          label: Text(
-                            "Report",
-                            style: TextStyle(
-                              color: Colors.red.shade600,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Obx(() {
-                          final marked = controller.markedForReview.contains(
-                            qid,
-                          );
-                          return OutlinedButton.icon(
-                            icon: Icon(
-                              marked ? Icons.flag : Icons.outlined_flag,
-                              color: marked
-                                  ? Colors.purple.shade600
-                                  : Colors.grey.shade600,
-                              size: 18,
-                            ),
-                            label: Text(
-                              marked ? "Unmark" : "Mark",
-                              style: TextStyle(
-                                color: marked
-                                    ? Colors.purple.shade600
-                                    : Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13.sp,
-                              ),
-                            ),
-                            onPressed: controller.toggleMarkForReview,
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 🔹 Navigation Buttons
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 12.h,
-                    horizontal: 16.w,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Previous Button
-                      if (controller.currentIndex.value > 0)
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              if (controller.currentIndex.value > 0) {
-                                controller.currentIndex.value--;
-                              }
-                            },
-                            icon: const Icon(Icons.arrow_back, size: 18),
-                            label: Text(
-                              "Previous",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade800 : Colors.grey.shade100,
-                              foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade100 : Colors.grey.shade800,
-                              elevation: 0,
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      if (controller.currentIndex.value > 0)
-                        SizedBox(width: 12.w),
-
-                      // Next or Submit Button
-                      Expanded(
-                        child: Obx(() {
-                          final isLastQuestion =
-                              controller.currentIndex.value >=
-                              currentQuestions.length - 1;
-                          final isLastSubject =
-                              controller.subjects.indexOf(
-                                controller.selectedSubject.value,
-                              ) >=
-                              controller.subjects.length - 1;
-
-                          final showSubmit = isLastQuestion && isLastSubject;
-
-                          return ElevatedButton.icon(
-                            onPressed: () async {
-                              // Upload current answer before moving to next
-                               final connectivityResult = await Connectivity().checkConnectivity();
-    final isOnline = connectivityResult != ConnectivityResult.none;
-                              await controller.uploadCurrentQuestionAnswer();
-
-                              if (showSubmit) {
-                                if(isOnline){
- controller.submitTest(context);
-                                }
-                                else{
-                                  Get.snackbar("Error", "Please Check Your Connectivity Before Submit!",colorText: Colors.white,backgroundColor: Colors.red);
-                                }
-                               
-                              } else {
-                                if (controller.currentIndex.value <
-                                    currentQuestions.length - 1) {
-                                  controller.currentIndex.value++;
-                                } else {
-                                  // Move to next subject
-                                  final currentSubjectIndex = controller
-                                      .subjects
-                                      .indexOf(
-                                        controller.selectedSubject.value,
-                                      );
-                                  if (currentSubjectIndex <
-                                      controller.subjects.length - 1) {
-                                    controller.selectedSubject.value =
-                                        controller
-                                            .subjects[currentSubjectIndex + 1];
-                                    controller.currentIndex.value = 0;
-                                  }
-                                }
-                              }
-                            },
-                            icon: Icon(
-                              showSubmit
-                                  ? Icons.check_circle
-                                  : Icons.arrow_forward,
-                              size: 18,
-                            ),
-                            label: Text(
-                              showSubmit ? "Submit Test" : "Next",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: showSubmit
-                                  ? Colors.green.shade600
-                                  : AppColor.MAHARISHI_BRONZE,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 24.h),
-
-                // ✅ PALETTE
-                Container(
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.grid_view_rounded,
-                            color: AppColor.MAHARISHI_BRONZE,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            "Question Palette",
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 12.h),
-                      Divider(color: Theme.of(context).dividerColor, height: 1),
-                      SizedBox(height: 12.h),
-                      Obx(() {
-                        final questions = controller.currentQuestions;
-                        return Wrap(
-                          spacing: 10.w,
-                          runSpacing: 10.h,
-                          alignment: WrapAlignment.center,
-                          children: List.generate(questions.length, (qIndex) {
-                            final q = questions[qIndex];
-                            final id = asInt(q['id']);
-
-                            final answered =
-                                controller.selectedAnswers[id] != null &&
-                                controller.selectedAnswers[id]
-                                    .toString()
-                                    .isNotEmpty;
-
-                            final marked = controller.markedForReview.contains(
-                              id,
-                            );
-                            final isCurrent =
-                              controller.currentIndex.value == qIndex;
-                            final isSkipped =
-                              qIndex < controller.currentIndex.value &&
-                              !answered;
-
-                            Color color;
-                            if (isCurrent) {
-                              color = AppColor.MAHARISHI_GOLD;
-                            } else if (marked) {
-                              color = Colors.purple;
-                            } else if (answered) {
-                              color = Colors.green;
-                            } else if (isSkipped) {
-                              color = Colors.red;
-                            } else {
-                              color = Colors.grey;
-                            }
-
-                            return GestureDetector(
-                              onTap: () {
-                                controller.currentIndex.value = qIndex;
-                                controller.visitedQuestions.add(id);
-                              },
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: color,
-                                child: Text(
-                                  '${qIndex + 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                            Container(
+                              width: double.infinity,
+                              child: Card(
+                                color: isDarkMode
+                                    ? Colors.grey[850]
+                                    : Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(6.w),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(height: 7.h),
+                                      if (iscomprehnsion) ...[
+                                        if (controller.hasValidImage(
+                                          question['questionImg'],
+                                        ))
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 8.h,
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                              child: Image.network(
+                                                controller.imgUrl(
+                                                  question['questionImg']
+                                                      .toString(),
+                                                ),
+                                                width: double.infinity,
+                                                fit: BoxFit
+                                                    .fitWidth, // full width, no distortion
+                                                errorBuilder: (_, __, ___) =>
+                                                    const Icon(
+                                                      Icons.broken_image,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        Text(
+                                          question['question'],
+                                          style: TextStyle(
+                                            fontSize: 7.sp * fs,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.black87,
+                                            height: 1.1,
+                                            fontFamily:
+                                                null, // Use default font
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        ),
+                                      ] else ...[
+                                        Text(
+                                          question['question'],
+                                          style: TextStyle(
+                                            fontSize: 7.sp * fs,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.black87,
+                                            height: 1.1,
+                                            fontFamily:
+                                                null, // Use default font
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        ),
+                                        if (controller.hasValidImage(
+                                          question['questionImg'],
+                                        ))
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 8.h),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                              child: Image.network(
+                                                controller.imgUrl(
+                                                  question['questionImg']
+                                                      .toString(),
+                                                ),
+                                                width: double.infinity,
+                                                fit: BoxFit
+                                                    .fitWidth, // full width, no distortion
+                                                errorBuilder: (_, __, ___) =>
+                                                    const Icon(
+                                                      Icons.broken_image,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20.h),
+                            ),
+                            SizedBox(height: 4.h),
+                            if (isNumeric)
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 8.h,
+                                  horizontal: 4.w,
+                                ),
+                                child: TextField(
+                                  key: ValueKey(
+                                    'numeric_${controller.selectedSubject.value}_${controller.selectedQuestionType.value}_${question['id']}',
+                                  ),
+                                  controller: controller.controllerText,
+                                  keyboardType:
+                                      TextInputType.text, // ✅ full keyboard
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9+\-*/().]'),
+                                    ),
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Enter your answer',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  onChanged: (val) {
+                                    controller.setNumericAnswer(
+                                      question['id'],
+                                      val,
+                                    );
+                                  },
+                                ),
+                              )
+                            else if (isinteger)
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 8.h,
+                                  horizontal: 4.w,
+                                ),
+                                child: Obx(() {
+                                  final selected =
+                                      controller
+                                          .selectedIntegerAnswers[question['id']] ??
+                                      -1;
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: List.generate(10, (index) {
+                                      return Row(
+                                        children: [
+                                          Radio<int>(
+                                            value: index,
+                                            groupValue: selected,
+                                            onChanged: (val) {
+                                              if (val != null) {
+                                                controller.setIntegerAnswer(
+                                                  question['id'],
+                                                  val,
+                                                );
+                                              }
+                                            },
+                                          ),
+                                          Text(
+                                            index.toString(),
+                                            style: TextStyle(fontSize: 7.sp),
+                                          ),
+                                        ],
+                                      );
+                                    }),
+                                  );
+                                }),
+                              ),
+                            // Unified single choice for single correct, comprehension, and match
+                            if (questionType.toLowerCase().contains('s.c.q') ||
+                                iscomprehnsion ||
+                                ismatch)
+                              Column(
+                                children: [
+                                  for (final option
+                                      in question['options'] ?? [])
+                                    Obx(() {
+                                      final qid = question['id'];
+                                      final selectedSet =
+                                          controller.selectedAnswers[qid] ??
+                                          <String>{};
+                                      final isSelected = selectedSet.contains(
+                                        option['key'],
+                                      );
+                                      final rawImg = option['img'];
+                                      final optionImg =
+                                          controller.hasValidImage(rawImg)
+                                          ? controller.buildImgUrl(rawImg)
+                                          : '';
+                                      return ListTile(
+                                        leading: Radio<String>(
+                                          value: option['key'],
+                                          groupValue: selectedSet.isNotEmpty
+                                              ? selectedSet.first
+                                              : null,
+                                          onChanged: (_) => controller
+                                              .selectOption(qid, option['key']),
+                                          activeColor: isDarkMode
+                                              ? Colors.grey[400]
+                                              : const Color(0xFF8B2D28),
+                                        ),
+                                        title: Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6.w,
+                                            vertical: 6.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isDarkMode
+                                                ? Colors.grey[800]
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
+                                          ),
+                                          child: Builder(
+                                            builder: (_) {
+                                              final keyStr =
+                                                  (option['key'] ?? '')
+                                                      .toString()
+                                                      .trim();
+                                              final valueStr =
+                                                  (option['value'] ?? '')
+                                                      .toString()
+                                                      .trim();
+                                              final hasText =
+                                                  valueStr.isNotEmpty &&
+                                                  valueStr.toLowerCase() !=
+                                                      'null';
+                                              final hasImg =
+                                                  optionImg.isNotEmpty;
 
-                SizedBox(height: 20.h),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
+                                              // 🔹 CASE 1: Text exists → Column layout
+                                              if (hasText) {
+                                                return Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: 15.0,
+                                                          ),
+                                                      child: Text(
+                                                        "$keyStr. $valueStr",
+                                                        style: TextStyle(
+                                                          color: isDarkMode
+                                                              ? Colors.grey[300]
+                                                              : Colors.black87,
+                                                          fontSize: 6.sp * fs,
+                                                          fontWeight: isSelected
+                                                              ? FontWeight.bold
+                                                              : FontWeight.w500,
+                                                          height: 1.2,
+                                                        ),
+                                                        softWrap: true,
+                                                      ),
+                                                    ),
+                                                    if (hasImg) ...[
+                                                      SizedBox(height: 8.h),
+                                                      ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        child: Image.network(
+                                                          optionImg,
+                                                          width:
+                                                              double.infinity,
+                                                          fit: BoxFit.fitWidth,
+                                                          errorBuilder:
+                                                              (_, __, ___) =>
+                                                                  const SizedBox.shrink(),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                );
+                                              }
+
+                                              // 🔹 CASE 2: No text → key + image in Row
+                                              return Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "$keyStr.",
+                                                    style: TextStyle(
+                                                      fontSize: 7.sp * fs,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDarkMode
+                                                          ? Colors.grey[300]
+                                                          : Colors.black87,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8.w),
+                                                  if (hasImg)
+                                                    Expanded(
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        child: Image.network(
+                                                          optionImg,
+                                                          fit: BoxFit
+                                                              .contain, // prevents overflow
+                                                          errorBuilder:
+                                                              (_, __, ___) =>
+                                                                  const SizedBox.shrink(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        onTap: () => controller.selectOption(
+                                          qid,
+                                          option['key'],
+                                        ),
+                                      );
+                                    }),
+                                ],
+                              )
+                            else
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: question['options'] != null
+                                    ? question['options'].length
+                                    : 0,
+                                itemBuilder: (context, index) {
+                                  final option = question['options'][index];
+                                  return Obx(() {
+                                    final qid = question['id'];
+                                    final selectedSet =
+                                        controller.selectedAnswers[qid] ??
+                                        <String>{};
+                                    final isSelected = selectedSet.contains(
+                                      option['key'],
+                                    );
+                                    final rawImg = option['img'];
+                                    final optionImg =
+                                        controller.hasValidImage(rawImg)
+                                        ? controller.buildImgUrl(rawImg)
+                                        : '';
+                                    return ListTile(
+                                      leading: Checkbox(
+                                        value: isSelected,
+                                        onChanged: (_) => controller
+                                            .selectOption(qid, option['key']),
+                                        activeColor: isDarkMode
+                                            ? Colors.green[400]
+                                            : Colors.green,
+                                      ),
+                                      title: Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 6.w,
+                                          vertical: 6.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isDarkMode
+                                              ? Colors.grey[800]
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                        ),
+                                        child: Builder(
+                                          builder: (_) {
+                                            final keyStr = (option['key'] ?? '')
+                                                .toString()
+                                                .trim();
+                                            final valueStr =
+                                                (option['value'] ?? '')
+                                                    .toString()
+                                                    .trim();
+                                            final hasText =
+                                                valueStr.isNotEmpty &&
+                                                valueStr.toLowerCase() !=
+                                                    'null';
+                                            final hasImg = optionImg.isNotEmpty;
+
+                                            // 🔹 CASE 1: Text exists → Column layout
+                                            if (hasText) {
+                                              return Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 15.0,
+                                                        ),
+                                                    child: Text(
+                                                      "$keyStr. $valueStr",
+                                                      style: TextStyle(
+                                                        color: isDarkMode
+                                                            ? Colors.grey[300]
+                                                            : Colors.black87,
+                                                        fontSize: 7.sp * fs,
+                                                        fontWeight: isSelected
+                                                            ? FontWeight.bold
+                                                            : FontWeight.w500,
+                                                        height: 1.2,
+                                                      ),
+                                                      softWrap: true,
+                                                    ),
+                                                  ),
+                                                  if (hasImg) ...[
+                                                    SizedBox(height: 8.h),
+                                                    ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8.r,
+                                                          ),
+                                                      child: Image.network(
+                                                        optionImg,
+                                                        width: double.infinity,
+                                                        fit: BoxFit.fitWidth,
+                                                        errorBuilder:
+                                                            (_, __, ___) =>
+                                                                const SizedBox.shrink(),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              );
+                                            }
+
+                                            // 🔹 CASE 2: No text → key + image in Row
+                                            return Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "$keyStr.",
+                                                  style: TextStyle(
+                                                    fontSize: 7.sp * fs,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isDarkMode
+                                                        ? Colors.grey[300]
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8.w),
+                                                if (hasImg)
+                                                  Expanded(
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8.r,
+                                                          ),
+                                                      child: Image.network(
+                                                        optionImg,
+                                                        fit: BoxFit
+                                                            .contain, // prevents overflow
+                                                        errorBuilder:
+                                                            (_, __, ___) =>
+                                                                const SizedBox.shrink(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      onTap: () => controller.selectOption(
+                                        qid,
+                                        option['key'],
+                                      ),
+                                    );
+                                  });
+                                },
+                              ),
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Fixed action buttons at the bottom
+                    Container(
+                      width: 260.w,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 10.h,
+                        horizontal: 8.w,
+                      ),
+                      color: isDarkMode ? Colors.grey[900] : Colors.white,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton.icon(
+                                icon: const Icon(
+                                  Icons.arrow_back_ios_new,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                label: Text(
+                                  "Previous",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 4.sp,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isDarkMode
+                                      ? Colors.grey[800]
+                                      : Colors.grey.shade600,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(7.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 10.h,
+                                  ),
+                                ),
+                                onPressed: controller.previousQuestion,
+                              ),
+                              ElevatedButton.icon(
+                                icon: const Icon(
+                                  Icons.arrow_forward_ios,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                label: Text(
+                                  "Save & Next",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 4.sp,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green.shade500,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(7.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w,
+                                    vertical: 10.h,
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    controller.nextQuestion(context),
+                              ),
+                              // --- Clear Button ---
+                              ElevatedButton.icon(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                label: Text(
+                                  "Clear",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 4.sp,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red.shade400,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(7.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 10.h,
+                                  ),
+                                ),
+                                onPressed: () => controller
+                                    .clearQuestionWithWarning(question['id']),
+                              ),
+                              Obx(() {
+                                final marked = controller.markedForReview
+                                    .contains(question['id']);
+                                return ElevatedButton.icon(
+                                  icon: Icon(
+                                    marked ? Icons.flag : Icons.outlined_flag,
+                                    size: 15,
+                                    color: marked
+                                        ? Colors.white
+                                        : (isDarkMode
+                                              ? Colors.grey[300]
+                                              : Colors.grey.shade800),
+                                  ),
+                                  label: Text(
+                                    marked ? "Unmark" : "Save & Mark Review",
+                                    style: TextStyle(
+                                      fontSize: 4.sp,
+                                      color: marked
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: marked
+                                        ? Colors.purple
+                                        : Colors.yellow,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(7.r),
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 10.h,
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  onPressed:
+                                      controller.markForReviewWithWarning,
+                                );
+                              }),
+                              Obx(() {
+                                final isTimeOver =
+                                    controller.remainingSeconds.value <= 0;
+                                return ElevatedButton(
+                                  onPressed: () => controller
+                                      .showSubmitWarningLikeJeeMain(context),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                      vertical: 10.h,
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    elevation: 4,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_outline,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        isTimeOver ? "Time Up!" : "Submit Test",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 4.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Question palette (right, grid style)
+              Container(
+                width: 100.w,
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStatusLegend(
+                      controller: controller,
+                      isDarkMode: isDarkMode,
+                      fs: fs,
+                    ),
+                    SizedBox(height: 16.h),
+                    const Divider(thickness: 1.2),
+                    Text(
+                      "Question Palette",
+                      style: TextStyle(
+                        fontSize: 8.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode
+                            ? Colors.grey[300]
+                            : const Color(0xFF8B2D28),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Obx(() {
+                      final questions = controller.currentQuestions;
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 5,
+                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 4,
+                          childAspectRatio: 2.1,
+                        ),
+                        itemCount: questions.length,
+                        itemBuilder: (context, i) {
+                          final q = questions[i];
+                          return _buildPaletteBox(
+                            i: i,
+                            q: q,
+                            controller: controller,
+                            fs: fs,
+                            isDarkMode: isDarkMode,
+                          );
+                        },
+                      );
+                    }),
+                    SizedBox(height: 18.h),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }

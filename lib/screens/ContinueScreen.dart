@@ -19,11 +19,19 @@ class ContinueScreen extends StatefulWidget {
 }
 
 class _ContinueScreenState extends State<ContinueScreen> {
-  var allAssignments = <String, Map<String, AssignmentChapters>>{}; // Store all assignments by exam type
+  var allAssignments =
+      <
+        String,
+        Map<String, AssignmentChapters>
+      >{}; // Store all assignments by exam type
   var selectedExam = 'JEE Advanced'.obs; // Default selected exam
   var schoolid = ''.obs;
-  var studentid = ''.obs; 
+  var studentid = ''.obs;
   var subjectId = ''.obs;
+
+  var subjectname = ''.obs;
+
+  var classs = ''.obs;
 
   // Define color constants
   final Color primary = ColorPainter.primaryColor;
@@ -39,48 +47,64 @@ class _ContinueScreenState extends State<ContinueScreen> {
 
   Future<void> _initialize() async {
     subjectId.value = Get.arguments['subjectId'] ?? '';
+    subjectname.value = Get.arguments['subjectName'] ?? '';
     schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
     studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
+    classs.value = await PrefManager().readValue(key: PrefConst.className);
     // Fetch assignments on screen load
     await assignment();
   }
 
   Future<void> assignment() async {
     try {
-      final response = await http.get(Uri.parse("${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}"));
-      print("Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}");
+      final response = await http.get(
+        Uri.parse(
+          "${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}",
+        ),
+      );
+      print(
+        "Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}",
+      );
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
         print("API Response: $jsonResponse");
-        
-        if (jsonResponse['data'] != null && jsonResponse['data']['AssignmentExam'] != null) {
-          final assignmentExam = jsonResponse['data']['AssignmentExam'] as Map<String, dynamic>;
-          
+
+        if (jsonResponse['data'] != null &&
+            jsonResponse['data']['AssignmentExam'] != null) {
+          final assignmentExam =
+              jsonResponse['data']['AssignmentExam'] as Map<String, dynamic>;
+
           setState(() {
             allAssignments.clear();
-            
+
             // Loop through each exam type (JEE Advanced, Board, etc.)
             assignmentExam.forEach((examType, examData) {
-              if (examData is Map<String, dynamic> && examData['AssignmentChapters'] != null) {
-                final chapters = examData['AssignmentChapters'] as Map<String, dynamic>;
-                
+              if (examData is Map<String, dynamic> &&
+                  examData['AssignmentChapters'] != null) {
+                final chapters =
+                    examData['AssignmentChapters'] as Map<String, dynamic>;
+
                 // Create a map to store chapters for this exam type
                 Map<String, AssignmentChapters> examChapters = {};
-                
+
                 // Loop through each chapter
                 chapters.forEach((chapterName, chapterData) {
                   if (chapterData is List) {
                     // Create AssignmentChapters object
                     final assignmentChapter = AssignmentChapters(
-                      assignments: chapterData.map((item) => 
-                        Assignment.fromJson(item as Map<String, dynamic>)
-                      ).toList(),
+                      assignments: chapterData
+                          .map(
+                            (item) => Assignment.fromJson(
+                              item as Map<String, dynamic>,
+                            ),
+                          )
+                          .toList(),
                     );
-                    
+
                     examChapters[chapterName] = assignmentChapter;
                   }
                 });
-                
+
                 // Store chapters under exam type
                 allAssignments[examType] = examChapters;
               }
@@ -104,11 +128,11 @@ class _ContinueScreenState extends State<ContinueScreen> {
   Widget buildExamSelector() {
     // Get available exam types from API response
     final exams = allAssignments.keys.toList();
-    
+
     if (exams.isEmpty) {
       return SizedBox.shrink();
     }
-    
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -121,18 +145,30 @@ class _ContinueScreenState extends State<ContinueScreen> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 margin: EdgeInsets.symmetric(horizontal: 6.w),
-                padding: EdgeInsets.symmetric(horizontal:6.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
                 decoration: BoxDecoration(
                   color: selected ? primary : Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: selected ? primary : Colors.grey.shade300),
+                  border: Border.all(
+                    color: selected ? primary : Colors.grey.shade300,
+                  ),
                   boxShadow: selected
-                      ? [BoxShadow(color: primary.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 3))] 
+                      ? [
+                          BoxShadow(
+                            color: primary.withOpacity(0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
                       : null,
                 ),
                 child: Text(
                   e,
-                  style: TextStyle(color: selected ? Colors.white : Colors.black87, fontSize: 10.sp, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.black87,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             );
@@ -157,7 +193,12 @@ class _ContinueScreenState extends State<ContinueScreen> {
   }
 
   // Helper method to build info chips
-  Widget _buildInfoChip(IconData icon, String text, Color bgColor, Color textColor) {
+  Widget _buildInfoChip(
+    IconData icon,
+    String text,
+    Color bgColor,
+    Color textColor,
+  ) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
@@ -182,6 +223,74 @@ class _ContinueScreenState extends State<ContinueScreen> {
     );
   }
 
+  Color _getCgpaColor(double cgpa) {
+    if (cgpa >= 9.0) {
+      return const Color(0xFF2E7D32);
+    }
+    if (cgpa >= 7.0) {
+      return const Color(0xFF1565C0);
+    }
+    if (cgpa >= 5.0) {
+      return const Color(0xFFEF6C00);
+    }
+    return const Color(0xFFC62828);
+  }
+
+  Widget _buildCgpaCircle(double cgpa) {
+    final color = _getCgpaColor(cgpa);
+    return GestureDetector(
+      onTap: (){
+          // SUCCESS → GO TO TEST SCREEN
+    Get.offAllNamed(
+      AdminRoutes.testscreen,
+      arguments: {
+        'testId': "85228368",
+        'passcode': "8689512515",
+      },
+    );
+      },
+      child: Container(
+        width: 15.w,
+        height: 35.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.16),
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 1.2),
+        ),
+        child: Text(
+          cgpa.toStringAsFixed(1),
+          style: TextStyle(
+            fontSize: 6.2.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChapterRow(String title, List<double> cgpas) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        SizedBox(
+          width: 60.w,
+          child: Text(
+            title,
+            style: TextStyle(fontSize: 4.sp, color: Colors.black87),
+          ),
+        ),
+        ...cgpas.map((cgpa) {
+          return Padding(
+            padding: EdgeInsets.only(right: 6.w),
+            child: _buildCgpaCircle(cgpa),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -191,393 +300,157 @@ class _ContinueScreenState extends State<ContinueScreen> {
       drawer: AdminDrawer2(),
       backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
       appBar: AppBar(
-  elevation: 0,
-  backgroundColor: Colors.transparent,
-  flexibleSpace: Container(
-    height: 120, // Set the height you prefer for the top container
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [primary, accent],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        toolbarHeight: 170, // increase appbar height from here
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primary, accent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Assignments',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              subjectname.value.isNotEmpty
+                  ? "${subjectname.value} - ${classs.value.replaceAll('"', '').trim()}"
+                  : 'Continue your tests',
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w400,
+                color: Colors.white70,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(width: 20.sp),
+                Text(
+                  'Board',
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white70,
+                  ),
+                ),
+                Text(
+                  'Jee Main',
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white70,
+                  ),
+                ),
+                Text(
+                  'Jee Advanced',
+                  style: TextStyle(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        centerTitle: true,
       ),
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-      ),
-    ),
-  ),
-  leading: IconButton(
-    icon: const Icon(Icons.menu, color: Colors.white),
-    onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-  ),
-  title: Center(
-    child: Text(
-      'Assignments\t\t\t\t\t\t\t\t',
-      style: TextStyle(
-        fontSize: 10.sp,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-      ),
-    ),
-  ),
-),  body: SafeArea(
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            // Exam Selector Section
             Container(
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
-              color: Colors.transparent,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Text(
-                      'Select Exam Type',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : Colors.grey.shade700,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Center(child: buildExamSelector()),
-                ],
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              child: Text(
+                'Select the chapter you want to continue',
+                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
               ),
             ),
-            SizedBox(height: 8.h),
-            Expanded(
-                child: Obx(() {
-                  final filteredAssignments = getFilteredAssignments();
-                  
-                  if (allAssignments.isEmpty) {
-                    return Center(
-                      child: LoadingAnimationWidget.staggeredDotsWave(
-                        color: primary,
-                        size: 50,
-                      ),
-                    );
-                  }
-                  
-                  if (filteredAssignments.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox_outlined, size: 80, color: Colors.grey.shade400),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'No assignments found for ${selectedExam.value}',
-                            style: TextStyle(fontSize: 16.sp, color: isDarkMode ? Colors.white : Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  
-                  return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: filteredAssignments.keys.length,
-                    itemBuilder: (context, index) {
-                      String chapterName = filteredAssignments.keys.elementAt(index);
-                      AssignmentChapters chapters = filteredAssignments[chapterName]!;
-
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 16.h),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.grey[800] : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Chapter Header
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    primary.withOpacity(0.08),
-                                    accent.withOpacity(0.08),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(12.w),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [primary, accent],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(Icons.library_books, color: Colors.white, size: 16),
-                                  ),
-                                  SizedBox(width: 14.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          chapterName,
-                                          style: TextStyle(
-                                            fontSize: 11.sp,
-                                            fontWeight: FontWeight.w700,
-                                            color: isDarkMode ? Colors.white : Colors.black87,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4.h),
-                                        Text(
-                                          '${chapters.assignments?.length ?? 0} Assignments',
-                                          style: TextStyle(
-                                            fontSize: 9.sp,
-                                            color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Assignments List
-                            Padding(
-                              padding: EdgeInsets.all(12.w),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                itemCount: chapters.assignments?.length ?? 0,
-                                itemBuilder: (context, idx) {
-                                  final assignment = chapters.assignments![idx];
-                                  final isAttempted = assignment.aStatus?.toLowerCase() == 'attempted';
-                                  final statusColor = _getStatusColor(assignment.aStatus);
-                                  
-                                  return Container(
-                                    margin: EdgeInsets.only(bottom: 12.h),
-                                    decoration: BoxDecoration(
-                                      color: isDarkMode ? Colors.grey[850] : Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey.shade200),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 8,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(12.w),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 30.w,
-                                                height: 60.h,
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    colors: [primary.withOpacity(0.8), accent],
-                                                    begin: Alignment.topLeft,
-                                                    end: Alignment.bottomRight,
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: Icon(
-                                                  isAttempted ? Icons.check_circle : Icons.play_arrow_rounded,
-                                                  color: Colors.white,
-                                                  size: 30,
-                                                ),
-                                              ),
-                                              SizedBox(width: 12.w),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      assignment.testName ?? '',
-                                                      style: TextStyle(
-                                                        fontSize: 9.sp,
-                                                        fontWeight: FontWeight.w700,
-                                                        color: isDarkMode ? Colors.white : Colors.black87,
-                                                      ),
-                                                    ),
-                                                    SizedBox(height: 4.h),
-                                                    Text(
-                                                      assignment.assignmentTopic ?? 'N/A',
-                                                      style: TextStyle(
-                                                        fontSize: 7.sp,
-                                                        color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 12.h),
-                                          Row(
-                                            children: [
-                                              _buildInfoChip(
-                                                Icons.timer_outlined,
-                                                '${assignment.totalMinutes} min',
-                                                Colors.blue.shade50,
-                                                Colors.blue.shade700,
-                                              ),
-                                              SizedBox(width: 8.w),
-                                              _buildInfoChip(
-                                                Icons.star_outline,
-                                                '${assignment.testTotalMarks} marks',
-                                                Colors.orange.shade50,
-                                                Colors.orange.shade700,
-                                              ),
-                                              SizedBox(width: 8.w),
-                                              Container(
-                                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                                                decoration: BoxDecoration(
-                                                  color: statusColor.withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  assignment.aStatus ?? 'Not Started',
-                                                  style: TextStyle(
-                                                    fontSize: 4.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: statusColor,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 12.h),
-                                      Row(
-  children: [
-    // First ElevatedButton (Start or Continue Test)
-    Expanded(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            print('${isAttempted ? 'Continue' : 'Start'} Test: ${assignment.testName}');
-            Get.offAllNamed(AdminRoutes.testscreen, arguments: {
-              'testId': assignment.testId,
-              'passcode': "1",
-              'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
-              'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
-              'timelimit': assignment.totalMinutes?.toString() ?? '',
-              'questiontestid': assignment.QuestionTestId.toString() ?? '',
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isAttempted ? accent : primary,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+            _buildChapterRow('Indicators And Solublity Product', [
+              9.8,
+              8.2,
+              7.4,
+              5.6,
+              4.2,
+              3.1,
+            ]),
+            _buildChapterRow('Ionic Equilibrium', [
+              8.8,
+              7.6,
+              6.9,
+              5.1,
+              4.8,
+              2.9,
+            ]),
+            _buildChapterRow('Organic Chemistry', [
+              9.2,
+              8.9,
+              7.2,
+              6.4,
+              5.5,
+              4.0,
+            ]),
+            _buildChapterRow('Thermodynamics', [9.5, 8.0, 7.1, 6.2, 5.2, 3.8]),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              child: Text(
+                'Select the chapter you want to continue2',
+                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+              ),
             ),
-            elevation: 2,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isAttempted ? Icons.refresh : Icons.play_arrow_rounded,
-                size: 20,
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                isAttempted ? 'Try Again' : 'Start Test',
-                style: TextStyle(
-                  fontSize: 4.sp, // Increased font size for better readability
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+            _buildChapterRow('Chemical Kinetics', [
+              8.7,
+              7.9,
+              6.0,
+              5.4,
+              4.6,
+              3.3,
+            ]),
+            _buildChapterRow('Electrochemistry', [
+              9.0,
+              8.3,
+              7.0,
+              6.1,
+              5.0,
+              4.4,
+            ]),
+            _buildChapterRow('Surface Chemistry', [
+              7.8,
+              7.0,
+              6.2,
+              5.5,
+              4.9,
+              3.6,
+            ]),
+          ],
         ),
       ),
-    ),
-    SizedBox(width: 12.w), // Add space between buttons
-    // Second ElevatedButton (View Result)
-    Expanded(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            print('view result Test: ${assignment.testName}');
-            Get.toNamed(AdminRoutes.resultview, arguments: {
-              'testId': assignment.testId,
-              'assignmenttopicid': assignment.assigtTopicId?.toString() ?? '',
-              'assignmentchapterid': assignment.assigtChapterId?.toString() ?? '',
-              'questiontestid': assignment.QuestionTestId.toString() ?? '',
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isAttempted ? accent : primary,
-            foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            elevation: 2,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.grade,
-                size: 20,
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                'View Result',
-                style: TextStyle(
-                  fontSize: 4.sp, // Increased font size for better readability
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  ],
-)   ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
-      );
+    );
   }
 }
 

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:path/path.dart';
 import '../controllers/dashboard_controller.dart';
 import '../infrastructure/routes/admin_routes.dart';
 
@@ -16,7 +14,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final HomeController controller = Get.put(HomeController());
-  String? selectedYear = '2025'; // Default selected year
 
   @override
   void initState() {
@@ -36,21 +33,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+    final isWideLayout = size.width >= 900;
+    final s = (size.width / 1200).clamp(0.85, 1.2);
 
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F1115)
+          : const Color(0xFFF2F5FA),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(180.h),
+        preferredSize: Size.fromHeight(128 * s),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF0D47A1), // Assignment primary color
-                  Color(0xFF4CA1AF),
-                ],
+                colors: [const Color(0xFF0D47A1), const Color(0xFF2B6CB0)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -59,36 +58,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 bottomRight: Radius.circular(24),
               ),
             ),
-            padding: EdgeInsets.only(top: 30.h, left: 20.w, right: 20.w, bottom: 20.h),
+            padding: EdgeInsets.only(
+              top: 22 * s,
+              left: 18 * s,
+              right: 18 * s,
+              bottom: 12 * s,
+            ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Row(
                   children: [
                     Container(
-                      width: 30.w,
-                      height: 60.h,
+                      width: 48 * s,
+                      height: 48 * s,
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         Icons.school,
                         color: Colors.white,
-                        size: 40,
+                        size: 24 * s,
                       ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 12 * s),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Obx(
                             () => Text(
-                              controller.studentname.value.replaceAll('"', '').trim(),
+                              controller.studentname.value
+                                  .replaceAll('"', '')
+                                  .trim(),
                               style: TextStyle(
-                                fontSize: 10.sp,
+                                fontSize: 18 * s,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -96,12 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 2 * s),
                           Obx(
                             () => Text(
                               '${controller.className.value.replaceAll('"', '').trim()} • ${controller.session.value.replaceAll('"', '').replaceAll('-', '-').trim()}',
                               style: TextStyle(
-                                fontSize: 9.sp,
+                                fontSize: 12 * s,
                                 color: Colors.white.withOpacity(0.9),
                                 fontWeight: FontWeight.w500,
                               ),
@@ -114,11 +121,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 10 * s),
                 Text(
-                  'Select Your Subject',
+                  'Select your subject',
                   style: TextStyle(
-                    fontSize: 7.sp,
+                    fontSize: 12 * s,
                     color: Colors.white.withOpacity(0.85),
                     fontWeight: FontWeight.w500,
                   ),
@@ -128,17 +135,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        child: Obx(
-          () => controller.subjects.isEmpty
-              ? Center(
+      body: Stack(
+        children: [
+          Positioned(
+            top: -110,
+            right: -80,
+            child: _circle(const Color(0xFF0D47A1).withOpacity(0.12), 260),
+          ),
+          Positioned(
+            bottom: -70,
+            left: -70,
+            child: _circle(const Color(0xFF4CA1AF).withOpacity(0.10), 220),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16 * s, vertical: 16 * s),
+            child: Obx(() {
+              if (controller.subjects.isEmpty) {
+                return Center(
                   child: CircularProgressIndicator(
                     color: ColorPainter.primaryColor,
                   ),
-                )
-              : ListView.builder(
-                  physics: BouncingScrollPhysics(),
+                );
+              }
+
+              if (isWideLayout) {
+                return GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 14 * s,
+                    mainAxisSpacing: 14 * s,
+                    childAspectRatio: 3.8,
+                  ),
                   itemCount: controller.subjects.length,
                   itemBuilder: (context, index) {
                     final subject = controller.subjects[index];
@@ -149,17 +177,52 @@ class _HomeScreenState extends State<HomeScreen> {
                           AdminRoutes.CONTINUE_SCREEN,
                           arguments: {
                             'subjectId': subject.subjectId.toString(),
+                            'subjectName': subject.subjectName.toString(),
                           },
                         );
                       },
                       context,
                       index,
-                      isDarkMode, // Pass dark mode info
+                      isDarkMode,
                     );
                   },
-                ),
-        ),
+                );
+              }
+
+              return ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                itemCount: controller.subjects.length,
+                itemBuilder: (context, index) {
+                  final subject = controller.subjects[index];
+                  return _buildSubjectCard(
+                    subject.subjectName ?? 'No Name',
+                    () {
+                      Get.offAllNamed(
+                        AdminRoutes.CONTINUE_SCREEN,
+                        arguments: {
+                          'subjectId': subject.subjectId.toString(),
+                          'subjectName': subject.subjectName.toString(),
+                        },
+                      );
+                    },
+                    context,
+                    index,
+                    isDarkMode,
+                  );
+                },
+              );
+            }),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _circle(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 
@@ -168,44 +231,58 @@ class _HomeScreenState extends State<HomeScreen> {
     VoidCallback onPressed,
     BuildContext context,
     int index,
-    bool isDarkMode, // Get the dark mode status
+    bool isDarkMode,
   ) {
-    // Icon selection based on subject
+    final s = (MediaQuery.of(context).size.width / 1200).clamp(0.85, 1.2);
+
     IconData getSubjectIcon(String subjectName) {
       final name = subjectName.toLowerCase();
-      if (name.contains('math')) return Icons.calculate;
-      if (name.contains('physics')) return Icons.science;
-      if (name.contains('chemistry')) return Icons.biotech;
-      if (name.contains('biology')) return Icons.local_florist;
-      if (name.contains('english')) return Icons.menu_book;
-      return Icons.school;
+      if (name.contains('math')) return Icons.calculate_rounded;
+      if (name.contains('physics')) return Icons.science_rounded;
+      if (name.contains('chemistry')) return Icons.biotech_rounded;
+      if (name.contains('biology')) return Icons.eco_rounded;
+      if (name.contains('english')) return Icons.menu_book_rounded;
+      return Icons.school_rounded;
     }
 
-    // Color selection based on index
     List<Color> getGradientColors(int idx) {
       final colorSets = [
-        [Color(0xFF0D47A1), Color(0xFF1976D2)],
-        [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
-        [Color(0xFFD84315), Color(0xFFFF6F00)],
-        [Color(0xFF2E7D32), Color(0xFF43A047)],
-        [Color(0xFFC62828), Color(0xFFE53935)],
+        [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
+        [const Color(0xFF6A1B9A), const Color(0xFF8E24AA)],
+        [const Color(0xFFD84315), const Color(0xFFFF6F00)],
+        [const Color(0xFF2E7D32), const Color(0xFF43A047)],
+        [const Color(0xFFC62828), const Color(0xFFE53935)],
       ];
       return colorSets[idx % colorSets.length];
     }
 
     final gradientColors = getGradientColors(index);
+    final initials = subject
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .take(2)
+        .map((word) => word.characters.first.toUpperCase())
+        .join();
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      margin: EdgeInsets.only(bottom: 12 * s),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        color: isDarkMode
+            ? const Color(0xFF1A1D23)
+            : Colors.white.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(isDarkMode ? 0.28 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -214,79 +291,102 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           onTap: () {
             _showLoadingDialog(context);
-            Future.delayed(Duration(seconds: 2), () {
+            Future.delayed(const Duration(milliseconds: 900), () {
+              if (!mounted) return;
               Navigator.of(context).pop();
               onPressed();
             });
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: EdgeInsets.all(4.w),
+            padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 12 * s),
             child: Row(
               children: [
-                // Gradient Icon Container
                 Container(
-                  width: 20.w,
-                  height: 60.h,
+                  width: 52 * s,
+                  height: 52 * s,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: gradientColors,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: gradientColors[0].withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
+                        color: gradientColors.first.withOpacity(0.33),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
                   child: Icon(
                     getSubjectIcon(subject),
                     color: Colors.white,
-                    size: 32,
+                    size: 24 * s,
                   ),
                 ),
-                SizedBox(width: 16.w),
-                // Subject Name
+                SizedBox(width: 12 * s),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         subject,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 15 * s,
                           fontWeight: FontWeight.w700,
                           color: isDarkMode ? Colors.white : Colors.black87,
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 4 * s),
                       Text(
-                        'View Assignments',
+                        'Open assignments and continue learning',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9.sp,
-                          color: isDarkMode ? Colors.white70 : Colors.grey.shade600,
+                          fontSize: 11 * s,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : Colors.grey.shade700,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Arrow Icon
-                Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: gradientColors[0].withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios,
-                    color: gradientColors[0],
-                    size: 18,
-                  ),
+                SizedBox(width: 8 * s),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10 * s,
+                        vertical: 6 * s,
+                      ),
+                      decoration: BoxDecoration(
+                        color: gradientColors.first.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Text(
+                        initials.isEmpty ? 'SB' : initials,
+                        style: TextStyle(
+                          color: gradientColors.first,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10 * s,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8 * s),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: gradientColors.first,
+                      size: 20 * s,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -297,6 +397,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showLoadingDialog(BuildContext context) {
+    final s = (MediaQuery.of(context).size.width / 1200).clamp(0.85, 1.2);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -306,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: Container(
-            padding: EdgeInsets.all(30.w),
+            padding: EdgeInsets.all(24 * s),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -316,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24.r),
+              borderRadius: BorderRadius.circular(24 * s),
               boxShadow: [
                 BoxShadow(
                   color: ColorPainter.primaryColor.withOpacity(0.2),
@@ -334,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.all(18 * s),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -355,25 +457,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: LoadingAnimationWidget.inkDrop(
                     color: Colors.white,
-                    size: 30.w,
+                    size: 28 * s,
                   ),
                 ),
-                SizedBox(height: 25.h),
+                SizedBox(height: 20 * s),
                 Text(
                   'Please wait...',
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 16 * s,
                     fontWeight: FontWeight.w700,
                     color: ColorPainter.primaryColor,
                     letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 8 * s),
                 Text(
                   'Loading your content',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 12 * s,
                     fontWeight: FontWeight.w400,
                     color: Colors.black54,
                   ),
