@@ -8,36 +8,34 @@ import 'package:gold_app/localstorage.dart';
 import 'package:gold_app/prefconst.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 import '../infrastructure/app_drawer/admin_drawer2.dart';
 import '../infrastructure/routes/admin_routes.dart';
 
 class ContinueScreen extends StatefulWidget {
-  ContinueScreen({super.key});
+  const ContinueScreen({super.key});
 
   @override
   State<ContinueScreen> createState() => _ContinueScreenState();
 }
 
 class _ContinueScreenState extends State<ContinueScreen> {
-  var allAssignments =
-      <
-        String,
-        Map<String, AssignmentChapters>
-      >{}; // Store all assignments by exam type
-  var selectedExam = 'JEE Advanced'.obs; // Default selected exam
-  var schoolid = ''.obs;
-  var studentid = ''.obs;
-  var subjectId = ''.obs;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  static const List<String> _examOrder = ['Board', 'JEE Main', 'JEE Advanced'];
 
-  var subjectname = ''.obs;
+  /// examType -> chapterName -> AssignmentChapters
+  final Map<String, Map<String, AssignmentChapters>> allAssignments = {};
 
-  var classs = ''.obs;
+  final RxString schoolid = ''.obs;
+  final RxString studentid = ''.obs;
+  final RxString subjectId = ''.obs;
+  final RxString subjectname = ''.obs;
+  final RxString classs = ''.obs;
 
-  // Define color constants
+  bool isLoading = true;
+
   final Color primary = ColorPainter.primaryColor;
   final Color accent = ColorPainter.accentColor;
-  final Color bronze = const Color(0xFFCD7F32);
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -46,247 +44,574 @@ class _ContinueScreenState extends State<ContinueScreen> {
   }
 
   Future<void> _initialize() async {
-    subjectId.value = Get.arguments['subjectId'] ?? '';
-    subjectname.value = Get.arguments['subjectName'] ?? '';
+    subjectId.value = Get.arguments?['subjectId'] ?? '';
+    subjectname.value = Get.arguments?['subjectName'] ?? '';
     schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
     studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
     classs.value = await PrefManager().readValue(key: PrefConst.className);
-    // Fetch assignments on screen load
     await assignment();
   }
 
   Future<void> assignment() async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          "${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}",
-        ),
-      );
-      print(
-        "Request URL: ${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}",
-      );
+      setState(() => isLoading = true);
+
+      final url =
+          "${Adminurl.assignment}/${schoolid.value}/${studentid.value}/${subjectId.value}";
+      final response = await http.get(Uri.parse(url));
+
+      debugPrint("Request URL: $url");
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        print("API Response: $jsonResponse");
+        debugPrint("API Response: $jsonResponse");
 
         if (jsonResponse['data'] != null &&
             jsonResponse['data']['AssignmentExam'] != null) {
           final assignmentExam =
               jsonResponse['data']['AssignmentExam'] as Map<String, dynamic>;
 
-          setState(() {
-            allAssignments.clear();
+          allAssignments.clear();
 
-            // Loop through each exam type (JEE Advanced, Board, etc.)
-            assignmentExam.forEach((examType, examData) {
-              if (examData is Map<String, dynamic> &&
-                  examData['AssignmentChapters'] != null) {
-                final chapters =
-                    examData['AssignmentChapters'] as Map<String, dynamic>;
+          assignmentExam.forEach((examType, examData) {
+            if (examData is Map<String, dynamic> &&
+                examData['AssignmentChapters'] != null) {
+              final chapters =
+                  examData['AssignmentChapters'] as Map<String, dynamic>;
 
-                // Create a map to store chapters for this exam type
-                Map<String, AssignmentChapters> examChapters = {};
+              final Map<String, AssignmentChapters> examChapters = {};
 
-                // Loop through each chapter
-                chapters.forEach((chapterName, chapterData) {
-                  if (chapterData is List) {
-                    // Create AssignmentChapters object
-                    final assignmentChapter = AssignmentChapters(
-                      assignments: chapterData
-                          .map(
-                            (item) => Assignment.fromJson(
-                              item as Map<String, dynamic>,
-                            ),
-                          )
-                          .toList(),
-                    );
+              chapters.forEach((chapterName, chapterData) {
+                if (chapterData is List) {
+                  examChapters[chapterName] = AssignmentChapters(
+                    assignments: chapterData
+                        .map(
+                          (item) =>
+                              Assignment.fromJson(item as Map<String, dynamic>),
+                        )
+                        .toList(),
+                  );
+                }
+              });
 
-                    examChapters[chapterName] = assignmentChapter;
-                  }
-                });
-
-                // Store chapters under exam type
-                allAssignments[examType] = examChapters;
-              }
-            });
+              allAssignments[examType] = examChapters;
+            }
           });
         }
       } else {
         throw Exception('Failed to load assignments: ${response.statusCode}');
       }
     } catch (e) {
-      print("Error in fetching assignments: $e");
+      debugPrint("Error in fetching assignments: $e");
+      Get.snackbar(
+        "Error",
+        "Assignments load nahi hue",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
-  // Get assignments for selected exam
-  Map<String, AssignmentChapters> getFilteredAssignments() {
-    return allAssignments[selectedExam.value] ?? {};
+  List<String> _getAllChapters() {
+    final Set<String> chapters = {};
+    for (final examMap in allAssignments.values) {
+      chapters.addAll(examMap.keys);
+    }
+    return chapters.toList();
   }
 
-  // Function to display the exam selector
-  Widget buildExamSelector() {
-    // Get available exam types from API response
-    final exams = allAssignments.keys.toList();
+  String _normalizeTopic(String? topic) {
+    final value = (topic ?? '').trim();
+    return value.isEmpty ? 'General Topic' : value;
+  }
 
-    if (exams.isEmpty) {
-      return SizedBox.shrink();
+  List<String> _getTopicsForChapter(String chapterName) {
+    final Set<String> topics = {};
+
+    for (final examMap in allAssignments.values) {
+      final items = examMap[chapterName]?.assignments ?? <Assignment>[];
+      for (final item in items) {
+        topics.add(_normalizeTopic(item.assignmentTopic));
+      }
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: exams.map((e) {
-          return Obx(() {
-            final selected = selectedExam.value == e;
-            return GestureDetector(
-              onTap: () => selectedExam.value = e,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: EdgeInsets.symmetric(horizontal: 6.w),
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: selected ? primary : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: selected ? primary : Colors.grey.shade300,
-                  ),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: primary.withOpacity(0.12),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  e,
-                  style: TextStyle(
-                    color: selected ? Colors.white : Colors.black87,
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            );
-          });
-        }).toList(),
+    return topics.toList();
+  }
+
+  String? _findExamKey(String target) {
+    for (final key in allAssignments.keys) {
+      final k = key.toLowerCase().replaceAll(' ', '');
+      final t = target.toLowerCase().replaceAll(' ', '');
+
+      if (k == t ||
+          k.contains(t) ||
+          t.contains(k) ||
+          (target == 'Board' && k.contains('board')) ||
+          (target == 'JEE Main' &&
+              (k.contains('jeemain') ||
+                  k.contains('jee(m)') ||
+                  k.contains('jeem') ||
+                  k.contains('main'))) ||
+          (target == 'JEE Advanced' &&
+              (k.contains('jeeadvanced') ||
+                  k.contains('jee(a)') ||
+                  k.contains('jeea') ||
+                  k.contains('advanced')))) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  List<Assignment> _getAssignmentsFor(
+    String examLabel,
+    String chapterName,
+    String topicName,
+  ) {
+    final examKey = _findExamKey(examLabel);
+    if (examKey == null) return [];
+    final items = allAssignments[examKey]?[chapterName]?.assignments ?? [];
+    return items
+        .where((item) => _normalizeTopic(item.assignmentTopic) == topicName)
+        .toList();
+  }
+
+  List<List<Assignment>> _splitAssignmentsIntoRounds(List<Assignment> items) {
+    if (items.isEmpty) return [[], [], []];
+
+    final List<Assignment> round1 = [];
+    final List<Assignment> round2 = [];
+    final List<Assignment> round3 = [];
+
+    for (int i = 0; i < items.length; i++) {
+      if (i % 3 == 0) {
+        round1.add(items[i]);
+      } else if (i % 3 == 1) {
+        round2.add(items[i]);
+      } else {
+        round3.add(items[i]);
+      }
+    }
+
+    return [round1, round2, round3];
+  }
+
+  void _openAssignment(Assignment assignment, int index) {
+    
+
+    Get.offAllNamed(
+      AdminRoutes.testscreen,
+      arguments: {'testId': "85228368", 'passcode': "8689512515"},
+    );
+  }
+
+  Color _examTone(String examLabel) {
+    switch (examLabel) {
+      case 'Board':
+        return primary;
+      case 'JEE Main':
+        return const Color(0xFF1565C0);
+      case 'JEE Advanced':
+        return accent;
+      default:
+        return primary;
+    }
+  }
+
+  Widget _buildRoundBubble({
+    required String text,
+    required VoidCallback onTap,
+    required Color fillColor,
+    required Color borderColor,
+    required Color textColor,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(100),
+      child: Container(
+        width: 15.w,
+        height: 15.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: fillColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: borderColor, width: 1.2),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w700,
+            fontSize: 5.sp,
+          ),
+        ),
       ),
     );
   }
 
-  // Helper method to get status color
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'attempted':
-        return Colors.green;
-      case 'in progress':
-        return Colors.orange;
-      case 'completed':
-        return Colors.blue;
-      default:
-        return Colors.grey;
+  Widget _buildRoundCell(
+    List<Assignment> assignments,
+    Color tone,
+    bool isDarkMode,
+  ) {
+    if (assignments.isEmpty) {
+      return Center(
+        child: Container(
+          width: 22.w,
+          height: 1.5,
+          color: isDarkMode ? Colors.white38 : tone.withOpacity(0.35),
+        ),
+      );
     }
+
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: List.generate(assignments.length, (index) {
+        final bubbleFill = tone.withOpacity(isDarkMode ? 0.18 : 0.12);
+        return _buildRoundBubble(
+          text: "${index + 1}",
+          onTap: () => _openAssignment(assignments[index], index),
+          fillColor: bubbleFill,
+          borderColor: tone,
+          textColor: isDarkMode ? Colors.white : tone,
+        );
+      }),
+    );
   }
 
-  // Helper method to build info chips
-  Widget _buildInfoChip(
-    IconData icon,
-    String text,
-    Color bgColor,
-    Color textColor,
-  ) {
+  Widget _buildExamRow({
+    required String examLabel,
+    required String chapterName,
+    required String topicName,
+    required bool isDarkMode,
+    bool showTopBorder = false,
+  }) {
+    final assignments = _getAssignmentsFor(examLabel, chapterName, topicName);
+    final rounds = _splitAssignmentsIntoRounds(assignments);
+    final tone = _examTone(examLabel);
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.14)
+        : tone.withOpacity(0.16);
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
+        border: Border(
+          top: showTopBorder
+              ? BorderSide(color: dividerColor, width: 1)
+              : BorderSide.none,
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: textColor),
-          SizedBox(width: 4.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 4.sp,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            _cell(
+              width: 80.w,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: tone.withOpacity(isDarkMode ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  examLabel,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : tone,
+                    fontSize: 4.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
+            _divider(dividerColor),
+            _cell(
+              width: 80.w,
+              child: _buildRoundCell(rounds[0], tone, isDarkMode),
+            ),
+            _divider(dividerColor),
+            _cell(
+              width: 80.w,
+              child: _buildRoundCell(rounds[1], tone, isDarkMode),
+            ),
+            _divider(dividerColor),
+            _cell(
+              width: 80.w,
+              child: _buildRoundCell(rounds[2], tone, isDarkMode),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cell({required double width, required Widget child, double? height}) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+        child: Center(child: child),
+      ),
+    );
+  }
+
+  Widget _divider(Color color) {
+    return Container(width: 1, color: color);
+  }
+
+  Widget _buildTopicSection({
+    required String chapterName,
+    required String topicName,
+    required bool isDarkMode,
+    required bool showTopBorder,
+  }) {
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.12)
+        : primary.withOpacity(0.14);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: showTopBorder
+              ? BorderSide(color: dividerColor, width: 1)
+              : BorderSide.none,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? Colors.white.withOpacity(0.04)
+                  : primary.withOpacity(0.05),
+            ),
+            child: Text(
+              topicName,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : const Color(0xFF13305C),
+                fontSize: 7.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                _cell(
+                  width: 80.w,
+                  child: Text(
+                    'Exam',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                _cell(
+                  width: 80.w,
+                  child: Text(
+                    'Round 1',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                _cell(
+                  width: 80.w,
+                  child: Text(
+                    'Round 2',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                _cell(
+                  width: 80.w,
+                  child: Text(
+                    'Round 3',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 1, color: dividerColor),
+          Column(
+            children: List.generate(_examOrder.length, (index) {
+              return _buildExamRow(
+                examLabel: _examOrder[index],
+                chapterName: chapterName,
+                topicName: topicName,
+                isDarkMode: isDarkMode,
+                showTopBorder: index != 0,
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  Color _getCgpaColor(double cgpa) {
-    if (cgpa >= 9.0) {
-      return const Color(0xFF2E7D32);
-    }
-    if (cgpa >= 7.0) {
-      return const Color(0xFF1565C0);
-    }
-    if (cgpa >= 5.0) {
-      return const Color(0xFFEF6C00);
-    }
-    return const Color(0xFFC62828);
-  }
+  Widget _buildChapterBlock(String chapterName, bool isDarkMode) {
+    final topics = _getTopicsForChapter(chapterName);
+    final dividerColor = isDarkMode
+        ? Colors.white.withOpacity(0.12)
+        : primary.withOpacity(0.14);
 
-  Widget _buildCgpaCircle(double cgpa) {
-    final color = _getCgpaColor(cgpa);
-    return GestureDetector(
-      onTap: (){
-          // SUCCESS → GO TO TEST SCREEN
-    Get.offAllNamed(
-      AdminRoutes.testscreen,
-      arguments: {
-        'testId': "85228368",
-        'passcode': "8689512515",
-      },
-    );
-      },
-      child: Container(
-        width: 15.w,
-        height: 35.w,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.16),
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 1.2),
-        ),
-        child: Text(
-          cgpa.toStringAsFixed(1),
-          style: TextStyle(
-            fontSize: 6.2.sp,
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Container(
+      margin: EdgeInsets.only(bottom: 18.h),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF141A24) : Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: dividerColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.24 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primary, accent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    'Chapter',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 6.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    chapterName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${topics.length} Topic${topics.length == 1 ? '' : 's'}',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            children: List.generate(topics.length, (index) {
+              return _buildTopicSection(
+                chapterName: chapterName,
+                topicName: topics[index],
+                isDarkMode: isDarkMode,
+                showTopBorder: index != 0,
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChapterRow(String title, List<double> cgpas) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        SizedBox(
-          width: 60.w,
+  Widget _buildBody() {
+    if (isLoading) {
+      return Center(
+        child: LoadingAnimationWidget.staggeredDotsWave(
+          color: primary,
+          size: 42,
+        ),
+      );
+    }
+
+    final chapters = _getAllChapters();
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (chapters.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
           child: Text(
-            title,
-            style: TextStyle(fontSize: 4.sp, color: Colors.black87),
+            "No assignments available",
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
+            ),
           ),
         ),
-        ...cgpas.map((cgpa) {
-          return Padding(
-            padding: EdgeInsets.only(right: 6.w),
-            child: _buildCgpaCircle(cgpa),
-          );
-        }).toList(),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: 50.w + 90.w + 90.w + 90.w + 8.w,
+                child: Column(
+                  children: List.generate(chapters.length, (index) {
+                    return _buildChapterBlock(chapters[index], isDarkMode);
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -298,9 +623,9 @@ class _ContinueScreenState extends State<ContinueScreen> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: AdminDrawer2(),
-      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF5F6FA),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFF4F6FA),
       appBar: AppBar(
-        toolbarHeight: 170, // increase appbar height from here
+        toolbarHeight: 120.h,
         elevation: 0,
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false,
@@ -311,9 +636,9 @@ class _ContinueScreenState extends State<ContinueScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(22.r),
+              bottomRight: Radius.circular(22.r),
             ),
           ),
         ),
@@ -323,133 +648,34 @@ class _ContinueScreenState extends State<ContinueScreen> {
         ),
         title: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'Assignments',
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 8.sp,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
             ),
             SizedBox(height: 4.h),
-            Text(
-              subjectname.value.isNotEmpty
-                  ? "${subjectname.value} - ${classs.value.replaceAll('"', '').trim()}"
-                  : 'Continue your tests',
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.white70,
+            Obx(
+              () => Text(
+                subjectname.value.isNotEmpty
+                    ? "${subjectname.value} • ${classs.value.replaceAll('"', '').trim()}"
+                    : "Continue your tests",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 9.sp,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-            ),
-            SizedBox(height: 20.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SizedBox(width: 20.sp),
-                Text(
-                  'Board',
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                  ),
-                ),
-                Text(
-                  'Jee Main',
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                  ),
-                ),
-                Text(
-                  'Jee Advanced',
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-              child: Text(
-                'Select the chapter you want to continue',
-                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
-              ),
-            ),
-            _buildChapterRow('Indicators And Solublity Product', [
-              9.8,
-              8.2,
-              7.4,
-              5.6,
-              4.2,
-              3.1,
-            ]),
-            _buildChapterRow('Ionic Equilibrium', [
-              8.8,
-              7.6,
-              6.9,
-              5.1,
-              4.8,
-              2.9,
-            ]),
-            _buildChapterRow('Organic Chemistry', [
-              9.2,
-              8.9,
-              7.2,
-              6.4,
-              5.5,
-              4.0,
-            ]),
-            _buildChapterRow('Thermodynamics', [9.5, 8.0, 7.1, 6.2, 5.2, 3.8]),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-              child: Text(
-                'Select the chapter you want to continue2',
-                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
-              ),
-            ),
-            _buildChapterRow('Chemical Kinetics', [
-              8.7,
-              7.9,
-              6.0,
-              5.4,
-              4.6,
-              3.3,
-            ]),
-            _buildChapterRow('Electrochemistry', [
-              9.0,
-              8.3,
-              7.0,
-              6.1,
-              5.0,
-              4.4,
-            ]),
-            _buildChapterRow('Surface Chemistry', [
-              7.8,
-              7.0,
-              6.2,
-              5.5,
-              4.9,
-              3.6,
-            ]),
-          ],
-        ),
-      ),
+      body: _buildBody(),
     );
   }
 }
@@ -459,13 +685,13 @@ class ColorPainter {
   static const Color secondaryColor = Color(0xFFFFA000);
   static const Color accentColor = Color(0xFF4CA1AF);
 
-  static LinearGradient get gradientBackground => LinearGradient(
+  static LinearGradient get gradientBackground => const LinearGradient(
     colors: [primaryColor, secondaryColor],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  static LinearGradient get buttonGradient => LinearGradient(
+  static LinearGradient get buttonGradient => const LinearGradient(
     colors: [primaryColor, accentColor],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -480,9 +706,9 @@ class ColorPainter {
     color: Colors.white,
     boxShadow: [
       BoxShadow(
-        offset: Offset(0, 6),
+        offset: const Offset(0, 6),
         blurRadius: 12,
-        color: Colors.black.withOpacity(0.15),
+        color: Colors.black26,
       ),
     ],
     borderRadius: BorderRadius.circular(20),
