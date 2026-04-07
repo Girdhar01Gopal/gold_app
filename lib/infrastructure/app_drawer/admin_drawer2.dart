@@ -58,7 +58,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF0D47A1), // Assignment primary color
+                    Color(0xFFA10D52), // Assignment primary color
                     Color(0xFF4CA1AF), // Assignment accent color
                   ],
                   begin: Alignment.topLeft,
@@ -183,7 +183,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF0D47A1), Color(0xFF4CA1AF)],
+                  colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -195,7 +195,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
               width: double.infinity,
               child: Center(
                 child: Text(
-                  "© MGEPL",
+                  "©MGE",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12 * s,
@@ -221,7 +221,7 @@ class _AdminDrawer2State extends State<AdminDrawer2> {
   }) {
     final isSelected = currentRoute == route;
     final isHovered = hoveredRoute == route;
-    final primaryColor = const Color(0xFF0D47A1);
+    final primaryColor = const Color(0xFFA10D52);
     final accentColor = const Color(0xFF4CA1AF);
     final s = (MediaQuery.of(context).size.width / 1200).clamp(0.85, 1.15);
 

@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF0D47A1), const Color(0xFF2B6CB0)],
+                colors: [const Color(0xFFA10D52), const Color(0xFF2B6CB0)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             top: -110,
             right: -80,
-            child: _circle(const Color(0xFF0D47A1).withOpacity(0.12), 260),
+            child: _circle(const Color(0xFFA10D52).withOpacity(0.12), 260),
           ),
           Positioned(
             bottom: -70,
@@ -247,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     List<Color> getGradientColors(int idx) {
       final colorSets = [
-        [const Color(0xFF0D47A1), const Color(0xFF1976D2)],
+        [const Color(0xFFA10D52), const Color(0xFF1976D2)],
         [const Color(0xFF6A1B9A), const Color(0xFF8E24AA)],
         [const Color(0xFFD84315), const Color(0xFFFF6F00)],
         [const Color(0xFF2E7D32), const Color(0xFF43A047)],

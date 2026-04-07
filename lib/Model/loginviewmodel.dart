@@ -32,6 +32,8 @@ class Data {
   String? session;
   int? courseId;
   String? courseName;
+  int? batchId;
+  String? batchName;
   int? schoolId;
   bool? isActive;
   String? createdDate;
@@ -47,6 +49,8 @@ class Data {
       this.session,
       this.courseId,
       this.courseName,
+      this.batchId,
+      this.batchName,
       this.schoolId,
       this.isActive,
       this.createdDate,
@@ -62,6 +66,8 @@ class Data {
     session = json['Session'];
     courseId = json['CourseId'];
     courseName = json['CourseName'];
+    batchId = json['BatchId'];
+    batchName = json['BatchName'];
     schoolId = json['SchoolId'];
     isActive = json['IsActive'];
     createdDate = json['CreatedDate'];
@@ -79,6 +85,8 @@ class Data {
     data['Session'] = this.session;
     data['CourseId'] = this.courseId;
     data['CourseName'] = this.courseName;
+    data['BatchId'] = this.batchId;
+    data['BatchName'] = this.batchName;
     data['SchoolId'] = this.schoolId;
     data['IsActive'] = this.isActive;
     data['CreatedDate'] = this.createdDate;

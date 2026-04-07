@@ -43,7 +43,7 @@ class LoginScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  isDarkMode ? Colors.black : const Color(0xFF0D47A1),
+                  isDarkMode ? Colors.black : const Color(0xFFA10D52),
                   isDarkMode ? Colors.grey.shade800 : const Color(0xFF1565C0),
                   isDarkMode ? Colors.grey.shade700 : const Color(0xFF4CA1AF),
                 ],
@@ -96,7 +96,7 @@ class LoginScreen extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.all(9.h),
                             child: Image.asset(
-                              'assets/images/FIITJEE_Logo.png',
+                              'assets/images/FIITJEE_Logo1.png',
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -138,7 +138,7 @@ class LoginScreen extends StatelessWidget {
                                   color: Colors.white70, size: 5.sp),
                               SizedBox(width: 4.5.w),
                               Text(
-                                "MGEPL ",
+                                "MGE ",
                                 style: TextStyle(
                                     color: Colors.white70, fontSize: 4.sp),
                               ),
@@ -154,7 +154,7 @@ class LoginScreen extends StatelessWidget {
                 //   left: 0,
                 //   right: 0,
                 //   child: Text(
-                //     "\u00a9 MGEPL",
+                //     "\u00a9 MGE",
                 //     textAlign: TextAlign.center,
                 //     style: TextStyle(color: Colors.white38, fontSize: 11.sp),
                 //   ),
@@ -212,7 +212,7 @@ class LoginScreen extends StatelessWidget {
                             BoxShadow(
                               color: isDarkMode
                                   ? Colors.black45
-                                  : const Color(0xFF0D47A1).withOpacity(0.10),
+                                  : const Color(0xFFA10D52).withOpacity(0.10),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -220,7 +220,7 @@ class LoginScreen extends StatelessWidget {
                           border: Border.all(
                             color: isDarkMode
                                 ? Colors.white.withOpacity(0.08)
-                                : const Color(0xFF0D47A1).withOpacity(0.12),
+                                : const Color(0xFFA10D52).withOpacity(0.12),
                           ),
                         ),
                         child: Column(
@@ -231,7 +231,7 @@ class LoginScreen extends StatelessWidget {
                                 Container(
                                   padding: EdgeInsets.all(4.w),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0D47A1)
+                                    color: const Color(0xFFA10D52)
                                         .withOpacity(0.10),
                                     borderRadius: BorderRadius.circular(6.r),
                                   ),
@@ -239,7 +239,7 @@ class LoginScreen extends StatelessWidget {
                                     Icons.lock_outline_rounded,
                                     color: isDarkMode
                                         ? Colors.white70
-                                        : const Color(0xFF0D47A1),
+                                        : const Color(0xFFA10D52),
                                     size: 10.sp,
                                   ),
                                 ),
@@ -251,7 +251,7 @@ class LoginScreen extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                     color: isDarkMode
                                         ? Colors.white
-                                        : const Color(0xFF0D47A1),
+                                        : const Color(0xFFA10D52),
                                   ),
                                 ),
                               ],
@@ -293,7 +293,7 @@ class LoginScreen extends StatelessWidget {
                                   borderSide: BorderSide(
                                     color: isDarkMode
                                         ? Colors.white12
-                                        : const Color(0xFF0D47A1)
+                                        : const Color(0xFFA10D52)
                                             .withOpacity(0.25),
                                   ),
                                 ),
@@ -302,14 +302,14 @@ class LoginScreen extends StatelessWidget {
                                   borderSide: BorderSide(
                                     color: isDarkMode
                                         ? Colors.white12
-                                        : const Color(0xFF0D47A1)
+                                        : const Color(0xFFA10D52)
                                             .withOpacity(0.25),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF0D47A1),
+                                    color: Color(0xFFA10D52),
                                     width: 1.8,
                                   ),
                                 ),
@@ -333,7 +333,7 @@ class LoginScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isDarkMode
                                       ? Colors.grey.shade700
-                                      : const Color(0xFF0D47A1),
+                                      : const Color(0xFFA10D52),
                                   minimumSize: Size(double.infinity, 48.h),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12.r),
@@ -403,7 +403,7 @@ class LoginScreen extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.all(5.h),
                     child: Image.asset(
-                      'assets/images/FIITJEE_Logo.png',
+                      'assets/images/FIITJEE_Logo1.png',
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -441,7 +441,7 @@ class LoginScreen extends StatelessWidget {
                     border: Border.all(
                       color: isDarkMode
                           ? Colors.white.withOpacity(0.4)
-                          : const Color(0xFF0D47A1).withOpacity(0.4),
+                          : const Color(0xFFA10D52).withOpacity(0.4),
                       width: 1,
                     ),
                     boxShadow: const [
@@ -462,7 +462,7 @@ class LoginScreen extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: isDarkMode
                               ? Colors.white
-                              : const Color(0xFF0D47A1),
+                              : const Color(0xFFA10D52),
                         ),
                       ),
                       SizedBox(height: 25.h),
@@ -485,7 +485,7 @@ class LoginScreen extends StatelessWidget {
                             borderSide: BorderSide(
                               color: isDarkMode
                                   ? Colors.white
-                                  : const Color(0xFF0D47A1),
+                                  : const Color(0xFFA10D52),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -493,7 +493,7 @@ class LoginScreen extends StatelessWidget {
                             borderSide: BorderSide(
                               color: isDarkMode
                                   ? Colors.white
-                                  : const Color(0xFF0D47A1),
+                                  : const Color(0xFFA10D52),
                               width: 1.5,
                             ),
                           ),
@@ -512,7 +512,7 @@ class LoginScreen extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isDarkMode
                                 ? Colors.grey.shade800
-                                : const Color(0xFF0D47A1),
+                                : const Color(0xFFA10D52),
                             minimumSize: Size(double.infinity, 52.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14.r),
@@ -523,7 +523,7 @@ class LoginScreen extends StatelessWidget {
                               ? LoadingAnimationWidget.fourRotatingDots(
                                   color: isDarkMode
                                       ? Colors.white
-                                      : const Color(0xFF0D47A1),
+                                      : const Color(0xFFA10D52),
                                   size: 50,
                                 )
                               : Text(
@@ -541,7 +541,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 50.h),
                 Text(
-                  "\u00a9 MGEPL",
+                  "\u00a9 MGE",
                   style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.grey[700],
                     fontSize: 13.sp,
@@ -589,7 +589,7 @@ class GradientCurvePainter extends CustomPainter {
 
     final gradient = LinearGradient(
       colors: [
-        isDarkMode ? Colors.black : const Color(0xFF0D47A1),
+        isDarkMode ? Colors.black : const Color(0xFFA10D52),
         isDarkMode ? Colors.grey.shade700 : const Color(0xFF4CA1AF),
       ],
       begin: Alignment.topLeft,

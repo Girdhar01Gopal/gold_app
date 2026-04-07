@@ -8,7 +8,6 @@ import 'package:gold_app/localstorage.dart';
 import 'package:gold_app/prefconst.dart';
 import 'package:http/http.dart' as https;
 import 'package:http/http.dart' as http;
-
 import '../infrastructure/routes/admin_routes.dart';
 
 class LoginController extends GetxController {
@@ -47,6 +46,12 @@ Future<loginmodel> login({
           key: PrefConst.EnrollmentNo,
           value: jsonEncode(data['data']?['AdmissionNo']),
         );
+        PrefManager().writeValue(
+            key: PrefConst.batchiid,
+            value: jsonEncode(
+              data['data']?['BatchId'] ?? data['data']?['batchId'],
+            ),
+          );
          PrefManager().writeValue(
           key: PrefConst.SchoolId,
           value: jsonEncode(data['data']?['SchoolId']),
@@ -65,11 +70,7 @@ Future<loginmodel> login({
           key: PrefConst.session,
           value: jsonEncode(data['data']?['Session']),
         );
-         PrefManager().writeValue(
-          key: PrefConst.session,
-          value: jsonEncode(data['data']?['Session']),
-        );
-         PrefManager().writeValue(
+        PrefManager().writeValue(
           key: PrefConst.className,
           value: jsonEncode(data['data']?['CourseName']),
         );
@@ -79,16 +80,13 @@ Future<loginmodel> login({
         print("✅ Stored SchoolId: ${await PrefManager().readValue(key: PrefConst.SchoolId)}");
         print("✅ Stored StudentId: ${await PrefManager().readValue(key: PrefConst.StudentId)}");
         print("✅ Stored CourseId: ${await PrefManager().readValue(key: PrefConst.CourseId)}");
-        print("✅ Stored StudentName: ${await PrefManager().readValue(key: PrefConst.studentname)}");
-        print("✅ Stored Session: ${await PrefManager().readValue(key: PrefConst.session
-)}");
-        print("✅ Stored ClassName: ${await PrefManager().readValue(key: PrefConst.className)}");
+        print("✅ Stored batchid: ${await PrefManager().readValue(key: PrefConst.batchiid)}");
+
         Get.snackbar(
           "Login Successful",
           "Welcome ${data['data']?['AdmissionNo'] ?? ''}",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor:    Color(0xFF0D47A1), // Assignment primary color
-               
+          backgroundColor: const Color(0xFF8b2d28),
           colorText: Colors.white,
         );
       } else {

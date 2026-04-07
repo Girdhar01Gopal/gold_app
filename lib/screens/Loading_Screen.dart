@@ -46,7 +46,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
           gradient: LinearGradient(
             colors: isDarkMode
                 ? [Color(0xFF121212), Color(0xFF1D1D1D)] // Dark background gradient
-                : [Color(0xFF0D47A1), Color(0xFF4CA1AF)], // Original gradient for light mode
+                : [Color(0xFFA10D52), Color(0xFF4CA1AF)], // Original gradient for light mode
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -56,13 +56,13 @@ class _LoadingScreenState extends State<LoadingScreen> {
           children: [
             // Logo Section
             Image.asset(
-              'assets/images/FIITJEE_Logo.png',
+              'assets/images/FIITJEE_Logo1.png',
               height: 120.h,
               fit: BoxFit.contain,
             ),
             SizedBox(height: 40.h),
 
-            // Title Text
+           
             Text(
               "Maharishi Learn",
               style: TextStyle(
@@ -91,7 +91,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
               width: 10.h,
               child: LoadingAnimationWidget.fourRotatingDots(
                 color: isDarkMode ? Colors.white : Colors.white, // Color for the loading animation
-                size: 120,
+                size: 80,
               ),
             ),
 
@@ -99,7 +99,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
             // Footer Text
             Text(
-              "© MGEPL",
+              "©MGE",
               style: TextStyle(
                 color: isDarkMode ? Colors.white.withOpacity(0.7) : Colors.white.withOpacity(0.7),
                 fontSize: 12.sp,

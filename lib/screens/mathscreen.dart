@@ -270,7 +270,7 @@ class Mathscreen extends GetView<Mathscreencontroller> {
 }
 
 class ColorPainter {
-  static const Color primaryColor = Color(0xFF0D47A1);
+  static const Color primaryColor = Color(0xFFA10D52);
   static const Color secondaryColor = Color(0xFFFFA000);
   static const Color accentColor = Color(0xFF4CA1AF);
 

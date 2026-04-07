@@ -23,7 +23,7 @@ class AdminSplashScreen extends StatelessWidget {
             children: [
               // Ensures the image is centered vertically and horizontally
               Image.asset(
-                'assets/images/FIITJEE_Logo.png',  // Corrected image path
+                'assets/images/FIITJEE_Logo1.png',  // Corrected image path
                 height: 250.h,
               ),
               SizedBox(height: 20.h),  // Optional: Add space below the logo if needed

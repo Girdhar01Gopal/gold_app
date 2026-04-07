@@ -51,7 +51,7 @@ class LoginScreen extends StatelessWidget {
                         child: Padding(
                           padding: EdgeInsets.all(5.h),
                           child: Image.asset(
-                            'assets/images/FIITJEE_Logo.png',
+                            'assets/images/FIITJEE_Logo1.png',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -93,7 +93,7 @@ class LoginScreen extends StatelessWidget {
                           border: Border.all(
                             color: isDarkMode
                                 ? Colors.white.withOpacity(0.4)
-                                : Color(0xFF0D47A1).withOpacity(0.4),
+                                : Color(0xFFA10D52).withOpacity(0.4),
                             width: 1,
                           ),
                           boxShadow: [
@@ -112,7 +112,7 @@ class LoginScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.w600,
-                                color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
+                                color: isDarkMode ? Colors.white : Color(0xFFA10D52),
                               ),
                             ),
                             SizedBox(height: 25.h),
@@ -135,13 +135,13 @@ class LoginScreen extends StatelessWidget {
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14.r),
       borderSide: BorderSide(
-        color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
+        color: isDarkMode ? Colors.white : Color(0xFFA10D52),
       ),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14.r),
       borderSide: BorderSide(
-        color: isDarkMode ? Colors.white : Color(0xFF0D47A1),
+        color: isDarkMode ? Colors.white : Color(0xFFA10D52),
         width: 1.5,
       ),
     ),
@@ -161,7 +161,7 @@ class LoginScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isDarkMode
                                       ? Colors.grey.shade800
-                                      : Color(0xFF0D47A1),
+                                      : Color(0xFFA10D52),
                                   minimumSize: Size(double.infinity, 52.h),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14.r),
@@ -172,7 +172,7 @@ class LoginScreen extends StatelessWidget {
                                     ? LoadingAnimationWidget.fourRotatingDots(
                                         color: isDarkMode
                                             ? Colors.white
-                                            : Color(0xFF0D47A1),
+                                            : Color(0xFFA10D52),
                                         size: 50,
                                       )
                                     : Text(
@@ -193,7 +193,7 @@ class LoginScreen extends StatelessWidget {
 
                       /// ---------- Footer ----------
                       Text(
-                        "© MGEPL",
+                        "©MGE",
                         style: TextStyle(
                           color: isDarkMode ? Colors.white70 : Colors.grey[700],
                           fontSize: 13.sp,
@@ -241,7 +241,7 @@ class GradientCurvePainter extends CustomPainter {
     // ---------- Gradient ----------
     final gradient = LinearGradient(
       colors: [
-        isDarkMode ? Colors.black : Color(0xFF0D47A1), 
+        isDarkMode ? Colors.black : Color(0xFFA10D52), 
         isDarkMode ? Colors.grey.shade700 : Color(0xFF4CA1AF),
       ],
       begin: Alignment.topLeft,

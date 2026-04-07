@@ -6,22 +6,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:gold_app/Model/exammodel.dart';
+import 'package:gold_app/Model/exammodel.dart' show Data, exammodel;
 import 'package:gold_app/appurl/adminurl.dart';
 import 'package:gold_app/infrastructure/routes/admin_routes.dart';
 import 'package:gold_app/localstorage.dart';
 import 'package:gold_app/oflinerepo/questionhivemodel.dart';
 import 'package:gold_app/prefconst.dart';
+import 'package:gold_app/screens/submitscreenview%20copy.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-
+import 'package:http/http.dart' as Https;
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'dart:developer' as developer;
 
 class Testscreencontroller extends GetxController {
   bool _isSubmittingTest = false;
   bool _isAutoSubmitTriggered = false;
+  final RxDouble submitProgressPercent = 0.0.obs;
+  final RxInt submitUploadedCount = 0.obs;
+  final RxInt submitTotalToUpload = 0.obs;
 
   String _subjectQuestionKey(String subject, int questionId) =>
       '${subject}__$questionId';
@@ -44,6 +47,37 @@ class Testscreencontroller extends GetxController {
     ).trim().isNotEmpty;
   }
 
+  bool _hasAnyInMemoryAnswer(int questionId) {
+    final hasOption = (selectedAnswers[questionId] ?? <String>{}).isNotEmpty;
+    final hasInteger = selectedIntegerAnswers.containsKey(questionId);
+    final hasNumeric = selectedNumericRangeAnswers.entries.any(
+      (e) =>
+          e.key.endsWith('__${questionId.toString()}') &&
+          e.value.trim().isNotEmpty,
+    );
+    return hasOption || hasInteger || hasNumeric;
+  }
+
+  String _resolveAnswerFromMemory(int questionId, String subject) {
+    final optionAnswer = selectedAnswers[questionId];
+    if (optionAnswer != null && optionAnswer.isNotEmpty) {
+      return optionAnswer.join(',');
+    }
+
+    final integerAnswer = selectedIntegerAnswers[questionId];
+    if (integerAnswer != null) {
+      return integerAnswer.toString();
+    }
+
+    final numericKey = _subjectQuestionKey(subject, questionId);
+    final numericAnswer = selectedNumericRangeAnswers[numericKey];
+    if (numericAnswer != null && numericAnswer.trim().isNotEmpty) {
+      return numericAnswer.trim();
+    }
+
+    return '';
+  }
+
   String _normalizeNumericForApi(String raw) {
     final value = raw.trim();
     if (value.isEmpty) return '';
@@ -58,9 +92,39 @@ class Testscreencontroller extends GetxController {
     return parsed.toString();
   }
 
+  bool _isNumericRangeType(String questionTypeRaw) {
+    final questionType = questionTypeRaw.toLowerCase();
+    return questionType.contains('numeric range') ||
+        questionType.contains('numerical') ||
+        questionType.contains('numeric');
+  }
+
   bool _numericEqualsForStatus(String studentRaw, String correctRaw) {
     final studentVal = double.tryParse(_normalizeNumericForApi(studentRaw));
     if (studentVal == null) return false;
+
+    // Treat hyphen between digits as a range separator (9-10 => 9 and 10),
+    // not as a negative sign for the second value.
+    final sanitizedCorrect = correctRaw.replaceAll(
+      RegExp(r'(?<=\d)-(?=\d)'),
+      ' ',
+    );
+
+    final tokens = RegExp(r'-?\d+(?:\.\d+)?')
+        .allMatches(sanitizedCorrect)
+        .map((m) => double.tryParse(m.group(0) ?? ''))
+        .whereType<double>()
+        .toList();
+
+    final looksLikeRange =
+        correctRaw.contains('-') ||
+        RegExp(r'\bto\b', caseSensitive: false).hasMatch(correctRaw);
+
+    if (looksLikeRange && tokens.length >= 2) {
+      final low = min(tokens[0], tokens[1]);
+      final high = max(tokens[0], tokens[1]);
+      return studentVal >= low && studentVal <= high;
+    }
 
     final exactCorrectVal = double.tryParse(
       _normalizeNumericForApi(correctRaw),
@@ -68,12 +132,6 @@ class Testscreencontroller extends GetxController {
     if (exactCorrectVal != null) {
       return studentVal == exactCorrectVal;
     }
-
-    final tokens = RegExp(r'-?\d+(?:\.\d+)?')
-        .allMatches(correctRaw)
-        .map((m) => double.tryParse(m.group(0) ?? ''))
-        .whereType<double>()
-        .toList();
 
     if (tokens.length >= 2) {
       final low = min(tokens[0], tokens[1]);
@@ -107,6 +165,10 @@ class Testscreencontroller extends GetxController {
     selectedIntegerAnswers.refresh();
     // Also clear text controller for numeric answers
     controllerText.clear();
+
+    // Keep clear action for API sync as Not Attempted.
+    _forceNotAttemptedSyncQuestions.add(questionId);
+    unawaited(_deleteAnswerOffline(questionId));
   }
 
   /// All unique question types for the selected subject
@@ -136,6 +198,7 @@ class Testscreencontroller extends GetxController {
     if (valid.isEmpty) {
       selectedNumericRangeAnswers.remove(key);
     } else {
+      _forceNotAttemptedSyncQuestions.remove(questionId);
       selectedNumericRangeAnswers[key] = valid;
       // Mark as visited when numeric answer entered
       visitedQuestions.add(questionId);
@@ -174,6 +237,7 @@ class Testscreencontroller extends GetxController {
   var studentidd = ''.obs;
   var passcode = ''.obs;
   var batchid = ''.obs;
+  var batchiid = ''.obs;
 
   // ------------ TIMER ------------
   RxInt viewsecond = 0.obs; // total minutes from API
@@ -220,6 +284,7 @@ class Testscreencontroller extends GetxController {
   final Set<int> _dirtyIntegerQuestions = <int>{};
   final Map<String, String> _committedNumericRangeAnswers = <String, String>{};
   final Set<String> _dirtyNumericRangeQuestions = <String>{};
+  final Set<int> _forceNotAttemptedSyncQuestions = <int>{};
 
   Set<String> _cloneSet(Set<String> source) => Set<String>.from(source);
 
@@ -229,12 +294,12 @@ class Testscreencontroller extends GetxController {
       _committedSelectedAnswers.remove(questionId);
       selectedAnswers.remove(questionId);
       try {
-        final box = await Hive.openBox('offline_answers_${testId.value}');
-        await box.delete(questionId);
+        await _deleteAnswerOffline(questionId);
       } catch (e) {
         print("❌ Failed to clear offline answer for Q:$questionId: $e");
       }
     } else {
+      _forceNotAttemptedSyncQuestions.remove(questionId);
       final copy = _cloneSet(current);
       _committedSelectedAnswers[questionId] = copy;
       selectedAnswers[questionId] = copy;
@@ -256,12 +321,12 @@ class Testscreencontroller extends GetxController {
       _committedIntegerAnswers.remove(questionId);
       selectedIntegerAnswers.remove(questionId);
       try {
-        final box = await Hive.openBox('offline_answers_${testId.value}');
-        await box.delete(questionId);
+        await _deleteAnswerOffline(questionId);
       } catch (e) {
         print("❌ Failed to clear offline integer answer for Q:$questionId: $e");
       }
     } else {
+      _forceNotAttemptedSyncQuestions.remove(questionId);
       _committedIntegerAnswers[questionId] = current;
       selectedIntegerAnswers[questionId] = current;
       try {
@@ -284,12 +349,12 @@ class Testscreencontroller extends GetxController {
       _committedNumericRangeAnswers.remove(key);
       selectedNumericRangeAnswers.remove(key);
       try {
-        final box = await Hive.openBox('offline_answers_${testId.value}');
-        await box.delete(questionId);
+        await _deleteAnswerOffline(questionId);
       } catch (e) {
         print("❌ Failed to clear offline numeric answer for Q:$questionId: $e");
       }
     } else {
+      _forceNotAttemptedSyncQuestions.remove(questionId);
       final normalized = _normalizeNumericForApi(current);
       _committedNumericRangeAnswers[key] = normalized;
       selectedNumericRangeAnswers[key] = normalized;
@@ -312,7 +377,7 @@ class Testscreencontroller extends GetxController {
     if (questionType.contains('integer type')) {
       await _commitIntegerSelection(questionId);
     }
-    if (questionType.contains('numeric range')) {
+    if (_isNumericRangeType(questionType)) {
       await _commitNumericRangeSelection(questionId, subject: subject);
     }
   }
@@ -425,6 +490,8 @@ class Testscreencontroller extends GetxController {
         await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
     studentidd.value =
         await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
+    batchiid.value =
+        await PrefManager().readValue(key: PrefConst.batchiid) ?? '';
 
     // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
     testId.value = Get.arguments['testId'] ?? '';
@@ -445,14 +512,9 @@ class Testscreencontroller extends GetxController {
     if (allQuestions.isNotEmpty) {
       final firstSubjectList = allQuestions.values.first;
       if (firstSubjectList.isNotEmpty) {
-        final int minutes = (firstSubjectList.first['viewsecond'] as int?) ?? 0;
-        viewsecond.value = minutes;
-
-        if (viewsecond.value > 0) {
-          startTimer(viewsecond.value);
-        } else {
-          print("⚠️ viewsecond is 0 → Timer not started");
-        }
+        // Force fixed exam duration: 180 minutes.
+        viewsecond.value = 180;
+        startTimer(viewsecond.value);
       }
     }
 
@@ -480,6 +542,7 @@ class Testscreencontroller extends GetxController {
 
   /// Set the selected integer answer for a question
   void setIntegerAnswer(int questionId, int value) {
+    _forceNotAttemptedSyncQuestions.remove(questionId);
     selectedIntegerAnswers[questionId] = value;
     _dirtyIntegerQuestions.add(questionId);
     selectedIntegerAnswers.refresh();
@@ -622,7 +685,7 @@ class Testscreencontroller extends GetxController {
 
   Future<void> _loadQuestions() async {
     final url =
-        '${Adminurl.testurl}/${schoolId.value}/${studentid.value}/${testId.value}/${passcode.value}/${studentidd.value}';
+        '${Adminurl.testurl}/${schoolId.value}/${studentid.value}/${testId.value}/${passcode.value}/${studentidd.value}/${batchiid.value}';
     print("🔗 Fetching questions from: $url");
 
     try {
@@ -1046,7 +1109,7 @@ class Testscreencontroller extends GetxController {
     final answeredByOptions =
         (selectedAnswers[questionId] ?? <String>{}).isNotEmpty;
     final answeredByInteger = selectedIntegerAnswers.containsKey(questionId);
-    final answeredByNumeric = questionType.contains('numeric range')
+    final answeredByNumeric = _isNumericRangeType(questionType)
         ? hasNumericRangeAnswer(questionId, subject: selectedSubject.value)
         : false;
     final hasAnswer =
@@ -1077,7 +1140,18 @@ class Testscreencontroller extends GetxController {
                 questionType: questionType,
                 subject: selectedSubject.value,
               );
+
+              // Save time on current question and move forward without API submit.
+              _saveCurrentQuestionTime();
+
               toggleMarkForReview();
+
+              final currentQuestionsList = currentQuestions;
+              if (currentQuestionsList.isNotEmpty &&
+                  currentIndex.value < currentQuestionsList.length - 1) {
+                currentIndex.value++;
+              }
+
               markedForReview.refresh();
               visitedQuestions.refresh();
               update();
@@ -1170,6 +1244,11 @@ class Testscreencontroller extends GetxController {
     box.put(qid, ans);
   }
 
+  Future<void> _deleteAnswerOffline(int qid) async {
+    final box = await Hive.openBox('offline_answers_${testId.value}');
+    await box.delete(qid);
+  }
+
   // ===================================================
   // SYNC ANSWERS ONLINE
   // ===================================================
@@ -1250,6 +1329,9 @@ class Testscreencontroller extends GetxController {
       }
       selectedAnswers[questionId] = currentSet;
     }
+    if ((selectedAnswers[questionId] ?? <String>{}).isNotEmpty) {
+      _forceNotAttemptedSyncQuestions.remove(questionId);
+    }
     _dirtyOptionQuestions.add(questionId);
     selectedAnswers.refresh();
   }
@@ -1266,18 +1348,6 @@ class Testscreencontroller extends GetxController {
     visitedQuestions.add(questionId);
     visitedQuestions.refresh();
     final currentSubject = selectedSubject.value;
-    final batchIdValue = q['batchId'] ?? 0;
-    final examtestidd = q['examTestId'] ?? 0;
-
-    final studentAnsSet = selectedAnswers[questionId] ?? <String>{};
-    String studentAns = studentAnsSet.isNotEmpty ? studentAnsSet.join(',') : "";
-
-    String correctAns = (q['correctOption'] ?? "") as String;
-    String intcorrectAns = (q['integerTypeCorrecrt'] ?? "") as String;
-    String numericRangeCorrectAnss =
-        (q['numericRangeCorrectAns'] ?? "") as String;
-    int? integerTypeCorrectAns;
-    String numericRangeCorrectAns = '';
     final questionType = (q['questionType'] ?? '').toString().toLowerCase();
 
     await _commitCurrentAnswer(
@@ -1286,133 +1356,13 @@ class Testscreencontroller extends GetxController {
       subject: currentSubject,
     );
 
-    if (questionType.contains('integer type')) {
-      integerTypeCorrectAns = selectedIntegerAnswers[questionId];
-      studentAns = "";
-    }
-    if (questionType.contains('numeric range')) {
-      numericRangeCorrectAns = _normalizeNumericForApi(
-        getNumericRangeAnswer(questionId, subject: currentSubject),
-      );
-      studentAns = "";
-    }
-
-    final hasOptionAnswer = studentAnsSet.isNotEmpty;
-    final hasIntegerAnswer =
-        questionType.contains('integer type') && integerTypeCorrectAns != null;
-    final hasNumericAnswer =
-        questionType.contains('numeric range') &&
-        numericRangeCorrectAns.trim().isNotEmpty;
-
     // NTA-like flow: Save & Next should convert a reviewed question to normal answered/unanswered.
     if (markedForReview.contains(questionId)) {
       markedForReview.remove(questionId);
       markedForReview.refresh();
     }
 
-    String status;
-    if (!hasOptionAnswer && !hasIntegerAnswer && !hasNumericAnswer) {
-      status = "Not Attempted";
-    } else if (studentAnsSet.contains(correctAns)) {
-      status = "Correct";
-    } else if (integerTypeCorrectAns?.toString() == intcorrectAns.toString() &&
-        questionType.contains('integer type')) {
-      status = "Correct";
-    } else if (integerTypeCorrectAns?.toString() != intcorrectAns.toString() &&
-        questionType.contains('integer type')) {
-      status = "Incorrect";
-    } else if (questionType.contains('numeric range') &&
-        _numericEqualsForStatus(
-          numericRangeCorrectAns,
-          numericRangeCorrectAnss.toString(),
-        )) {
-      status = "Correct";
-    } else if (questionType.contains('numeric range') &&
-        !_numericEqualsForStatus(
-          numericRangeCorrectAns,
-          numericRangeCorrectAnss.toString(),
-        )) {
-      status = "Incorrect";
-    } else {
-      status = "Incorrect";
-    }
-
     _saveCurrentQuestionTime();
-
-    // Use msubmitquestion for MCQ multi-select
-    if (questionType.contains('m.c.q')) {
-      // Prepare ChoiceOptions for A/B/C/D
-      final options = q['options'] as List<dynamic>? ?? [];
-      String choiceA = studentAnsSet.contains('A') ? 'A' : '';
-      String choiceB = studentAnsSet.contains('B') ? 'B' : '';
-      String choiceC = studentAnsSet.contains('C') ? 'C' : '';
-      String choiceD = studentAnsSet.contains('D') ? 'D' : '';
-
-      String correctA = q['optionCorrectA'] ?? '';
-      String correctB = q['optionCorrectB'] ?? '';
-      String correctC = q['optionCorrectC'] ?? '';
-      String correctD = q['optionCorrectD'] ?? '';
-
-      String statusA = choiceA.isNotEmpty
-          ? (choiceA == correctA ? 'Correct' : 'Incorrect')
-          : 'Not Attempted';
-      String statusB = choiceB.isNotEmpty
-          ? (choiceB == correctB ? 'Correct' : 'Incorrect')
-          : 'Not Attempted';
-      String statusC = choiceC.isNotEmpty
-          ? (choiceC == correctC ? 'Correct' : 'Incorrect')
-          : 'Not Attempted';
-      String statusD = choiceD.isNotEmpty
-          ? (choiceD == correctD ? 'Correct' : 'Incorrect')
-          : 'Not Attempted';
-
-      await msubmitquestion(
-        studentidd.value,
-        questionId,
-        batchIdValue.toString(),
-        examtestidd.toString(),
-        choiceA,
-        correctA,
-        statusA,
-        choiceB,
-        correctB,
-        statusB,
-        choiceC,
-        correctC,
-        statusC,
-        choiceD,
-        correctD,
-        statusD,
-        questionTimes[questionId].toString(),
-        questionTestId.value,
-        schoolId.value,
-        studentid.value,
-      );
-
-      print(
-        "📤 MCQ UPLOADED → Q:$questionId | A:$choiceA/$statusA | B:$choiceB/$statusB | C:$choiceC/$statusC | D:$choiceD/$statusD | Student=${studentidd.value} | examtestid:$examtestidd | time:${questionTimes[questionId] ?? 0}",
-      );
-    } else {
-      // Other types: use submitquestion
-      await submitquestion(
-        studentidd.value,
-        questionId,
-        batchIdValue.toString(),
-        examtestidd.toString(),
-        studentAns,
-        correctAns,
-        status,
-        schoolId.value,
-        questionTimes[questionId].toString(),
-        _normalizeNumericForApi(numericRangeCorrectAns),
-        intcorrectAns,
-        integerTypeCorrectAns,
-      );
-
-      print(
-        "📤 UPLOADED → Q:$questionId | SA:$studentAns || NSA : $numericRangeCorrectAns | | ISA : $integerTypeCorrectAns | CA:$correctAns | | ICA : $intcorrectAns | | NCA : $numericRangeCorrectAnss | Status:$status | Student=${studentidd.value} | examtestid:$examtestidd | time:${questionTimes[questionId] ?? 0}",
-      );
-    }
 
     // navigation: find next unattempted question across all types and subjects
     final allSubjects = subjects;
@@ -1420,26 +1370,6 @@ class Testscreencontroller extends GetxController {
     int subjectIdx = subjects.indexOf(selectedSubject.value);
     int typeIdx = questionTypes.indexOf(selectedQuestionType.value);
     int qIdx = currentIndex.value;
-
-    // Helper to check if a question is attempted (answered OR marked for review)
-    bool isAttempted(Map<String, dynamic> q) {
-      final qid = q['id'] as int;
-      final type = (q['questionType'] ?? '').toString().toLowerCase();
-      final isMarked = markedForReview.contains(qid);
-      if (type.contains('integer type')) {
-        final intAns = selectedIntegerAnswers[qid];
-        return (intAns != null && intAns.toString().isNotEmpty) || isMarked;
-      } else if (type.contains('numeric range')) {
-        final numAns = getNumericRangeAnswer(
-          qid,
-          subject: selectedSubject.value,
-        );
-        return numAns.trim().isNotEmpty || isMarked;
-      } else {
-        final ansSet = selectedAnswers[qid] ?? <String>{};
-        return ansSet.isNotEmpty || isMarked;
-      }
-    }
 
     // Always advance to the next question, even if not attempted
     final curSubject = selectedSubject.value;
@@ -1489,37 +1419,78 @@ class Testscreencontroller extends GetxController {
     }
     // If all done, stay on last question
     // If all done, show submit prompt
-    if (context != null) {
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.info,
-        animType: AnimType.scale,
-        title: "You have reached the end of the test.!",
-        desc:
-                       "If you want to try the unattempted questions (if any), visit the relevant subject and section before submitting.If you want to finish and exit the test, click on Submit Test.",
-
-        btnCancelText: "Cancel",
-        btnCancelOnPress: () {},
-      ).show();
-    }
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.info,
+      animType: AnimType.scale,
+      title: "You have reached the end of the test.!",
+      desc:
+          "If you want to try the unattempted questions (if any), visit the relevant subject and section before submitting.If you want to finish and exit the test, click on Submit Test.",
+      btnCancelText: "Cancel",
+      btnCancelOnPress: () {},
+    ).show();
   }
 
   // ===================================================
   // SYNC ANSWERS ONLINE
   // ===================================================
-  Future<void> syncAnswersOnline() async {
+  Future<void> syncAnswersOnline({
+    bool includeUnattempted = false,
+    void Function(int processed, int total)? onProgress,
+  }) async {
     var box = await Hive.openBox('offline_answers_${testId.value}');
-    if (box.isEmpty) {
+    var questionBox = await Hive.openBox('offlineexam${testId.value}');
+
+    // Build entries by checking memory first, then offline.
+    // Only include '--' defaults when explicitly requested (final submit).
+    final pendingEntries = <dynamic, dynamic>{};
+
+    for (final subjectList in allQuestions.values) {
+      for (final q in subjectList) {
+        final qid = q['id'] as int;
+        final subject =
+            (q['subject'] ?? q['subjectName'] ?? selectedSubject.value)
+                .toString();
+
+        // Priority 1: Check in-memory answers (latest selections)
+        final memoryAnswer = _resolveAnswerFromMemory(qid, subject);
+
+        if (memoryAnswer != null && memoryAnswer.isNotEmpty) {
+          pendingEntries[qid] = memoryAnswer;
+          continue;
+        }
+
+        // Priority 2: Check offline box
+        final offlineAnswer = box.get(qid)?.toString().trim();
+        if (offlineAnswer != null && offlineAnswer.isNotEmpty) {
+          pendingEntries[qid] = offlineAnswer;
+          continue;
+        }
+
+        if (includeUnattempted) {
+          // Final submit expects every question to be sent.
+          pendingEntries[qid] = '--';
+        }
+      }
+    }
+
+    if (pendingEntries.isEmpty) {
+      onProgress?.call(0, 0);
       print("🔁 No offline answers to sync");
       return;
     }
 
-    var questionBox = await Hive.openBox('offlineexam${testId.value}');
-    final entries = box.toMap().entries.toList();
+    final entries = pendingEntries.entries.toList();
+    final totalEntries = entries.length;
+    int processedEntries = 0;
+    onProgress?.call(processedEntries, totalEntries);
 
     for (var entry in entries) {
       final rawKey = entry.key;
       final studentAnsRaw = entry.value?.toString() ?? "";
+      final normalizedStudentAnsRaw = studentAnsRaw.trim();
+      final isUnattemptedMarker =
+          normalizedStudentAnsRaw.isEmpty || normalizedStudentAnsRaw == '--';
       int? questionId;
       if (rawKey is int) {
         questionId = rawKey;
@@ -1552,23 +1523,33 @@ class Testscreencontroller extends GetxController {
 
       // Prepare answer values
       Set<String> studentAnsSet = {};
-      if (studentAnsRaw.isNotEmpty) {
-        studentAnsSet = studentAnsRaw.split(',').toSet();
+      if (!isUnattemptedMarker) {
+        studentAnsSet = normalizedStudentAnsRaw.split(',').toSet();
       }
       String studentAns = studentAnsSet.isNotEmpty
           ? studentAnsSet.join(',')
-          : "";
+          : '--';
 
       var integerTypeCorrectAns;
       var numericRangeCorrectAns;
       if (questionType.contains('integer type')) {
-        integerTypeCorrectAns = selectedIntegerAnswers[questionId] ?? null;
-        studentAns = "";
+        final fromState = selectedIntegerAnswers[questionId]?.toString() ?? '';
+        final fromOffline = isUnattemptedMarker ? '' : normalizedStudentAnsRaw;
+        final resolved = fromState.isNotEmpty ? fromState : fromOffline;
+        integerTypeCorrectAns = resolved.isNotEmpty ? resolved : null;
+        studentAns = '--';
       }
-      if (questionType.contains('numeric range')) {
-        numericRangeCorrectAns = _normalizeNumericForApi(studentAnsRaw);
-        studentAns = "";
+      if (_isNumericRangeType(questionType)) {
+        numericRangeCorrectAns = isUnattemptedMarker
+            ? null
+            : _normalizeNumericForApi(normalizedStudentAnsRaw);
+        studentAns = '--';
       }
+
+      final isMcqType =
+          questionType.contains('m.c.q.') ||
+          questionType.contains('m.c.q') ||
+          questionType.contains('mcq');
 
       String status;
       if (studentAnsSet.isEmpty &&
@@ -1588,50 +1569,127 @@ class Testscreencontroller extends GetxController {
           questionType.contains('integer type')) {
         status = "Incorrect";
       } else if (numericRangeCorrectAns != null &&
-          questionType.contains('numeric range') &&
+          _isNumericRangeType(questionType) &&
           _numericEqualsForStatus(
             numericRangeCorrectAns.toString(),
             numericRangeCorrectAnss.toString(),
           )) {
         status = "Correct";
       } else if (numericRangeCorrectAns != null &&
-          questionType.contains('numeric range') &&
+          _isNumericRangeType(questionType) &&
           !_numericEqualsForStatus(
             numericRangeCorrectAns.toString(),
             numericRangeCorrectAnss.toString(),
           )) {
-        status = "InCorrect";
+        status = "Incorrect";
       } else {
         status = "Incorrect";
       }
 
       try {
-        final success = await submitquestion(
-          studentidd.value,
-          questionId ?? rawKey,
-          batchIdValue.toString(),
-          examtestidd.toString(),
-          studentAns,
-          correctAns,
-          status,
-          schoolId.value,
-          questionTimes[questionId].toString(),
-          numericRangeCorrectAns?.toString() ?? "",
-          intcorrectAns,
-          integerTypeCorrectAns,
-        );
+        bool success;
+        if (isMcqType) {
+          final normalizedAnsSet = studentAnsSet
+              .map((e) => e.toString().trim().toUpperCase())
+              .where((e) => e == 'A' || e == 'B' || e == 'C' || e == 'D')
+              .toSet();
+
+          final choiceA = normalizedAnsSet.contains('A')
+              ? 'A'
+              : (isUnattemptedMarker ? '--' : '');
+          final choiceB = normalizedAnsSet.contains('B')
+              ? 'B'
+              : (isUnattemptedMarker ? '--' : '');
+          final choiceC = normalizedAnsSet.contains('C')
+              ? 'C'
+              : (isUnattemptedMarker ? '--' : '');
+          final choiceD = normalizedAnsSet.contains('D')
+              ? 'D'
+              : (isUnattemptedMarker ? '--' : '');
+
+          final correctA = (question?.optionCorrectA ?? '').toString();
+          final correctB = (question?.optionCorrectB ?? '').toString();
+          final correctC = (question?.optionCorrectC ?? '').toString();
+          final correctD = (question?.optionCorrectD ?? '').toString();
+
+          bool _isAttemptedChoice(String choice) =>
+              choice.isNotEmpty && choice != '--';
+
+          final statusA = _isAttemptedChoice(choiceA)
+              ? (choiceA == correctA ? 'Correct' : 'Incorrect')
+              : 'Not Attempted';
+          final statusB = _isAttemptedChoice(choiceB)
+              ? (choiceB == correctB ? 'Correct' : 'Incorrect')
+              : 'Not Attempted';
+          final statusC = _isAttemptedChoice(choiceC)
+              ? (choiceC == correctC ? 'Correct' : 'Incorrect')
+              : 'Not Attempted';
+          final statusD = _isAttemptedChoice(choiceD)
+              ? (choiceD == correctD ? 'Correct' : 'Incorrect')
+              : 'Not Attempted';
+
+          success = await msubmitquestion(
+            studentidd.value,
+            questionId ?? rawKey,
+            batchIdValue.toString(),
+            examtestidd.toString(),
+            choiceA,
+            correctA,
+            statusA,
+            choiceB,
+            correctB,
+            statusB,
+            choiceC,
+            correctC,
+            statusC,
+            choiceD,
+            correctD,
+            statusD,
+            questionTimes[questionId].toString(),
+            questionTestId.value,
+            schoolId.value,
+            studentid.value,
+          );
+        } else {
+          success = await submitquestion(
+            studentidd.value,
+            questionId ?? rawKey,
+            batchIdValue.toString(),
+            examtestidd.toString(),
+            studentAns,
+            correctAns,
+            status,
+            schoolId.value,
+            questionTimes[questionId].toString(),
+            numericRangeCorrectAns?.toString() ?? "",
+            intcorrectAns,
+            integerTypeCorrectAns,
+          );
+        }
 
         if (success) {
           await box.delete(entry.key);
+          if (questionId != null) {
+            _forceNotAttemptedSyncQuestions.remove(questionId);
+          }
           print("✅ Synced Q:${questionId ?? rawKey}");
-          print(
-            "📤 UPLOADED → Q:${questionId ?? rawKey} | SA:$studentAns || NSA : ${numericRangeCorrectAns?.toString() ?? ""} | | ISA : ${integerTypeCorrectAns?.toString() ?? ""} | CA:$correctAns | | ICA : $intcorrectAns | | NCA : $numericRangeCorrectAnss | Status:$status | Student=${studentidd.value} | examtestid:$examtestidd | time:${questionTimes[questionId] ?? 0}",
-          );
+          if (isMcqType) {
+            print(
+              "📤 MCQ UPLOADED → Q:${questionId ?? rawKey} | Student=${studentidd.value} | examtestid:$examtestidd | time:${questionTimes[questionId] ?? 0}",
+            );
+          } else {
+            print(
+              "📤 UPLOADED → Q:${questionId ?? rawKey} | SA:$studentAns || NSA : ${numericRangeCorrectAns?.toString() ?? ""} | | ISA : ${integerTypeCorrectAns?.toString() ?? ""} | CA:$correctAns | | ICA : $intcorrectAns | | NCA : $numericRangeCorrectAnss | Status:$status | Student=${studentidd.value} | examtestid:$examtestidd | time:${questionTimes[questionId] ?? 0}",
+            );
+          }
         } else {
           print("❌ Failed to sync Q:${questionId ?? rawKey}, will retry later");
         }
       } catch (e) {
         print("❌ Exception while syncing Q:${questionId ?? rawKey}: $e");
+      } finally {
+        processedEntries++;
+        onProgress?.call(processedEntries, totalEntries);
       }
     }
 
@@ -1679,8 +1737,6 @@ class Testscreencontroller extends GetxController {
           .toList();
     }
 
-    final curQuestions = questionsForType(curSubject, curType);
-
     if (currentIndex.value > 0) {
       _saveCurrentQuestionTime();
       currentIndex.value--;
@@ -1718,7 +1774,6 @@ class Testscreencontroller extends GetxController {
   }
 
   String generateQuestionTestId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final random = Random().nextInt(9999999);
     return "$random";
   }
@@ -1756,7 +1811,7 @@ class Testscreencontroller extends GetxController {
           for (var q in subjectList) {
             if (q['id'] == qidInt) {
               final type = (q['questionType'] ?? '').toString().toLowerCase();
-              if (type.contains('numeric range')) {
+              if (_isNumericRangeType(type)) {
                 isNumericRange = true;
               }
               break;
@@ -1791,7 +1846,7 @@ class Testscreencontroller extends GetxController {
         "IntegerTypeCorrecrt": IntegerTypeCorrecrtAns.toString(),
       };
 
-      final response = await http.post(
+      final response = await Https.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
@@ -1868,7 +1923,7 @@ class Testscreencontroller extends GetxController {
         "CreateBy": CreateBy,
       };
 
-      final response = await http.post(
+      final response = await Https.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
@@ -1918,7 +1973,7 @@ class Testscreencontroller extends GetxController {
     var createdby,
   ) async {
     try {
-      final response = await http.post(
+      final response = await Https.post(
         Uri.parse(Adminurl.reportquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
@@ -2120,7 +2175,7 @@ class Testscreencontroller extends GetxController {
       return v != null && v != -1;
     }
 
-    if (type.contains('numeric range')) {
+    if (_isNumericRangeType(type)) {
       return hasNumericRangeAnswer(id, subject: selectedSubject.value);
     }
 
@@ -2132,6 +2187,9 @@ class Testscreencontroller extends GetxController {
   Future<void> submitTest(BuildContext? context) async {
     if (_isSubmittingTest) return;
     _isSubmittingTest = true;
+    submitProgressPercent.value = 0.0;
+    submitUploadedCount.value = 0;
+    submitTotalToUpload.value = 0;
     // Commit (not discard) the current question's answer so that typing an answer
     // and pressing Submit directly (without Save & Next) still registers it.
     final _curList = currentQuestions;
@@ -2144,8 +2202,13 @@ class Testscreencontroller extends GetxController {
       );
     }
 
+    void updateSubmitProgress(double value) {
+      submitProgressPercent.value = value.clamp(0.0, 100.0);
+    }
+
     try {
       final reviewData = <Map<String, dynamic>>[];
+      updateSubmitProgress(10.0);
 
       int attemptedCount = 0;
       int reviewedCount = 0;
@@ -2160,7 +2223,7 @@ class Testscreencontroller extends GetxController {
               .toString()
               .toLowerCase();
           final numericAnswer = getNumericRangeAnswer(id, subject: subject);
-          final bool isAnswered = questionType.contains('numeric range')
+          final bool isAnswered = _isNumericRangeType(questionType)
               ? numericAnswer.isNotEmpty
               : (ansSet.isNotEmpty || selectedIntegerAnswers.containsKey(id));
           final bool isMarked = markedForReview.contains(id);
@@ -2193,22 +2256,17 @@ class Testscreencontroller extends GetxController {
           List<Map<String, dynamic>> optionDetails = [];
           double questionObtainedMarks = 0;
 
-          // m.c.q. Multi-select (multiple correct)
-          if (questionType.contains('m.c.q.')) {
+          // MCQ multi-select (multiple correct)
+          final bool isMcqType =
+              questionType.contains('m.c.q.') ||
+              questionType.contains('m.c.q') ||
+              questionType.contains('mcq');
+          if (isMcqType) {
             final options = (q['options'] as List<dynamic>?) ?? [];
             final normalizedAnsSet = ansSet
                 .map((k) => k.toString().trim().toUpperCase())
                 .where((k) => k.isNotEmpty)
                 .toSet();
-
-            bool isMarkedCorrect(dynamic raw, String key) {
-              final value = raw.toString().trim().toUpperCase();
-              if (value == key) return true;
-              return value == 'TRUE' ||
-                  value == 'YES' ||
-                  value == 'Y' ||
-                  value == '1';
-            }
 
             final correctKeys = <String>{};
             final ocA = (q['optionCorrectA'] ?? '')
@@ -2228,55 +2286,123 @@ class Testscreencontroller extends GetxController {
                 .trim()
                 .toUpperCase();
 
-            if (isMarkedCorrect(ocA, 'A')) correctKeys.add('A');
-            if (isMarkedCorrect(ocB, 'B')) correctKeys.add('B');
-            if (isMarkedCorrect(ocC, 'C')) correctKeys.add('C');
-            if (isMarkedCorrect(ocD, 'D')) correctKeys.add('D');
+            String _normText(String v) {
+              return v.toUpperCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+            }
 
-            // Fallback (if backend ever sends only one correct in q['correctOption'])
-            if (correctKeys.isEmpty) {
-              final rawCorrect = (q['correctOption'] ?? '')
-                  .toString()
-                  .trim()
-                  .toUpperCase();
-              if (rawCorrect.contains(',')) {
-                final tokens = rawCorrect
-                    .split(',')
-                    .map((e) => e.trim().toUpperCase())
-                    .where((e) => e.isNotEmpty);
-                correctKeys.addAll(tokens);
-              } else {
-                if (rawCorrect.isNotEmpty) correctKeys.add(rawCorrect);
+            Iterable<String> _extractKeysFromRaw(dynamic raw) {
+              final v = (raw ?? '').toString().trim().toUpperCase();
+              if (v.isEmpty || v == 'NULL') return const <String>[];
+              return v
+                  .split(RegExp(r'[,/|]'))
+                  .map((e) => e.trim().toUpperCase())
+                  .where((e) => e == 'A' || e == 'B' || e == 'C' || e == 'D');
+            }
+
+            void _extractKeysFromTextMatch(dynamic raw) {
+              final rawStr = (raw ?? '').toString().trim();
+              if (rawStr.isEmpty || rawStr.toUpperCase() == 'NULL') return;
+
+              final normalizedRaw = _normText(rawStr);
+              final tokens = rawStr
+                  .split(RegExp(r'[/|,]'))
+                  .map((e) => _normText(e))
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+
+              for (final opt in options) {
+                final key = (opt['key'] ?? '').toString().trim().toUpperCase();
+                if (key.isEmpty) continue;
+                final value = _normText((opt['value'] ?? '').toString());
+                if (value.isEmpty) continue;
+
+                // Exact full match
+                if (normalizedRaw == value) {
+                  correctKeys.add(key);
+                  continue;
+                }
+
+                // Token-wise match for strings like "opt1 / opt2 / opt3"
+                if (tokens.any((t) => t == value)) {
+                  correctKeys.add(key);
+                }
               }
             }
 
+            // 1) Collect explicit key values from all correct fields.
+            correctKeys.addAll(_extractKeysFromRaw(ocA));
+            correctKeys.addAll(_extractKeysFromRaw(ocB));
+            correctKeys.addAll(_extractKeysFromRaw(ocC));
+            correctKeys.addAll(_extractKeysFromRaw(ocD));
+            correctKeys.addAll(_extractKeysFromRaw(q['correctOption']));
+
+            // 1b) Collect by matching text content against option values.
+            _extractKeysFromTextMatch(ocA);
+            _extractKeysFromTextMatch(ocB);
+            _extractKeysFromTextMatch(ocC);
+            _extractKeysFromTextMatch(ocD);
+            _extractKeysFromTextMatch(q['correctOption']);
+
+            // 2) Support boolean-style flags per option slot (true/yes/1).
+            bool _isTrueFlag(String value) {
+              return value == 'TRUE' ||
+                  value == 'YES' ||
+                  value == 'Y' ||
+                  value == '1';
+            }
+
+            if (_isTrueFlag(ocA)) correctKeys.add('A');
+            if (_isTrueFlag(ocB)) correctKeys.add('B');
+            if (_isTrueFlag(ocC)) correctKeys.add('C');
+            if (_isTrueFlag(ocD)) correctKeys.add('D');
+
             mcqTotalCorrect = correctKeys.length;
 
-            mcqCorrectCount = normalizedAnsSet
-                .where((k) => correctKeys.contains(k))
+            final bool selectedA = normalizedAnsSet.contains('A');
+            final bool selectedB = normalizedAnsSet.contains('B');
+            final bool selectedC = normalizedAnsSet.contains('C');
+            final bool selectedD = normalizedAnsSet.contains('D');
+
+            final statusMap = <String, String>{
+              'A': !selectedA
+                  ? 'Not Attempted'
+                  : (ocA == 'A' ? 'Correct' : 'Incorrect'),
+              'B': !selectedB
+                  ? 'Not Attempted'
+                  : (ocB == 'B' ? 'Correct' : 'Incorrect'),
+              'C': !selectedC
+                  ? 'Not Attempted'
+                  : (ocC == 'C' ? 'Correct' : 'Incorrect'),
+              'D': !selectedD
+                  ? 'Not Attempted'
+                  : (ocD == 'D' ? 'Correct' : 'Incorrect'),
+            };
+
+            mcqCorrectCount = statusMap.values
+                .where((s) => s == 'Correct')
                 .length;
-            mcqWrongSelectedCount = normalizedAnsSet
-                .where((k) => !correctKeys.contains(k))
+            mcqWrongSelectedCount = statusMap.values
+                .where((s) => s == 'Incorrect')
                 .length;
+            final int mcqSelectedCount =
+                mcqCorrectCount + mcqWrongSelectedCount;
 
             final double maxMarks = marks.toDouble();
             final bool exactAllCorrect =
                 mcqTotalCorrect > 0 &&
-                normalizedAnsSet.length == correctKeys.length &&
-                normalizedAnsSet.containsAll(correctKeys);
+                mcqCorrectCount == mcqTotalCorrect &&
+                mcqWrongSelectedCount == 0;
 
-            if (exactAllCorrect) {
+            if (mcqSelectedCount == 0) {
+              questionObtainedMarks = 0;
+            } else if (exactAllCorrect) {
               questionObtainedMarks = maxMarks;
             } else if (mcqWrongSelectedCount > 0) {
-              if (negative) {
-                // Any wrong option in MCQ gets only one negative penalty.
-                questionObtainedMarks = -negativeMarksPerWrong;
-              } else {
-                questionObtainedMarks = 0.0;
-              }
+              // MCQ rule: if any selected option is incorrect,
+              // award only one negative penalty (no positive marks).
+              questionObtainedMarks = -negativeMarksPerWrong;
             } else {
-              // Selected options are a proper subset of the correct set.
-              // Partial rule: each correctly selected option gives 1 mark.
+              // Partial for MCQ: +1 mark for each correctly selected option.
               questionObtainedMarks = mcqCorrectCount.toDouble();
               if (questionObtainedMarks > maxMarks) {
                 questionObtainedMarks = maxMarks;
@@ -2296,6 +2422,7 @@ class Testscreencontroller extends GetxController {
                 'value': value,
                 'selected': selected,
                 'isCorrect': isOptionCorrect,
+                'status': statusMap[key] ?? 'Not Attempted',
               };
             }).toList();
 
@@ -2341,14 +2468,15 @@ class Testscreencontroller extends GetxController {
             isCorrect = studentInt == correctInt && studentInt != "—";
           }
           // Numeric range
-          else if (questionType.contains('numeric range')) {
+          else if (_isNumericRangeType(questionType)) {
             final correctNum = (q['numericRangeCorrectAns'] ?? "").toString();
             final studentNum = numericAnswer.isNotEmpty ? numericAnswer : "—";
             correctAnsDisplay = correctNum;
             studentAnsDisplay = studentNum;
             // Use _numericEqualsForStatus so both single values ("16") and
             // range values ("14-18") are handled correctly.
-            isCorrect = studentNum != "—" &&
+            isCorrect =
+                studentNum != "—" &&
                 _numericEqualsForStatus(studentNum, correctNum);
           }
           // Other types
@@ -2359,20 +2487,15 @@ class Testscreencontroller extends GetxController {
           }
 
           final bool isWrong = isAnswered && !isCorrect;
-          final bool isNumericRangeQuestion = questionType.contains(
-            'numeric range',
-          );
-          double questionObtainedForReview = questionType.contains('m.c.q.')
+          double questionObtainedForReview = isMcqType
               ? questionObtainedMarks
               : (isCorrect
                     ? marks.toDouble()
-                    : (isWrong && negative && !isNumericRangeQuestion
-                          ? -negativeMarksPerWrong
-                          : 0.0));
-          if (!questionType.contains('m.c.q.')) {
+                    : (isWrong && negative ? -negativeMarksPerWrong : 0.0));
+          if (!isMcqType) {
             if (isCorrect) {
               obtainedMarks += marks;
-            } else if (isWrong && negative && !isNumericRangeQuestion) {
+            } else if (isWrong && negative) {
               obtainedMarks -= negativeMarksPerWrong;
             }
           }
@@ -2400,14 +2523,14 @@ class Testscreencontroller extends GetxController {
             'mcqTotalCorrect': mcqTotalCorrect,
             'mcqWrongSelectedCount': mcqWrongSelectedCount,
             'isMcqPartial':
-                questionType.contains('m.c.q.') &&
-                !isCorrect &&
-                questionObtainedMarks > 0,
+                isMcqType && !isCorrect && questionObtainedMarks > 0,
           });
         }
       });
 
       final total = reviewData.length;
+
+      updateSubmitProgress(25.0);
 
       // Calculate not attempted questions (total questions - attempted - marked for review)
       final notAttemptedCount = total - attemptedCount - reviewedCount;
@@ -2416,30 +2539,100 @@ class Testscreencontroller extends GetxController {
       final conn = await Connectivity().checkConnectivity();
 
       final dialogContext = Get.overlayContext ?? Get.context ?? context;
-      final canShowLoader = dialogContext != null;
-
-      if (canShowLoader) {
-        showDialog(
-          context: dialogContext!,
-          barrierDismissible: false,
-          builder: (_) => Center(
-            child: LoadingAnimationWidget.newtonCradle(
-              color: Colors.red,
-              size: 80,
+      if (dialogContext != null) {
+        Get.dialog(
+          Obx(
+            () => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.cloud_upload_rounded, size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Submitting Test',
+                          style: TextStyle(
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Uploading answers to server. Please wait...',
+                      style: TextStyle(fontSize: 13.sp, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 14),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: submitProgressPercent.value / 100,
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${submitProgressPercent.value.toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${submitUploadedCount.value}/${submitTotalToUpload.value} uploaded',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
+          barrierDismissible: false,
         );
       }
 
       if (conn == ConnectivityResult.none) {
         try {
+          updateSubmitProgress(60.0);
           var box = await Hive.openBox('offline_answers_${testId.value}');
-          for (var e in selectedAnswers.entries) {
-            await box.put(e.key, e.value);
-          }
-          print(
-            "💾 No internet — saved ${selectedAnswers.length} answers offline",
+          final totalToSave = allQuestions.values.fold<int>(
+            0,
+            (sum, list) => sum + list.length,
           );
+          submitTotalToUpload.value = totalToSave;
+          int saved = 0;
+          for (final subjectList in allQuestions.values) {
+            for (final q in subjectList) {
+              final qid = q['id'] as int;
+              final subject =
+                  (q['subject'] ?? q['subjectName'] ?? selectedSubject.value)
+                      .toString();
+              final answer = _resolveAnswerFromMemory(qid, subject);
+              await box.put(qid, answer.isNotEmpty ? answer : '--');
+              saved++;
+              submitUploadedCount.value = saved;
+              if (totalToSave > 0) {
+                updateSubmitProgress(60 + (saved / totalToSave) * 38);
+              }
+            }
+          }
+          print("💾 No internet — saved all answers offline");
           Get.snackbar(
             "Offline",
             "No internet. Answers saved and will sync when online",
@@ -2448,24 +2641,39 @@ class Testscreencontroller extends GetxController {
           print("❌ Failed to save answers offline before submit: $e");
         }
       } else {
-        await syncAnswersOnline();
+        updateSubmitProgress(35.0);
+        await syncAnswersOnline(
+          includeUnattempted: true,
+          onProgress: (processed, total) {
+            submitUploadedCount.value = processed;
+            submitTotalToUpload.value = total;
+            if (total <= 0) {
+              updateSubmitProgress(98.0);
+              return;
+            }
+            final uploadPercent = (processed / total) * 63.0;
+            updateSubmitProgress(35.0 + uploadPercent);
+          },
+        );
       }
+
+      updateSubmitProgress(100.0);
 
       if (Get.isDialogOpen == true) {
         Get.back();
       }
 
-      // Get.offAll(
-      //   () => ResultScreen(
-      //     total: total,
-      //     attempted: attemptedCount,
-      //     reviewed: reviewedCount,
-      //     notAttempted: notAttemptedCount,
-      //     totalMarks: totalMarks,
-      //     obtainedMarks: obtainedMarks,
-      //     questionReviewData: reviewData,
-      //   ),
-      // );
+      Get.offAll(
+        () => ResultScreen(
+          total: total,
+          attempted: attemptedCount,
+          reviewed: reviewedCount,
+          notAttempted: notAttemptedCount,
+          totalMarks: totalMarks,
+          obtainedMarks: obtainedMarks.toInt(),
+          questionReviewData: reviewData,
+        ),
+      );
 
       // Show snackbar immediately after submit
       Get.snackbar(

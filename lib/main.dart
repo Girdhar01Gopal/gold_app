@@ -54,7 +54,7 @@ class AdminApp extends StatelessWidget {
       minTextAdapt: true,
       builder: (_, __) {
         return GetMaterialApp(
-          title: 'Meritova',
+          title: 'Abhyasa',
           debugShowCheckedModeBanner: false,
           getPages: AdminRoutes.routes,
           initialRoute: AdminRoutes.ADMIN_SPLASH,

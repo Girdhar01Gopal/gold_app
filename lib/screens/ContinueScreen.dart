@@ -21,7 +21,17 @@ class ContinueScreen extends StatefulWidget {
 
 class _ContinueScreenState extends State<ContinueScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  static const List<String> _examOrder = ['Board', 'JEE Main', 'JEE Advanced'];
+  static const List<String> _examOrder = ['CBSE', 'JEE M', 'JEE A'];
+  static const List<_QuestionModeOption> _questionModeOptions = [
+    _QuestionModeOption(label: 'Average time per Question 2 min', value: 'average'),
+    _QuestionModeOption(label: 'Average time per Question 3 min', value: 'medium'),
+    _QuestionModeOption(
+      label: 'Average time per Question 5 min',
+      value: 'hard',
+      color: ColorPainter.secondaryColor,
+    ),
+    _QuestionModeOption(label: 'No Time limit', value: 'no_limit', color: Color.fromARGB(255, 226, 22, 121),),
+  ];
 
   /// examType -> chapterName -> AssignmentChapters
   final Map<String, Map<String, AssignmentChapters>> allAssignments = {};
@@ -149,13 +159,14 @@ class _ContinueScreenState extends State<ContinueScreen> {
       if (k == t ||
           k.contains(t) ||
           t.contains(k) ||
+          (target == 'CBSE' && k.contains('board')) ||
           (target == 'Board' && k.contains('board')) ||
-          (target == 'JEE Main' &&
+          (target == 'JEE M' &&
               (k.contains('jeemain') ||
                   k.contains('jee(m)') ||
                   k.contains('jeem') ||
                   k.contains('main'))) ||
-          (target == 'JEE Advanced' &&
+          (target == 'JEE A' &&
               (k.contains('jeeadvanced') ||
                   k.contains('jee(a)') ||
                   k.contains('jeea') ||
@@ -199,22 +210,63 @@ class _ContinueScreenState extends State<ContinueScreen> {
     return [round1, round2, round3];
   }
 
-  void _openAssignment(Assignment assignment, int index) {
-    
+  Future<void> _openAssignment(Assignment assignment, int index) async {
+    final selectedMode = await Get.dialog<String>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Set time limit to solve assignment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _questionModeOptions
+              .map(
+                (option) => Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(result: option.value),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: option.color ?? primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(option.label,style: TextStyle(fontSize: 14),),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+
+    if (selectedMode == null) return;
 
     Get.offAllNamed(
       AdminRoutes.testscreen,
-      arguments: {'testId': "85228368", 'passcode': "8689512515"},
+      arguments: {
+        'testId': "83245522",
+        'passcode': "81360757188",
+        'questionMode': selectedMode,
+      },
     );
   }
 
   Color _examTone(String examLabel) {
     switch (examLabel) {
+      case 'CBSE':
       case 'Board':
         return primary;
-      case 'JEE Main':
+      case 'JEE M':
         return const Color(0xFF1565C0);
-      case 'JEE Advanced':
+      case 'JEE A':
         return accent;
       default:
         return primary;
@@ -310,7 +362,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
         child: Row(
           children: [
             _cell(
-              width: 80.w,
+              width: 60.w,
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
@@ -330,17 +382,17 @@ class _ContinueScreenState extends State<ContinueScreen> {
             ),
             _divider(dividerColor),
             _cell(
-              width: 80.w,
+              width: 60.w,
               child: _buildRoundCell(rounds[0], tone, isDarkMode),
             ),
             _divider(dividerColor),
             _cell(
-              width: 80.w,
+              width: 60.w,
               child: _buildRoundCell(rounds[1], tone, isDarkMode),
             ),
             _divider(dividerColor),
             _cell(
-              width: 80.w,
+              width: 60.w,
               child: _buildRoundCell(rounds[2], tone, isDarkMode),
             ),
           ],
@@ -384,28 +436,23 @@ class _ContinueScreenState extends State<ContinueScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? Colors.white.withOpacity(0.04)
-                  : primary.withOpacity(0.05),
-            ),
-            child: Text(
-              topicName,
-              style: TextStyle(
-                color: isDarkMode ? Colors.white : const Color(0xFF13305C),
-                fontSize: 7.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
           IntrinsicHeight(
             child: Row(
               children: [
                 _cell(
-                  width: 80.w,
+                  width: 60.w,
+                  child: Text(
+                    'Topic',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                _cell(
+                  width: 60.w,
                   child: Text(
                     'Exam',
                     style: TextStyle(
@@ -417,9 +464,9 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 ),
                 _divider(dividerColor),
                 _cell(
-                  width: 80.w,
+                  width: 60.w,
                   child: Text(
-                    'Round 1',
+                    'Scholar',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white70 : Colors.black54,
                       fontSize: 8.sp,
@@ -429,9 +476,9 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 ),
                 _divider(dividerColor),
                 _cell(
-                  width: 80.w,
+                  width: 60.w,
                   child: Text(
-                    'Round 2',
+                    'Expert',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white70 : Colors.black54,
                       fontSize: 8.sp,
@@ -441,9 +488,9 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 ),
                 _divider(dividerColor),
                 _cell(
-                  width: 80.w,
+                  width: 60.w,
                   child: Text(
-                    'Round 3',
+                    'Champion',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white70 : Colors.black54,
                       fontSize: 8.sp,
@@ -455,16 +502,48 @@ class _ContinueScreenState extends State<ContinueScreen> {
             ),
           ),
           Container(height: 1, color: dividerColor),
-          Column(
-            children: List.generate(_examOrder.length, (index) {
-              return _buildExamRow(
-                examLabel: _examOrder[index],
-                chapterName: chapterName,
-                topicName: topicName,
-                isDarkMode: isDarkMode,
-                showTopBorder: index != 0,
-              );
-            }),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                _cell(
+                  width: 60.w,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.white.withOpacity(0.04)
+                          : primary.withOpacity(0.05),
+                    ),
+                    child: Text(
+                      topicName,
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF13305C),
+                        fontSize: 4.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                Column(
+                  children: List.generate(_examOrder.length, (index) {
+                    return _buildExamRow(
+                      examLabel: _examOrder[index],
+                      chapterName: chapterName,
+                      topicName: topicName,
+                      isDarkMode: isDarkMode,
+                      showTopBorder: index != 0,
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -680,8 +759,16 @@ class _ContinueScreenState extends State<ContinueScreen> {
   }
 }
 
+class _QuestionModeOption {
+  const _QuestionModeOption({required this.label, required this.value, this.color});
+
+  final String label;
+  final String value;
+  final Color? color;
+}
+
 class ColorPainter {
-  static const Color primaryColor = Color(0xFF0D47A1);
+  static const Color primaryColor = Color(0xFFA10D52);
   static const Color secondaryColor = Color(0xFFFFA000);
   static const Color accentColor = Color(0xFF4CA1AF);
 

@@ -13,11 +13,63 @@ class Testscreenview extends StatefulWidget {
 
 class _TestscreenviewState extends State<Testscreenview> {
   late final Testscreencontroller controller;
+  static const Color _primaryColor = Color(0xFFA10D52);
+  static const Color _secondaryColor = Color(0xFFFFA000);
+  static const Color _accentColor = Color(0xFF4CA1AF);
+  static const Color _deepInk = Color(0xFF2B1A1F);
 
   @override
   void initState() {
     super.initState();
     controller = Get.put(Testscreencontroller());
+  }
+
+  void _openImagePreview(String imageUrl) {
+    final screenSize = MediaQuery.of(context).size;
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (dialogContext) {
+        return Scaffold(
+          backgroundColor: Colors.black87,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 6.0,
+                    boundaryMargin: const EdgeInsets.all(24),
+                    child: SizedBox(
+                      width: screenSize.width * 0.95,
+                      height: screenSize.height * 0.82,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.broken_image,
+                          color: Colors.white,
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildOption({
@@ -41,7 +93,9 @@ class _TestscreenviewState extends State<Testscreenview> {
         .toString()
         .toLowerCase();
     final isMultiSelect =
-        questionType.contains('ismcq') || questionType.contains('M.C.Q');
+        questionType.contains('ismcq') ||
+        questionType.contains('m.c.q') ||
+        questionType.contains('mcq');
     return Obx(() {
       final selectedSet = controller.selectedAnswers[qid] ?? <String>{};
       final selected = selectedSet.contains(optionKey);
@@ -59,12 +113,12 @@ class _TestscreenviewState extends State<Testscreenview> {
           padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 6.h),
           decoration: BoxDecoration(
             color: selected
-                ? (isDarkMode ? Colors.green[800] : Colors.green.shade100)
+                ? (isDarkMode ? Colors.grey[800] : const Color(0xFFF8E3EC))
                 : (isDarkMode ? Colors.grey[850] : Colors.white),
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: selected
-                  ? (isDarkMode ? Colors.green[600]! : const Color(0xFF8B2D28))
+                  ? (isDarkMode ? _secondaryColor : _primaryColor)
                   : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
               width: 1.1,
             ),
@@ -84,16 +138,14 @@ class _TestscreenviewState extends State<Testscreenview> {
                 Checkbox(
                   value: selected,
                   onChanged: (_) => controller.selectOption(qid, optionKey),
-                  activeColor: isDarkMode ? Colors.green[400] : Colors.green,
+                  activeColor: isDarkMode ? _secondaryColor : _secondaryColor,
                 )
               else
                 Radio<String>(
                   value: optionKey,
                   groupValue: selectedSet.isNotEmpty ? selectedSet.first : null,
                   onChanged: (_) => controller.selectOption(qid, optionKey),
-                  activeColor: isDarkMode
-                      ? Colors.grey[400]
-                      : const Color(0xFF8B2D28),
+                  activeColor: isDarkMode ? Colors.grey[400] : _primaryColor,
                 ),
               SizedBox(width: 8.w),
               Expanded(
@@ -113,11 +165,16 @@ class _TestscreenviewState extends State<Testscreenview> {
                     if (optionImg.isNotEmpty)
                       Padding(
                         padding: EdgeInsets.only(top: 8.h),
-                        child: Image.network(
-                          optionImg,
-                          height: 80,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          // onTap: () => _openImagePreview(optionImg),
+                          child: Image.network(
+                            optionImg,
+                            height: 80,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                   ],
@@ -178,9 +235,9 @@ class _TestscreenviewState extends State<Testscreenview> {
               height: 28.w,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.purple,
+                color: _primaryColor,
                 borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(color: Colors.purple, width: 2),
+                border: Border.all(color: _secondaryColor, width: 2),
               ),
               child: Text(
                 displayIndex.toString().padLeft(2, '0'),
@@ -198,7 +255,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                 width: 5.w,
                 height: 5.w,
                 decoration: BoxDecoration(
-                  color: Colors.green,
+                  color: _accentColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
@@ -212,9 +269,9 @@ class _TestscreenviewState extends State<Testscreenview> {
           height: 28.w,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.purple,
+            color: _primaryColor,
             borderRadius: BorderRadius.circular(6.r),
-            border: Border.all(color: Colors.purple, width: 2),
+            border: Border.all(color: _secondaryColor, width: 2),
           ),
           child: Text(
             displayIndex.toString().padLeft(2, '0'),
@@ -231,9 +288,9 @@ class _TestscreenviewState extends State<Testscreenview> {
           height: 28.w,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.green,
+            color: _accentColor,
             borderRadius: BorderRadius.circular(6.r),
-            border: Border.all(color: Colors.green, width: 2),
+            border: Border.all(color: _primaryColor, width: 2),
           ),
           child: Text(
             displayIndex.toString().padLeft(2, '0'),
@@ -250,9 +307,9 @@ class _TestscreenviewState extends State<Testscreenview> {
           height: 28.w,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.orange,
+            color: _secondaryColor,
             borderRadius: BorderRadius.circular(6.r),
-            border: Border.all(color: Colors.orange, width: 2),
+            border: Border.all(color: _primaryColor, width: 2),
           ),
           child: Text(
             displayIndex.toString().padLeft(2, '0'),
@@ -269,14 +326,17 @@ class _TestscreenviewState extends State<Testscreenview> {
           height: 28.w,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300,
+            color: isDarkMode ? Colors.grey.shade700 : const Color(0xFFF3E9C9),
             borderRadius: BorderRadius.circular(6.r),
-            border: Border.all(color: Colors.grey, width: 2),
+            border: Border.all(
+              color: _primaryColor.withOpacity(0.55),
+              width: 2,
+            ),
           ),
           child: Text(
             displayIndex.toString().padLeft(2, '0'),
             style: TextStyle(
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : _deepInk,
               fontWeight: FontWeight.bold,
               fontSize: 4.5.sp,
             ),
@@ -324,7 +384,6 @@ class _TestscreenviewState extends State<Testscreenview> {
 
     if (!badge) return base;
 
-    // Purple circle + smaller green badge (Answered & Marked)
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -334,7 +393,7 @@ class _TestscreenviewState extends State<Testscreenview> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(6.r)),
-            color: Colors.purple,
+            color: _primaryColor,
             shape: BoxShape.rectangle,
           ),
           child: Text(
@@ -353,7 +412,7 @@ class _TestscreenviewState extends State<Testscreenview> {
             width: 5.w,
             height: 5.w,
             decoration: BoxDecoration(
-              color: Colors.green,
+              color: _accentColor,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 1.5),
             ),
@@ -487,9 +546,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                 _legendRow(
                   iconBox: _legendBox(
                     count: notVisited,
-                    color: isDarkMode
-                        ? Colors.grey.shade400
-                        : Colors.grey.shade700,
+                    color: isDarkMode ? Colors.grey.shade400 : _deepInk,
                     outlined: true,
                   ),
                   label: "Not Visited",
@@ -498,21 +555,24 @@ class _TestscreenviewState extends State<Testscreenview> {
                 ),
                 SizedBox(height: isSmall ? 2.h : 5.h),
                 _legendRow(
-                  iconBox: _legendBox(count: notAnswered, color: Colors.orange),
+                  iconBox: _legendBox(
+                    count: notAnswered,
+                    color: _secondaryColor,
+                  ),
                   label: "Not Answered",
                   isDarkMode: isDarkMode,
                   gap: isSmall ? 2 : 6,
                 ),
                 SizedBox(height: isSmall ? 2.h : 5.h),
                 _legendRow(
-                  iconBox: _legendBox(count: answered, color: Colors.green),
+                  iconBox: _legendBox(count: answered, color: _primaryColor),
                   label: "Answered",
                   isDarkMode: isDarkMode,
                   gap: isSmall ? 2 : 6,
                 ),
                 SizedBox(height: isSmall ? 2.h : 5.h),
                 _legendRow(
-                  iconBox: _legendBox(count: markedOnly, color: Colors.purple),
+                  iconBox: _legendBox(count: markedOnly, color: _accentColor),
                   label: "Marked for Review",
                   isDarkMode: isDarkMode,
                   gap: isSmall ? 2 : 6,
@@ -521,7 +581,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                 _legendRow(
                   iconBox: _legendBox(
                     count: answeredAndMarked,
-                    color: Colors.purple,
+                    color: _accentColor,
                     badge: true,
                   ),
                   label:
@@ -585,13 +645,11 @@ class _TestscreenviewState extends State<Testscreenview> {
               ? Colors.grey[900]
               : const Color(0xFFF5F6FA),
           appBar: AppBar(
-            backgroundColor: isDarkMode
-                ? Colors.grey[850]
-                : const Color(0xFF8B2D28),
+            backgroundColor: isDarkMode ? Colors.grey[850] : _primaryColor,
             elevation: 3,
             centerTitle: true,
             title: const Text(
-              "Meritova",
+              "Abhyasa",
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -633,7 +691,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                         controller.formattedTime,
                         style: TextStyle(
                           color: controller.remainingSeconds.value < 600
-                              ? const Color.fromARGB(255, 249, 20, 20)
+                              ? Colors.red.shade700
                               : Colors.white,
                           fontSize: 9.sp,
                           fontWeight: FontWeight.bold,
@@ -643,6 +701,51 @@ class _TestscreenviewState extends State<Testscreenview> {
                   ],
                 ),
               ),
+
+              // Padding(
+              //   padding: EdgeInsets.only(right: 8.w, top: 7.h, bottom: 7.h),
+              //   child: Material(
+              //     color: Colors.white.withValues(alpha: 0.15),
+              //     borderRadius: BorderRadius.circular(20.r),
+              //     child: InkWell(
+              //       borderRadius: BorderRadius.circular(20.r),
+              //       onTap: () {
+              //         // Get.toNamed(
+              //         //   AdminRoutes.instruction,
+              //         //   arguments: {
+              //         //     'testId': controller.testId.value,
+              //         //     'passcode': controller.passcode.value,
+              //         //     'type': "Test Instructions",
+              //         //   },
+              //         // );
+              //       },
+              //       child: Padding(
+              //         padding: EdgeInsets.symmetric(
+              //           horizontal: 8.w,
+              //           vertical: 6.h,
+              //         ),
+              //         child: Row(
+              //           children: [
+              //             Icon(
+              //               Icons.info_outline,
+              //               color: Colors.white,
+              //               size: 7.sp,
+              //             ),
+              //             SizedBox(width: 4.w),
+              //             Text(
+              //               "Instructions",
+              //               style: TextStyle(
+              //                 fontSize: 4.sp,
+              //                 color: Colors.white,
+              //                 fontWeight: FontWeight.w600,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
           body: Row(
@@ -697,7 +800,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                           selected: isSelected,
                                           selectedColor: isDarkMode
                                               ? Colors.grey[700]
-                                              : const Color(0xFF8B2D28),
+                                              : _primaryColor,
                                           backgroundColor: isDarkMode
                                               ? Colors.grey[850]
                                               : Colors.white,
@@ -707,7 +810,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                             color: isSelected
                                                 ? (isDarkMode
                                                       ? Colors.grey[600]!
-                                                      : const Color(0xFF8B2D28))
+                                                      : _primaryColor)
                                                 : (isDarkMode
                                                       ? Colors.grey[700]!
                                                       : Colors.grey.shade300),
@@ -759,7 +862,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                           selected: isSelected,
                                           selectedColor: isDarkMode
                                               ? Colors.amber[800]
-                                              : Colors.deepPurple,
+                                              : _secondaryColor,
                                           backgroundColor: isDarkMode
                                               ? Colors.grey[850]
                                               : Colors.white,
@@ -769,7 +872,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                             color: isSelected
                                                 ? (isDarkMode
                                                       ? Colors.amber[700]!
-                                                      : Colors.deepPurple)
+                                                      : _secondaryColor)
                                                 : (isDarkMode
                                                       ? Colors.grey[700]!
                                                       : Colors.grey.shade300),
@@ -844,18 +947,26 @@ class _TestscreenviewState extends State<Testscreenview> {
                                             child: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(8.r),
-                                              child: Image.network(
-                                                controller.imgUrl(
-                                                  question['questionImg']
-                                                      .toString(),
+                                              child: GestureDetector(
+                                                onTap: () => _openImagePreview(
+                                                  controller.imgUrl(
+                                                    question['questionImg']
+                                                        .toString(),
+                                                  ),
                                                 ),
-                                                width: double.infinity,
-                                                fit: BoxFit
-                                                    .fitWidth, // full width, no distortion
-                                                errorBuilder: (_, __, ___) =>
-                                                    const Icon(
-                                                      Icons.broken_image,
-                                                    ),
+                                                child: Image.network(
+                                                  controller.imgUrl(
+                                                    question['questionImg']
+                                                        .toString(),
+                                                  ),
+                                                  width: double.infinity,
+                                                  fit: BoxFit
+                                                      .fitWidth, // full width, no distortion
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Icon(
+                                                        Icons.broken_image,
+                                                      ),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -896,18 +1007,26 @@ class _TestscreenviewState extends State<Testscreenview> {
                                             child: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(8.r),
-                                              child: Image.network(
-                                                controller.imgUrl(
-                                                  question['questionImg']
-                                                      .toString(),
+                                              child: GestureDetector(
+                                                onTap: () => _openImagePreview(
+                                                  controller.imgUrl(
+                                                    question['questionImg']
+                                                        .toString(),
+                                                  ),
                                                 ),
-                                                width: double.infinity,
-                                                fit: BoxFit
-                                                    .fitWidth, // full width, no distortion
-                                                errorBuilder: (_, __, ___) =>
-                                                    const Icon(
-                                                      Icons.broken_image,
-                                                    ),
+                                                child: Image.network(
+                                                  controller.imgUrl(
+                                                    question['questionImg']
+                                                        .toString(),
+                                                  ),
+                                                  width: double.infinity,
+                                                  fit: BoxFit
+                                                      .fitWidth, // full width, no distortion
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Icon(
+                                                        Icons.broken_image,
+                                                      ),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -930,7 +1049,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                   ),
                                   controller: controller.controllerText,
                                   keyboardType:
-                                      TextInputType.text, // ✅ full keyboard
+                                      TextInputType.text, // Γ£à full keyboard
                                   inputFormatters: [
                                     FilteringTextInputFormatter.allow(
                                       RegExp(r'[0-9+\-*/().]'),
@@ -1019,7 +1138,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                               .selectOption(qid, option['key']),
                                           activeColor: isDarkMode
                                               ? Colors.grey[400]
-                                              : const Color(0xFF8B2D28),
+                                              : _primaryColor,
                                         ),
                                         title: Container(
                                           width: double.infinity,
@@ -1052,7 +1171,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                               final hasImg =
                                                   optionImg.isNotEmpty;
 
-                                              // 🔹 CASE 1: Text exists → Column layout
+                                              // ≡ƒö╣ CASE 1: Text exists ΓåÆ Column layout
                                               if (hasText) {
                                                 return Column(
                                                   crossAxisAlignment:
@@ -1085,14 +1204,35 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                             BorderRadius.circular(
                                                               8.r,
                                                             ),
-                                                        child: Image.network(
-                                                          optionImg,
-                                                          width:
-                                                              double.infinity,
-                                                          fit: BoxFit.fitWidth,
-                                                          errorBuilder:
-                                                              (_, __, ___) =>
-                                                                  const SizedBox.shrink(),
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                                maxHeight:
+                                                                    110.h,
+                                                              ),
+                                                          child: GestureDetector(
+                                                            behavior:
+                                                                HitTestBehavior
+                                                                    .opaque,
+                                                            // onTap: () =>
+                                                            //     _openImagePreview(
+                                                            //       optionImg,
+                                                            //     ),
+                                                            child: Image.network(
+                                                              optionImg,
+                                                              width: double
+                                                                  .infinity,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                              errorBuilder:
+                                                                  (
+                                                                    _,
+                                                                    __,
+                                                                    ___,
+                                                                  ) =>
+                                                                      const SizedBox.shrink(),
+                                                            ),
+                                                          ),
                                                         ),
                                                       ),
                                                     ],
@@ -1100,7 +1240,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                 );
                                               }
 
-                                              // 🔹 CASE 2: No text → key + image in Row
+                                              // ≡ƒö╣ CASE 2: No text ΓåÆ key + image in Row
                                               return Row(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
@@ -1124,13 +1264,32 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                             BorderRadius.circular(
                                                               8.r,
                                                             ),
-                                                        child: Image.network(
-                                                          optionImg,
-                                                          fit: BoxFit
-                                                              .contain, // prevents overflow
-                                                          errorBuilder:
-                                                              (_, __, ___) =>
-                                                                  const SizedBox.shrink(),
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                                maxHeight: 90.h,
+                                                              ),
+                                                          child: GestureDetector(
+                                                            behavior:
+                                                                HitTestBehavior
+                                                                    .opaque,
+                                                            // onTap: () =>
+                                                            //     _openImagePreview(
+                                                            //       optionImg,
+                                                            //     ),
+                                                            child: Image.network(
+                                                              optionImg,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                              errorBuilder:
+                                                                  (
+                                                                    _,
+                                                                    __,
+                                                                    ___,
+                                                                  ) =>
+                                                                      const SizedBox.shrink(),
+                                                            ),
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
@@ -1175,8 +1334,8 @@ class _TestscreenviewState extends State<Testscreenview> {
                                         onChanged: (_) => controller
                                             .selectOption(qid, option['key']),
                                         activeColor: isDarkMode
-                                            ? Colors.green[400]
-                                            : Colors.green,
+                                            ? _secondaryColor
+                                            : _secondaryColor,
                                       ),
                                       title: Container(
                                         width: double.infinity,
@@ -1207,7 +1366,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                     'null';
                                             final hasImg = optionImg.isNotEmpty;
 
-                                            // 🔹 CASE 1: Text exists → Column layout
+                                            // ≡ƒö╣ CASE 1: Text exists ΓåÆ Column layout
                                             if (hasText) {
                                               return Column(
                                                 crossAxisAlignment:
@@ -1240,13 +1399,29 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                           BorderRadius.circular(
                                                             8.r,
                                                           ),
-                                                      child: Image.network(
-                                                        optionImg,
-                                                        width: double.infinity,
-                                                        fit: BoxFit.fitWidth,
-                                                        errorBuilder:
-                                                            (_, __, ___) =>
-                                                                const SizedBox.shrink(),
+                                                      child: ConstrainedBox(
+                                                        constraints:
+                                                            BoxConstraints(
+                                                              maxHeight: 110.h,
+                                                            ),
+                                                        child: GestureDetector(
+                                                          behavior:
+                                                              HitTestBehavior
+                                                                  .opaque,
+                                                          // onTap: () =>
+                                                          //     _openImagePreview(
+                                                          //       optionImg,
+                                                          //     ),
+                                                          child: Image.network(
+                                                            optionImg,
+                                                            width:
+                                                                double.infinity,
+                                                            fit: BoxFit.contain,
+                                                            errorBuilder:
+                                                                (_, __, ___) =>
+                                                                    const SizedBox.shrink(),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -1254,7 +1429,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                               );
                                             }
 
-                                            // 🔹 CASE 2: No text → key + image in Row
+                                            // ≡ƒö╣ CASE 2: No text ΓåÆ key + image in Row
                                             return Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
@@ -1277,13 +1452,27 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                           BorderRadius.circular(
                                                             8.r,
                                                           ),
-                                                      child: Image.network(
-                                                        optionImg,
-                                                        fit: BoxFit
-                                                            .contain, // prevents overflow
-                                                        errorBuilder:
-                                                            (_, __, ___) =>
-                                                                const SizedBox.shrink(),
+                                                      child: ConstrainedBox(
+                                                        constraints:
+                                                            BoxConstraints(
+                                                              maxHeight: 90.h,
+                                                            ),
+                                                        child: GestureDetector(
+                                                          behavior:
+                                                              HitTestBehavior
+                                                                  .opaque,
+                                                          // onTap: () =>
+                                                          //     _openImagePreview(
+                                                          //       optionImg,
+                                                          //     ),
+                                                          child: Image.network(
+                                                            optionImg,
+                                                            fit: BoxFit.contain,
+                                                            errorBuilder:
+                                                                (_, __, ___) =>
+                                                                    const SizedBox.shrink(),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -1334,7 +1523,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isDarkMode
                                       ? Colors.grey[800]
-                                      : Colors.grey.shade600,
+                                      : _accentColor,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(7.r),
                                   ),
@@ -1359,7 +1548,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade500,
+                                  backgroundColor: _secondaryColor,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(7.r),
                                   ),
@@ -1409,7 +1598,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                         ? Colors.white
                                         : (isDarkMode
                                               ? Colors.grey[300]
-                                              : Colors.grey.shade800),
+                                              : Colors.yellow),
                                   ),
                                   label: Text(
                                     marked ? "Unmark" : "Save & Mark Review",
@@ -1417,13 +1606,13 @@ class _TestscreenviewState extends State<Testscreenview> {
                                       fontSize: 4.sp,
                                       color: marked
                                           ? Colors.white
-                                          : Colors.black87,
+                                          : Colors.white,
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: marked
-                                        ? Colors.purple
-                                        : Colors.yellow,
+                                        ? _accentColor
+                                        : _primaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(7.r),
                                     ),
@@ -1448,7 +1637,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                       horizontal: 10.w,
                                       vertical: 10.h,
                                     ),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: _primaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12.r),
                                     ),
@@ -1502,9 +1691,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                       style: TextStyle(
                         fontSize: 8.sp,
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode
-                            ? Colors.grey[300]
-                            : const Color(0xFF8B2D28),
+                        color: isDarkMode ? Colors.grey[300] : _deepInk,
                       ),
                     ),
                     SizedBox(height: 10.h),

@@ -4,6 +4,8 @@ class PrefConst {
   static String StudentId = "StudentId";
   static String CourseId = "CourseId";
   static String SchoolId = "SchoolId";
+    static String batchiid = "batchiid";
+
     static String studentname = "studentname";
   static String session = "session";
     static String className = "className";
