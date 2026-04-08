@@ -21,16 +21,23 @@ class ContinueScreen extends StatefulWidget {
 
 class _ContinueScreenState extends State<ContinueScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   static const List<String> _examOrder = ['CBSE', 'JEE M', 'JEE A'];
   static const List<_QuestionModeOption> _questionModeOptions = [
-    _QuestionModeOption(label: 'Average time per Question 2 min', value: 'average'),
-    _QuestionModeOption(label: 'Average time per Question 3 min', value: 'medium'),
     _QuestionModeOption(
-      label: 'Average time per Question 5 min',
+      label: 'Set average time per Question 2 min',
+      value: 'average',
+    ),
+    _QuestionModeOption(
+      label: 'Set average time per Question 3 min',
+      value: 'medium',
+    ),
+    _QuestionModeOption(
+      label: 'Set average time per Question 5 min',
       value: 'hard',
       color: ColorPainter.secondaryColor,
     ),
-    _QuestionModeOption(label: 'No Time limit', value: 'no_limit', color: Color.fromARGB(255, 226, 22, 121),),
+    _QuestionModeOption(label: 'No Time limit', value: 'no_limit'),
   ];
 
   /// examType -> chapterName -> AssignmentChapters
@@ -233,7 +240,10 @@ class _ContinueScreenState extends State<ContinueScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: Text(option.label,style: TextStyle(fontSize: 14),),
+                      child: Text(
+                        option.label,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
                   ),
                 ),
@@ -304,36 +314,79 @@ class _ContinueScreenState extends State<ContinueScreen> {
     );
   }
 
+  int _uiBubbleCountForRound(String examLabel, int roundIndex) {
+    final label = examLabel.trim().toUpperCase();
+
+    if (label == 'CBSE' || label == 'BOARD') {
+      return roundIndex == 0 ? 2 : 0;
+    }
+
+    if (label == 'JEE M' ||
+        label == 'JEE MAIN' ||
+        label == 'JEE A' ||
+        label == 'JEE ADVANCED') {
+      return 2;
+    }
+
+    return 0;
+  }
+
   Widget _buildRoundCell(
     List<Assignment> assignments,
     Color tone,
-    bool isDarkMode,
-  ) {
-    if (assignments.isEmpty) {
-      return Center(
-        child: Container(
-          width: 22.w,
-          height: 1.5,
-          color: isDarkMode ? Colors.white38 : tone.withOpacity(0.35),
-        ),
-      );
+    bool isDarkMode, {
+    required int uiCount,
+  }) {
+    if (uiCount <= 0) {
+      return const SizedBox.shrink();
     }
 
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 8.w,
       runSpacing: 8.h,
-      children: List.generate(assignments.length, (index) {
+      children: List.generate(uiCount, (index) {
+        final hasAssignment = index < assignments.length;
         final bubbleFill = tone.withOpacity(isDarkMode ? 0.18 : 0.12);
         return _buildRoundBubble(
           text: "${index + 1}",
-          onTap: () => _openAssignment(assignments[index], index),
-          fillColor: bubbleFill,
-          borderColor: tone,
+          onTap: hasAssignment
+              ? () => _openAssignment(assignments[index], index)
+              : () {},
+          fillColor: hasAssignment
+              ? bubbleFill
+              : tone.withOpacity(isDarkMode ? 0.08 : 0.06),
+          borderColor: hasAssignment ? tone : tone.withOpacity(0.6),
           textColor: isDarkMode ? Colors.white : tone,
         );
       }),
     );
+  }
+
+  Widget _buildRoundCellWithUiRules({
+    required String examLabel,
+    required int roundIndex,
+    required List<Assignment> assignments,
+    required Color tone,
+    required bool isDarkMode,
+  }) {
+    final uiCount = _uiBubbleCountForRound(examLabel, roundIndex);
+    final normalizedLabel = examLabel.trim().toUpperCase();
+
+    if (uiCount == 0 &&
+        (normalizedLabel == 'CBSE' || normalizedLabel == 'BOARD') &&
+        (roundIndex == 1 || roundIndex == 2)) {
+      return Text(
+        '--',
+        style: TextStyle(
+          color: isDarkMode ? Colors.white70 : tone,
+          fontSize: 7.sp,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
+
+    return _buildRoundCell(assignments, tone, isDarkMode, uiCount: uiCount);
   }
 
   Widget _buildExamRow({
@@ -383,17 +436,35 @@ class _ContinueScreenState extends State<ContinueScreen> {
             _divider(dividerColor),
             _cell(
               width: 60.w,
-              child: _buildRoundCell(rounds[0], tone, isDarkMode),
+              child: _buildRoundCellWithUiRules(
+                examLabel: examLabel,
+                roundIndex: 0,
+                assignments: rounds[0],
+                tone: tone,
+                isDarkMode: isDarkMode,
+              ),
             ),
             _divider(dividerColor),
             _cell(
               width: 60.w,
-              child: _buildRoundCell(rounds[1], tone, isDarkMode),
+              child: _buildRoundCellWithUiRules(
+                examLabel: examLabel,
+                roundIndex: 1,
+                assignments: rounds[1],
+                tone: tone,
+                isDarkMode: isDarkMode,
+              ),
             ),
             _divider(dividerColor),
             _cell(
               width: 60.w,
-              child: _buildRoundCell(rounds[2], tone, isDarkMode),
+              child: _buildRoundCellWithUiRules(
+                examLabel: examLabel,
+                roundIndex: 2,
+                assignments: rounds[2],
+                tone: tone,
+                isDarkMode: isDarkMode,
+              ),
             ),
           ],
         ),
@@ -760,7 +831,11 @@ class _ContinueScreenState extends State<ContinueScreen> {
 }
 
 class _QuestionModeOption {
-  const _QuestionModeOption({required this.label, required this.value, this.color});
+  const _QuestionModeOption({
+    required this.label,
+    required this.value,
+    this.color,
+  });
 
   final String label;
   final String value;
@@ -792,8 +867,8 @@ class ColorPainter {
   static BoxDecoration get cardDecoration => BoxDecoration(
     color: Colors.white,
     boxShadow: [
-      BoxShadow(
-        offset: const Offset(0, 6),
+      const BoxShadow(
+        offset: Offset(0, 6),
         blurRadius: 12,
         color: Colors.black26,
       ),
