@@ -390,15 +390,15 @@ class _ContinueScreenState extends State<ContinueScreen> {
     final uiCount = _uiBubbleCountForRound(examLabel, roundIndex);
     final normalizedLabel = examLabel.trim().toUpperCase();
 
-   if (uiCount == 0 &&
-    (normalizedLabel == 'CBSE' || normalizedLabel == 'BOARD') &&
-    (roundIndex == 1 || roundIndex == 2)) {
-  return Icon(
-    Icons.emoji_emotions,
-    color: Colors.redAccent.withOpacity(0.8),
-    size: 18.sp,
-  );
-}
+    if (uiCount == 0 &&
+        (normalizedLabel == 'CBSE' || normalizedLabel == 'BOARD') &&
+        (roundIndex == 1 || roundIndex == 2)) {
+      return Icon(
+        Icons.emoji_emotions,
+        color: Colors.redAccent.withOpacity(0.8),
+        size: 18.sp,
+      );
+    }
 
     return _buildRoundCell(assignments, tone, isDarkMode, uiCount: uiCount);
   }
@@ -489,10 +489,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 decoration: BoxDecoration(
                   color: tone.withOpacity(isDarkMode ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: tone.withOpacity(0.35),
-                    width: 1,
-                  ),
+                  border: Border.all(color: tone.withOpacity(0.35), width: 1),
                 ),
                 child: Text(
                   '${averagePercent.toStringAsFixed(1)}%',
