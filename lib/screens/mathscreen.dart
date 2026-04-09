@@ -87,7 +87,7 @@ class Mathscreen extends GetView<Mathscreencontroller> {
     final RxString selectedExam = 'Board'.obs;
     final List<String> exams = ['Board', 'JEE Main', 'JEE Advanced'];
 
-  // Maharishi Learn brand palette (bright gold -> soft amber -> rich bronze)
+  // Abhyasa brand palette (bright gold -> soft amber -> rich bronze)
   const Color primary = Color.fromARGB(255, 231, 217, 20); // bright gold
   const Color accent = Color(0xFFEB8A2A); // soft amber
   const Color bronze = Color(0xFFB8860B); // rich bronze

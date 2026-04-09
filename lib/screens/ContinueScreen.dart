@@ -331,6 +331,23 @@ class _ContinueScreenState extends State<ContinueScreen> {
     return 0;
   }
 
+  double _rowAveragePercent(String examLabel, List<List<Assignment>> rounds) {
+    final totalSlots = List.generate(
+      3,
+      (index) => _uiBubbleCountForRound(examLabel, index),
+    ).fold<int>(0, (sum, value) => sum + value);
+
+    if (totalSlots == 0) return 0;
+
+    final filledSlots = List.generate(3, (index) {
+      final slotCount = _uiBubbleCountForRound(examLabel, index);
+      final available = rounds[index].length;
+      return available > slotCount ? slotCount : available;
+    }).fold<int>(0, (sum, value) => sum + value);
+
+    return (filledSlots * 100) / totalSlots;
+  }
+
   Widget _buildRoundCell(
     List<Assignment> assignments,
     Color tone,
@@ -373,18 +390,15 @@ class _ContinueScreenState extends State<ContinueScreen> {
     final uiCount = _uiBubbleCountForRound(examLabel, roundIndex);
     final normalizedLabel = examLabel.trim().toUpperCase();
 
-    if (uiCount == 0 &&
-        (normalizedLabel == 'CBSE' || normalizedLabel == 'BOARD') &&
-        (roundIndex == 1 || roundIndex == 2)) {
-      return Text(
-        '--',
-        style: TextStyle(
-          color: isDarkMode ? Colors.white70 : tone,
-          fontSize: 7.sp,
-          fontWeight: FontWeight.w700,
-        ),
-      );
-    }
+   if (uiCount == 0 &&
+    (normalizedLabel == 'CBSE' || normalizedLabel == 'BOARD') &&
+    (roundIndex == 1 || roundIndex == 2)) {
+  return Icon(
+    Icons.emoji_emotions,
+    color: Colors.redAccent.withOpacity(0.8),
+    size: 18.sp,
+  );
+}
 
     return _buildRoundCell(assignments, tone, isDarkMode, uiCount: uiCount);
   }
@@ -399,6 +413,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
     final assignments = _getAssignmentsFor(examLabel, chapterName, topicName);
     final rounds = _splitAssignmentsIntoRounds(assignments);
     final tone = _examTone(examLabel);
+    final averagePercent = _rowAveragePercent(examLabel, rounds);
     final dividerColor = isDarkMode
         ? Colors.white.withOpacity(0.14)
         : tone.withOpacity(0.16);
@@ -464,6 +479,30 @@ class _ContinueScreenState extends State<ContinueScreen> {
                 assignments: rounds[2],
                 tone: tone,
                 isDarkMode: isDarkMode,
+              ),
+            ),
+            _divider(dividerColor),
+            _cell(
+              width: 60.w,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: tone.withOpacity(isDarkMode ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: tone.withOpacity(0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '${averagePercent.toStringAsFixed(1)}%',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : tone,
+                    fontSize: 4.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
@@ -562,6 +601,18 @@ class _ContinueScreenState extends State<ContinueScreen> {
                   width: 60.w,
                   child: Text(
                     'Champion',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _divider(dividerColor),
+                _cell(
+                  width: 60.w,
+                  child: Text(
+                    'Average',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white70 : Colors.black54,
                       fontSize: 8.sp,
@@ -752,7 +803,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
-                width: 50.w + 90.w + 90.w + 90.w + 8.w,
+                width: 60.w * 6 + 8.w,
                 child: Column(
                   children: List.generate(chapters.length, (index) {
                     return _buildChapterBlock(chapters[index], isDarkMode);

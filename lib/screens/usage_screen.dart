@@ -7,7 +7,7 @@
 // class UsageScreen extends StatelessWidget {
 //   final UsageController controller = Get.find();
 
-//   // Maharishi Learn brand palette (bright gold -> soft amber -> rich bronze)
+//   // Abhyasa brand palette (bright gold -> soft amber -> rich bronze)
 //   static const Color primary = Color.fromARGB(255, 231, 217, 20); // bright gold
 //   static const Color accent = Color(0xFFEB8A2A); // soft amber
 //   static const Color bronze = Color(0xFFB8860B); // rich bronze
@@ -51,7 +51,7 @@
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
 //               Text(
-//                 'MAHARISHI LEARN APP USAGE GUIDE',
+//                 'Abhyasa APP USAGE GUIDE',
 //                 style: TextStyle(
 //                   fontSize: 12.sp,
 //                   fontWeight: FontWeight.bold,

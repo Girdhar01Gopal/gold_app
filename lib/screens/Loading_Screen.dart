@@ -64,7 +64,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
            
             Text(
-              "Maharishi Learn",
+              "Abhyasa",
               style: TextStyle(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.bold,

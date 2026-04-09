@@ -103,7 +103,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 20.h),
                         Text(
-                          "Maharishi Learn",
+                          "Abhyasa",
                           style: TextStyle(
                             fontSize: 7.sp,
                             fontWeight: FontWeight.bold,
@@ -410,7 +410,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 75.h),
                 Text(
-                  "Welcome to Maharishi Learn",
+                  "Welcome to Abhyasa",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.sp,

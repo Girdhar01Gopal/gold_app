@@ -61,7 +61,7 @@ class LoginScreen extends StatelessWidget {
 
                       /// ---------- Title ----------
                       Text(
-                        "Welcome to Maharishi Learn",
+                        "Welcome to Abhyasa",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 20.sp,
