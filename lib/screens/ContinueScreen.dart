@@ -726,7 +726,7 @@ class _ContinueScreenState extends State<ContinueScreen> {
                   ),
                 ),
                 SizedBox(width: 10.w),
-                Expanded(
+                Container(
                   child: Text(
                     chapterName,
                     style: TextStyle(
