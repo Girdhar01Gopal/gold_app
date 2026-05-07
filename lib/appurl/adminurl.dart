@@ -16,7 +16,7 @@ class Adminurl {
   static const String analysis =
       "$baseurl/MobApp/AppStdResultReports/";
   static const String instructionUrl =
-      "$baseurl/MobApp/ViewExamInstruction";
+      "$baseurl/MobApp/MobAppAssignmentnstruction";
        static const String result =
       "$baseurl/MobApp/MobAssignmentStudentReports"; // Admin App Base URL
 }

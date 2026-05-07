@@ -19,57 +19,61 @@ class ContinueScreen extends StatelessWidget {
   Color get primary => ColorPainter.primaryColor;
   Color get accent  => ColorPainter.accentColor;
 
-  // ── Open assignment dialog ───────────────────────────────────
-  Future<void> _openAssignment(Assignment assignment) async {
-    final selectedMode = await Get.dialog<String>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Set time limit to solve assignment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ContinueScreenController.questionModeOptions
-              .map(
-                (option) => Padding(
-                  padding: const EdgeInsets.only(bottom: 5),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Get.back(result: option.value),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: option.color ?? primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(option.label,
-                          style: const TextStyle(fontSize: 14)),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Get.back(), child: const Text('Cancel')),
-        ],
-      ),
-      barrierDismissible: false,
-    );
+  // // ── Open assignment dialog ───────────────────────────────────
+  // Future<void> _openAssignment(Assignment assignment) async {
+  //   final selectedMode = await Get.dialog<String>(
+  //     AlertDialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //       title: const Text('Set time limit to solve assignment'),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: ContinueScreenController.questionModeOptions
+  //             .map(
+  //               (option) => Padding(
+  //                 padding: const EdgeInsets.only(bottom: 5),
+  //                 child: SizedBox(
+  //                   width: double.infinity,
+  //                   child: ElevatedButton(
+  //                     onPressed: () => Get.back(result: option.value),
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: option.color ?? primary,
+  //                       foregroundColor: Colors.white,
+  //                       padding: const EdgeInsets.symmetric(vertical: 12),
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(10),
+  //                       ),
+  //                     ),
+  //                     child: Text(option.label,
+  //                         style: const TextStyle(fontSize: 14)),
+  //                   ),
+  //                 ),
+  //               ),
+  //             )
+  //             .toList(),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //             onPressed: () => Get.back(), child: const Text('Cancel')),
+  //       ],
+  //     ),
+  //     barrierDismissible: false,
+  //   );
 
-    if (selectedMode == null) return;
+  //   if (selectedMode == null) return;
 
-    Get.offAllNamed(
-      AdminRoutes.testscreen,
-      arguments: {
-        'testId':       assignment.testId ?? '',
-        'passcode':     assignment.testId ?? '',
-        'questionMode': selectedMode,
-      },
-    );
-  }
+  //     Get.offAllNamed(AdminRoutes.examinstruction,
+  //     arguments: {
+  //       'testId':       assignment.testId ?? '',
+  //     });
+  //   // Get.offAllNamed(
+  //   //   AdminRoutes.testscreen,
+  //   //   arguments: {
+  //   //     'testId':       assignment.testId ?? '',
+  //   //     'passcode':     assignment.testId ?? '',
+  //   //     'questionMode': selectedMode,
+  //   //   },
+  //   // );
+  // }
 
   // ── Helpers ──────────────────────────────────────────────────
   Color _examTone(String examLabel) {
@@ -143,9 +147,17 @@ class ContinueScreen extends StatelessWidget {
         final bubbleFill = tone.withValues(alpha: isDarkMode ? 0.18 : 0.12);
         return _buildRoundBubble(
           text: '${index + 1}',
-          onTap: hasAssignment
-              ? () => _openAssignment(assignments[index])
-              : () {},
+          onTap: (){
+            if (!hasAssignment) return;
+            final assignment = assignments[index];
+            Get.offAllNamed(AdminRoutes.examinstruction,
+              arguments: {
+                'testId':       assignment.testId ?? '',
+                'passcode':     assignment.testId ?? '',
+            
+
+              });
+          },
           fillColor: hasAssignment
               ? bubbleFill
               : tone.withValues(alpha: isDarkMode ? 0.08 : 0.06),

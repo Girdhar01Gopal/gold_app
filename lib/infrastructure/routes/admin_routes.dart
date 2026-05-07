@@ -1,11 +1,13 @@
 // infrastructure/routes/admin_routes.dart
 import 'package:get/get.dart';
+import 'package:gold_app/bindings/examinstructionbinding.dart';
 import 'package:gold_app/bindings/instructionbinding.dart';
 import 'package:gold_app/bindings/loginbinding.dart';
 import 'package:gold_app/bindings/mathscreenbinding.dart';
 import 'package:gold_app/bindings/physicsbinding.dart';
 import 'package:gold_app/bindings/resultbinding.dart';
 import 'package:gold_app/bindings/testscreenbinding.dart';
+import 'package:gold_app/screens/examinstruction.dart';
 import 'package:gold_app/screens/instructionview.dart';
 import 'package:gold_app/screens/login.dart';
 import 'package:gold_app/screens/mathscreen.dart';
@@ -40,6 +42,8 @@ class AdminRoutes {
   static const login = '/login';
   static const resultview = '/resultview';
     static const instruction = '/instruction';
+        static const examinstruction = '/examinstruction';
+
 
 
 
@@ -66,6 +70,11 @@ class AdminRoutes {
       name: testscreen,
       page: () =>  Testscreenview(),
       binding: Testscreenbinding(),
+    ),
+    GetPage(
+      name: examinstruction,
+      page: () =>  examinstructionview(),
+      binding: Examinstructionbinding(),
     ),
     // GetPage(
     //   name: mathscreen,
