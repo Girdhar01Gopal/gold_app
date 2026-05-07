@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:gold_app/Model/exammodel.dart' show Data, exammodel;
+import 'package:gold_app/Model/exammodel.dart';
 import 'package:gold_app/appurl/adminurl.dart';
 import 'package:gold_app/infrastructure/routes/admin_routes.dart';
 import 'package:gold_app/localstorage.dart';
@@ -16,7 +16,7 @@ import 'package:gold_app/screens/submitscreenview%20copy.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:http/http.dart' as Https;
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class Testscreencontroller extends GetxController {
@@ -534,7 +534,7 @@ class Testscreencontroller extends GetxController {
     return true;
   }
 
-  String imgUrl(String path) => 'https://student.maharishiglobal.org/$path';
+  String imgUrl(String path) => 'https://student.maharishiglobal.in/$path';
 
   /// Stores selected integer answer for each question (for Integer Type questions)
 
@@ -894,7 +894,7 @@ class Testscreencontroller extends GetxController {
     selectedQuestionType.value = types.isNotEmpty ? types.first : '';
   }
 
-  String fullImgUrl(String path) => 'https://student.maharishiglobal.org/$path';
+  String fullImgUrl(String path) => 'https://student.maharishiglobal.in/$path';
 
   Widget buildRatingStars(double rating, bool isDarkMode) {
     return Row(
@@ -923,7 +923,7 @@ class Testscreencontroller extends GetxController {
     if (p.startsWith('http://') || p.startsWith('https://')) return p;
 
     // Otherwise build full URL
-    return 'https://student.maharishiglobal.org/$p';
+    return 'https://student.maharishiglobal.in/$p';
   }
 
   void showCustomSubmitDialog(BuildContext context) {
@@ -1846,7 +1846,7 @@ class Testscreencontroller extends GetxController {
         "IntegerTypeCorrecrt": IntegerTypeCorrecrtAns.toString(),
       };
 
-      final response = await Https.post(
+      final response = await http.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
@@ -1923,7 +1923,7 @@ class Testscreencontroller extends GetxController {
         "CreateBy": CreateBy,
       };
 
-      final response = await Https.post(
+      final response = await http.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
@@ -1973,7 +1973,7 @@ class Testscreencontroller extends GetxController {
     var createdby,
   ) async {
     try {
-      final response = await Https.post(
+      final response = await http.post(
         Uri.parse(Adminurl.reportquestion),
         headers: {
           'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',

@@ -1,10 +1,12 @@
 // infrastructure/routes/admin_routes.dart
 import 'package:get/get.dart';
+import 'package:gold_app/bindings/instructionbinding.dart';
 import 'package:gold_app/bindings/loginbinding.dart';
 import 'package:gold_app/bindings/mathscreenbinding.dart';
 import 'package:gold_app/bindings/physicsbinding.dart';
 import 'package:gold_app/bindings/resultbinding.dart';
 import 'package:gold_app/bindings/testscreenbinding.dart';
+import 'package:gold_app/screens/instructionview.dart';
 import 'package:gold_app/screens/login.dart';
 import 'package:gold_app/screens/mathscreen.dart';
 import 'package:gold_app/screens/physicsscreen.dart';
@@ -37,6 +39,8 @@ class AdminRoutes {
   static const testscreen = '/testscreen';
   static const login = '/login';
   static const resultview = '/resultview';
+    static const instruction = '/instruction';
+
 
 
 
@@ -53,21 +57,26 @@ class AdminRoutes {
       transition: Transition.fadeIn,
       transitionDuration: Duration(milliseconds: 400),
     ),
+     GetPage(
+      name: instruction,
+      page: () =>  Instructionview(),
+      binding: Instructionbinding(),
+    ),
  GetPage(
       name: testscreen,
       page: () =>  Testscreenview(),
       binding: Testscreenbinding(),
     ),
-    GetPage(
-      name: mathscreen,
-      page: () => Mathscreen(),
-       binding: Mathscreenbinding(),
-    ),
-    GetPage(
-      name: physics,
-      page: () => Physicsscreen(),
-       binding: Physicsbinding(),
-    ),
+    // GetPage(
+    //   name: mathscreen,
+    //   page: () => Mathscreen(),
+    //    binding: Mathscreenbinding(),
+    // ),
+    // GetPage(
+    //   name: physics,
+    //   page: () => Physicsscreen(),
+    //    binding: Physicsbinding(),
+    // ),
 
     // Loading Screen
     GetPage(

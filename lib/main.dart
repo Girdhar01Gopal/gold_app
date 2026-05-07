@@ -5,11 +5,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:gold_app/utils/landscape_only_gate.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:gold_app/oflinerepo/questionhivemodel.dart';
-import 'package:gold_app/utils/localStorage/hivemodel.dart';
-
 import 'infrastructure/routes/admin_routes.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,17 +16,14 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.manual,
+    overlays: [],
+  );
+
+ 
 
   await GetStorage.init();
-  await Hive.initFlutter();
-
-  if (!Hive.isAdapterRegistered(0)) {
-    Hive.registerAdapter(HivemodelAdapter());
-  }
-  if (!Hive.isAdapterRegistered(1)) {
-    Hive.registerAdapter(hivequestionAdapter());
-  }
 
   runApp(AdminApp());
 }

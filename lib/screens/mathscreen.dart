@@ -1,310 +1,429 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
-import 'package:gold_app/controllers/mathscreencontroller.dart';
-import 'package:gold_app/controllers/physicscontroller.dart';
-import 'package:gold_app/infrastructure/routes/admin_routes.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
-import '../infrastructure/app_drawer/admin_drawer2.dart';
+// import 'dart:convert';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_screenutil/flutter_screenutil.dart';
+// import 'package:get/get.dart';
+// import 'package:gold_app/Model/assignmentmodel.dart';
+// import 'package:gold_app/appurl/adminurl.dart';
+// import 'package:gold_app/infrastructure/routes/admin_routes.dart';
+// import 'package:gold_app/localstorage.dart';
+// import 'package:gold_app/prefconst.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-class Mathscreen extends GetView<Mathscreencontroller> {
-   Mathscreen({super.key});
-  // keep key as a state field so it's stable across builds
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+// import '../infrastructure/app_drawer/admin_drawer2.dart';
 
-  // Helper function to calculate CGPA based on completed assignments
-  double calculateCGPA(List<Map<String, dynamic>> assignments) {
-    double totalMarks = 0.0;
-    int completedCount = 0;
+// class Mathscreen extends StatefulWidget {
+//   const Mathscreen({super.key});
 
-    for (var assignment in assignments) {
-      if (assignment['status'] == 'Completed') {
-        var marks = assignment['marks'] as List<dynamic>;
-        // Sum non-null marks safely
-        final double sum = marks.where((mark) => mark != null).fold<double>(0.0, (p, e) => p + (e as double));
-        final int nonNull = marks.where((mark) => mark != null).length;
-        final double averageMarks = nonNull > 0 ? sum / nonNull : 0.0;
+//   @override
+//   State<Mathscreen> createState() => _MathscreenState();
+// }
 
-        totalMarks += averageMarks;
-        completedCount++;
-      }
-    }
+// class _MathscreenState extends State<Mathscreen> {
+//   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-    if (completedCount == 0) return 0.0;
-    return totalMarks / completedCount;
-  }
- final Map<String, Map<String, List<Map<String, dynamic>>>> assignmentsData = {
-  'Board': {
-    'CALCULUS': [
-      {'assignment': 'Limits and Continuity', 'marks': [8.0], 'status': 'Completed'},
-      {'assignment': 'Differentiation', 'marks': [7.5], 'status': 'Completed'},
-      {'assignment': 'Integration', 'marks': [6.5], 'status': 'Completed'},
-    ],
-    'ALGEBRA': [
-      {'assignment': 'Quadratic Equations', 'marks': [9.0], 'status': 'Completed'},
-      {'assignment': 'Matrices and Determinants', 'marks': [8.5], 'status': 'Completed'},
-    ],
-  },
-  'JEE Main': {
-    'CALCULUS': [
-      {'assignment': 'Differentiation Rules', 'marks': [null], 'status': 'Not Started'},
-      {'assignment': 'Integration Techniques', 'marks': [6.0], 'status': 'In Progress'},
-      {'assignment': 'Application of Derivatives', 'marks': [7.5], 'status': 'Completed'},
-    ],
-    'LINEAR ALGEBRA': [
-      {'assignment': 'Vector Algebra', 'marks': [5.5], 'status': 'Completed'},
-      {'assignment': 'Matrices', 'marks': [8.0], 'status': 'Completed'},
-    ],
-  },
-  'JEE Advanced': {
-    'CONIC SECTIONS': [
-      {'assignment': 'Parabola', 'marks': [9.0], 'status': 'Completed'},
-      {'assignment': 'Ellipse', 'marks': [8.5], 'status': 'Completed'},
-      {'assignment': 'Hyperbola', 'marks': [7.0], 'status': 'Completed'},
-    ],
-    'TRIGONOMETRY': [
-      {'assignment': 'Trigonometric Identities', 'marks': [null], 'status': 'In Progress'},
-      {'assignment': 'Properties of Triangles', 'marks': [6.5], 'status': 'Completed'},
-      {'assignment': 'Heights and Distances', 'marks': [8.0], 'status': 'Completed'},
-    ],
-  }
-};
+//   // examType -> chapterName -> list of tests
+//   final Map<String, Map<String, List<Test>>> allData = {};
+//   List<String> examTypes = [];
+//   String selectedExam = '';
 
+//   bool isLoading = true;
+//   String? error;
 
-  
-  // Color helper for score-based circle color
-  Color _scoreColor(double score) {
-    if (score >= 10) return Colors.green.shade900;
-    if (score >= 9) return Colors.green.shade700;
-    if (score >= 7) return Colors.lightGreen.shade700;
-    if (score >= 5) return Colors.yellow.shade700;
-    if (score >= 3) return Colors.orange.shade700;
-    if (score >= 2) return Colors.deepOrange.shade400;
-    return Colors.red.shade700;
-  }
-  @override
-  Widget build(BuildContext context) {
-    final RxString selectedExam = 'Board'.obs;
-    final List<String> exams = ['Board', 'JEE Main', 'JEE Advanced'];
+//   String schoolId = '';
+//   String studentId = '';
+//   String subjectId = '';
+//   String subjectName = '';
 
-  // Abhyasa brand palette (bright gold -> soft amber -> rich bronze)
-  const Color primary = Color.fromARGB(255, 231, 217, 20); // bright gold
-  const Color accent = Color(0xFFEB8A2A); // soft amber
-  const Color bronze = Color(0xFFB8860B); // rich bronze
+//   static const Color primary = Color.fromARGB(255, 231, 217, 20);
+//   static const Color accent = Color(0xFFEB8A2A);
+//   static const Color bronze = Color(0xFFB8860B);
 
-    Widget buildExamSelector() {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: exams.map((e) {
-          return Obx(() {
-            final selected = selectedExam.value == e;
-            return GestureDetector(
-              onTap: () => selectedExam.value = e,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: EdgeInsets.symmetric(horizontal: 6.w),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: selected ? primary : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: selected ? primary : Colors.grey.shade300),
-                  boxShadow: selected ? [BoxShadow(color: primary.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 3))] : null,
-                ),
-                child: Text(e, style: TextStyle(color: selected ? Colors.white : Colors.black87, fontSize: 14.sp, fontWeight: FontWeight.w600)),
-              ),
-            );
-          });
-        }).toList(),
-      );
-    }
+//   static const List<_TimeModeOption> _timeModes = [
+//     _TimeModeOption(label: 'Set average time per Question 2 min', value: 'average'),
+//     _TimeModeOption(label: 'Set average time per Question 3 min', value: 'medium'),
+//     _TimeModeOption(label: 'Set average time per Question 5 min', value: 'hard', color: Color(0xFFFFA000)),
+//     _TimeModeOption(label: 'No Time limit', value: 'no_limit'),
+//   ];
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: AdminDrawer2(),
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [primary, accent, bronze], begin: Alignment.topLeft, end: Alignment.bottomRight),
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.menu,color: Colors.white,),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Assignments', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white)),
-            SizedBox(height: 2.h),
-            Text('Track progress & continue tests', style: TextStyle(fontSize: 12.sp, color: Colors.white.withOpacity(0.9))),
-          ],
-        ),
-      
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-          child: Column(
-            children: [
-              buildExamSelector(),
-              SizedBox(height: 12.h),
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initialize();
+//   }
 
-              Expanded(
-                child: Obx(() {
-                  final examData = assignmentsData[selectedExam.value];
-                  if (examData == null) {
-                    return Center(child: Text('No assignments for ${selectedExam.value}', style: TextStyle(fontSize: 14.sp, color: Colors.red.shade700)));
-                  }
+//   Future<void> _initialize() async {
+//     subjectId = Get.arguments?['subjectId']?.toString() ?? '';
+//     subjectName = Get.arguments?['subjectName']?.toString() ?? 'Assignments';
+//     schoolId = await PrefManager().readValue(key: PrefConst.SchoolId) ?? '';
+//     studentId = await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
+//     await _fetchAssignments();
+//   }
 
-                  return ListView.separated(
-                    itemCount: examData.keys.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                    itemBuilder: (context, idx) {
-                      final sectionKey = examData.keys.elementAt(idx);
-                      final List<Map<String, dynamic>> items = examData[sectionKey] ?? [];
-                      final int completed = items.where((it) => it['status'] == 'Completed').length;
-                      final double progress = items.isNotEmpty ? (completed / items.length) : 0.0;
+//   Future<void> _fetchAssignments() async {
+//     if (!mounted) return;
+//     setState(() {
+//       isLoading = true;
+//       error = null;
+//     });
 
-                      return Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 3,
-                        child: Padding(
-                          padding: EdgeInsets.all(12.w),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(child: Text(sectionKey, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700))),
-                                  Text('${(progress * 100).toStringAsFixed(0)}%', style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade700)),
-                                ],
-                              ),
-                              SizedBox(height: 8.h),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: LinearProgressIndicator(value: progress, minHeight: 8.h, backgroundColor: Colors.grey.shade200, valueColor: AlwaysStoppedAnimation(accent)),
-                              ),
-                              SizedBox(height: 12.h),
+//     try {
+//       final url = '${Adminurl.assignment}/$schoolId/$studentId/$subjectId';
+//       debugPrint('Mathscreen API: $url');
+//       final response = await http.get(Uri.parse(url));
 
-                              // Assignments list preview (max 3 shown)
-                              Column(
-                                children: items.take(7).map((assignment) {
-                                  final marks = (assignment['marks'] as List<dynamic>?) ?? [];
-                                  final nonNull = marks.where((m) => m != null).toList();
-                                  final bool hasMark = nonNull.isNotEmpty;
-                                  final double? firstMark = hasMark ? (nonNull.first as num).toDouble() : null;
-                                  final markDisplay = hasMark ? nonNull.map((m) => m.toString()).join(', ') : '';
-                                  final status = assignment['status'] as String? ?? 'Not Started';
+//       if (response.statusCode == 200) {
+//         final json = jsonDecode(response.body) as Map<String, dynamic>;
+//         _parseResponse(json);
+//       } else {
+//         throw Exception('HTTP ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       debugPrint('Mathscreen fetch error: $e');
+//       if (mounted) setState(() => error = 'Failed to load assignments. Please try again.');
+//     } finally {
+//       if (mounted) setState(() => isLoading = false);
+//     }
+//   }
 
-                                  return ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: CircleAvatar(
-                                      radius: 20.w,
-                                      backgroundColor: hasMark ? _scoreColor(firstMark!) : (status == 'Completed' ? primary : Colors.grey.shade200),
-                                      child: Text(
-                                        hasMark ? firstMark!.toString() : '-',
-                                        style: TextStyle(
-                                          color: hasMark ? Colors.white : (status == 'Completed' ? Colors.white : Colors.black87),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(assignment['assignment'], style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
-                                    subtitle: Row(children: [
-                                      Container(padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h), decoration: BoxDecoration(color: status == 'Completed' ? Colors.green.shade50 : status == 'In Progress' ? Colors.orange.shade50 : Colors.red.shade50, borderRadius: BorderRadius.circular(8)), child: Text(status, style: TextStyle(color: status == 'Completed' ? Colors.green.shade700 : status == 'In Progress' ? Colors.orange.shade700 : Colors.red.shade700, fontSize: 12.sp, fontWeight: FontWeight.w600))),
-                                      SizedBox(width: 8.w),
-                                      if (markDisplay.isNotEmpty) Text('Marks: $markDisplay', style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade700)),
-                                    ]),
-                                    trailing: ElevatedButton(
-                                      onPressed: () async {
-                                        if (status != 'Completed') {
-                                          final bool? confirm = await Get.dialog<bool>(
-                                            AlertDialog(
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              title: const Text('Open Test'),
-                                              content: const Text('Do you want to open this test now?'),
-                                              actions: [
-                                                TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel', style: TextStyle(color: Colors.red))),
-                                                ElevatedButton(onPressed: () => Get.back(result: true), style: ElevatedButton.styleFrom(backgroundColor: bronze), child: const Text('Yes',style: TextStyle(color: Colors.white))),
-                                              ],
-                                            ),
-                                          );
+//   void _parseResponse(Map<String, dynamic> json) {
+//     allData.clear();
 
-                                          if (confirm == true) {
-                                            Get.dialog(Center(child: LoadingAnimationWidget.dotsTriangle(size: 40.0, color: Colors.white)), barrierDismissible: false);
-                                            await Future.delayed(const Duration(seconds: 2));
-                                            Get.back();
-                                            Get.offAllNamed(AdminRoutes.testscreen);
-                                          }
-                                        }
-                                      },
-                                      style: ElevatedButton.styleFrom(backgroundColor: status == 'Completed' ? Colors.grey.shade400 : const Color.fromARGB(255, 76, 119, 8), padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                                      child: Text(status == 'Completed' ? 'View' : status == 'In Progress' ? 'Resume' : 'Start', style: TextStyle(fontSize: 12.sp, color: Colors.white)),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+//     final examMap = json['data']?['AssignmentExam'] as Map<String, dynamic>?;
+//     if (examMap == null) return;
 
-                              if (items.length > 7) ...[
-                                SizedBox(height: 8.h),
-                                Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () {}, child: Text('View all', style: TextStyle(color: primary, fontWeight: FontWeight.w600)))),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+//     examMap.forEach((examType, examData) {
+//       if (examData is! Map<String, dynamic>) return;
+//       final chapters = examData['AssignmentChapters'] as Map<String, dynamic>?;
+//       if (chapters == null) return;
 
-}
+//       final Map<String, List<Test>> chapterMap = {};
+//       chapters.forEach((chapterName, chapterData) {
+//         if (chapterData is List) {
+//           chapterMap[chapterName] = chapterData
+//               .whereType<Map<String, dynamic>>()
+//               .map((item) => Test.fromJson(item))
+//               .toList();
+//         }
+//       });
 
-class ColorPainter {
-  static const Color primaryColor = Color(0xFFA10D52);
-  static const Color secondaryColor = Color(0xFFFFA000);
-  static const Color accentColor = Color(0xFF4CA1AF);
+//       if (chapterMap.isNotEmpty) {
+//         allData[examType] = chapterMap;
+//       }
+//     });
 
-  static LinearGradient get gradientBackground => LinearGradient(
-        colors: [primaryColor, secondaryColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+//     examTypes = allData.keys.toList();
+//     if (examTypes.isNotEmpty) selectedExam = examTypes.first;
+//   }
 
-  static LinearGradient get buttonGradient => LinearGradient(
-        colors: [primaryColor, accentColor],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+//   Color _scoreColor(double score) {
+//     if (score >= 9) return Colors.green.shade700;
+//     if (score >= 7) return Colors.lightGreen.shade700;
+//     if (score >= 5) return Colors.yellow.shade700;
+//     if (score >= 3) return Colors.orange.shade700;
+//     return Colors.red.shade700;
+//   }
 
-  static BoxDecoration get boxDecoration => BoxDecoration(
-        gradient: gradientBackground,
-        borderRadius: BorderRadius.circular(25),
-      );
+//   Future<void> _openTest(Test test) async {
+//     if (test.status == 'Completed') return;
 
-  static BoxDecoration get cardDecoration => BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            offset: Offset(0, 6),
-            blurRadius: 12,
-            color: Colors.black.withOpacity(0.15),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(20),
-      );
+//     final mode = await Get.dialog<String>(
+//       AlertDialog(
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+//         title: const Text('Set time limit'),
+//         content: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: _timeModes
+//               .map((opt) => Padding(
+//                     padding: const EdgeInsets.only(bottom: 6),
+//                     child: SizedBox(
+//                       width: double.infinity,
+//                       child: ElevatedButton(
+//                         onPressed: () => Get.back(result: opt.value),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: opt.color ?? primary,
+//                           foregroundColor: Colors.white,
+//                           padding: const EdgeInsets.symmetric(vertical: 12),
+//                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+//                         ),
+//                         child: Text(opt.label, style: const TextStyle(fontSize: 13)),
+//                       ),
+//                     ),
+//                   ))
+//               .toList(),
+//         ),
+//         actions: [
+//           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+//         ],
+//       ),
+//       barrierDismissible: false,
+//     );
 
-  static BoxDecoration get buttonBoxDecoration => BoxDecoration(
-        gradient: buttonGradient,
-        borderRadius: BorderRadius.circular(30),
-      );
-}
+//     if (mode == null) return;
+
+//     Get.offAllNamed(
+//       AdminRoutes.testscreen,
+//       arguments: {
+//         'testId': test.testId ?? '',
+//         'passcode': test.questionTestId?.toString() ?? '',
+//         'questionMode': mode,
+//       },
+//     );
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       key: _scaffoldKey,
+//       drawer: AdminDrawer2(),
+//       backgroundColor: Colors.grey.shade50,
+//       appBar: AppBar(
+//         elevation: 0,
+//         backgroundColor: Colors.transparent,
+//         flexibleSpace: Container(
+//           decoration: const BoxDecoration(
+//             gradient: LinearGradient(
+//               colors: [primary, accent, bronze],
+//               begin: Alignment.topLeft,
+//               end: Alignment.bottomRight,
+//             ),
+//           ),
+//         ),
+//         leading: IconButton(
+//           icon: const Icon(Icons.menu, color: Colors.white),
+//           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+//         ),
+//         title: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(subjectName, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+//             Text('Track progress & continue tests', style: TextStyle(fontSize: 12.sp, color: Colors.white.withValues(alpha: 0.9))),
+//           ],
+//         ),
+//       ),
+//       body: SafeArea(child: _buildBody()),
+//     );
+//   }
+
+//   Widget _buildBody() {
+//     if (isLoading) {
+//       return Center(
+//         child: LoadingAnimationWidget.dotsTriangle(size: 48, color: primary),
+//       );
+//     }
+
+//     if (error != null) {
+//       return Center(
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Icon(Icons.error_outline, size: 48.sp, color: Colors.red.shade400),
+//             SizedBox(height: 12.h),
+//             Text(error!, style: TextStyle(fontSize: 14.sp, color: Colors.red.shade700), textAlign: TextAlign.center),
+//             SizedBox(height: 16.h),
+//             ElevatedButton(
+//               onPressed: _fetchAssignments,
+//               style: ElevatedButton.styleFrom(backgroundColor: primary),
+//               child: const Text('Retry', style: TextStyle(color: Colors.white)),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
+
+//     if (allData.isEmpty) {
+//       return Center(
+//         child: Text('No assignments found.', style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600)),
+//       );
+//     }
+
+//     return Padding(
+//       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+//       child: Column(
+//         children: [
+//           _buildExamSelector(),
+//           SizedBox(height: 12.h),
+//           Expanded(child: _buildChapterList()),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildExamSelector() {
+//     return SingleChildScrollView(
+//       scrollDirection: Axis.horizontal,
+//       child: Row(
+//         children: examTypes.map((exam) {
+//           final selected = selectedExam == exam;
+//           return GestureDetector(
+//             onTap: () => setState(() => selectedExam = exam),
+//             child: AnimatedContainer(
+//               duration: const Duration(milliseconds: 220),
+//               margin: EdgeInsets.symmetric(horizontal: 6.w),
+//               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+//               decoration: BoxDecoration(
+//                 color: selected ? primary : Colors.white,
+//                 borderRadius: BorderRadius.circular(20),
+//                 border: Border.all(color: selected ? primary : Colors.grey.shade300),
+//                 boxShadow: selected
+//                     ? [BoxShadow(color: primary.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3))]
+//                     : null,
+//               ),
+//               child: Text(
+//                 exam,
+//                 style: TextStyle(
+//                   color: selected ? Colors.white : Colors.black87,
+//                   fontSize: 13.sp,
+//                   fontWeight: FontWeight.w600,
+//                 ),
+//               ),
+//             ),
+//           );
+//         }).toList(),
+//       ),
+//     );
+//   }
+
+//   Widget _buildChapterList() {
+//     final chapters = allData[selectedExam];
+//     if (chapters == null || chapters.isEmpty) {
+//       return Center(
+//         child: Text('No assignments for $selectedExam', style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600)),
+//       );
+//     }
+
+//     return ListView.separated(
+//       itemCount: chapters.length,
+//       separatorBuilder: (_, __) => SizedBox(height: 12.h),
+//       itemBuilder: (context, idx) {
+//         final chapterName = chapters.keys.elementAt(idx);
+//         final tests = chapters[chapterName] ?? [];
+//         final completed = tests.where((t) => t.status == 'Completed').length;
+//         final progress = tests.isNotEmpty ? completed / tests.length : 0.0;
+
+//         return Card(
+//           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+//           elevation: 3,
+//           child: Padding(
+//             padding: EdgeInsets.all(12.w),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Row(
+//                   children: [
+//                     Expanded(
+//                       child: Text(chapterName, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700)),
+//                     ),
+//                     Text('$completed/${tests.length}', style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600)),
+//                     SizedBox(width: 6.w),
+//                     Text('${(progress * 100).toStringAsFixed(0)}%', style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade700)),
+//                   ],
+//                 ),
+//                 SizedBox(height: 8.h),
+//                 ClipRRect(
+//                   borderRadius: BorderRadius.circular(8),
+//                   child: LinearProgressIndicator(
+//                     value: progress,
+//                     minHeight: 7.h,
+//                     backgroundColor: Colors.grey.shade200,
+//                     valueColor: const AlwaysStoppedAnimation(accent),
+//                   ),
+//                 ),
+//                 SizedBox(height: 10.h),
+//                 ...tests.map((test) => _buildTestTile(test)),
+//               ],
+//             ),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+//   Widget _buildTestTile(Test test) {
+//     final status = test.status ?? 'Not Started';
+//     final marks = test.testTotalMarks;
+//     final hasMarks = marks != null && marks.isNotEmpty && marks != '0';
+//     final marksVal = double.tryParse(marks ?? '') ?? 0.0;
+
+//     Color statusColor;
+//     Color statusBg;
+//     switch (status) {
+//       case 'Completed':
+//         statusColor = Colors.green.shade700;
+//         statusBg = Colors.green.shade50;
+//         break;
+//       case 'In Progress':
+//         statusColor = Colors.orange.shade700;
+//         statusBg = Colors.orange.shade50;
+//         break;
+//       default:
+//         statusColor = Colors.red.shade700;
+//         statusBg = Colors.red.shade50;
+//     }
+
+//     String btnLabel;
+//     Color btnColor;
+//     switch (status) {
+//       case 'Completed':
+//         btnLabel = 'View';
+//         btnColor = Colors.grey.shade400;
+//         break;
+//       case 'In Progress':
+//         btnLabel = 'Resume';
+//         btnColor = const Color.fromARGB(255, 76, 119, 8);
+//         break;
+//       default:
+//         btnLabel = 'Start';
+//         btnColor = const Color.fromARGB(255, 76, 119, 8);
+//     }
+
+//     return ListTile(
+//       contentPadding: EdgeInsets.zero,
+//       leading: CircleAvatar(
+//         radius: 20.w,
+//         backgroundColor: hasMarks ? _scoreColor(marksVal) : (status == 'Completed' ? primary : Colors.grey.shade200),
+//         child: Text(
+//           hasMarks ? marksVal.toStringAsFixed(0) : '-',
+//           style: TextStyle(
+//             color: hasMarks || status == 'Completed' ? Colors.white : Colors.black87,
+//             fontWeight: FontWeight.bold,
+//             fontSize: 12.sp,
+//           ),
+//         ),
+//       ),
+//       title: Text(test.testName ?? 'Assignment', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+//       subtitle: Wrap(
+//         spacing: 6,
+//         crossAxisAlignment: WrapCrossAlignment.center,
+//         children: [
+//           Container(
+//             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+//             decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(8)),
+//             child: Text(status, style: TextStyle(color: statusColor, fontSize: 11.sp, fontWeight: FontWeight.w600)),
+//           ),
+//           if (test.totalMinutes != null)
+//             Text('${test.totalMinutes} min', style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade600)),
+//           if (hasMarks)
+//             Text('Marks: $marks', style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade700)),
+//         ],
+//       ),
+//       trailing: ElevatedButton(
+//         onPressed: status == 'Completed' ? null : () => _openTest(test),
+//         style: ElevatedButton.styleFrom(
+//           backgroundColor: btnColor,
+//           disabledBackgroundColor: Colors.grey.shade400,
+//           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+//           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+//         ),
+//         child: Text(btnLabel, style: TextStyle(fontSize: 12.sp, color: Colors.white)),
+//       ),
+//     );
+//   }
+// }
+
+// class _TimeModeOption {
+//   final String label;
+//   final String value;
+//   final Color? color;
+//   const _TimeModeOption({required this.label, required this.value, this.color});
+// }

@@ -29,7 +29,7 @@ class Data {
   int? studentId;
   String? admissionNo;
   String? studentName;
-  String? session;
+  Null? session;
   int? courseId;
   String? courseName;
   int? batchId;

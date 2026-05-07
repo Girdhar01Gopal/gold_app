@@ -23,6 +23,8 @@ class HomeController extends GetxController {
           var session = ''.obs;
           var schoolid = ''.obs;
           var studentid = ''.obs; 
+          var courseid = ''.obs;
+          var batchid = ''.obs;
 
           var subjects = <dynamic>[].obs;
 
@@ -39,15 +41,19 @@ var start = false.obs;
       session.value = await PrefManager().readValue(key: PrefConst.session);
       schoolid.value = await PrefManager().readValue(key: PrefConst.SchoolId);
       studentid.value = await PrefManager().readValue(key: PrefConst.StudentId);
+      courseid.value = await PrefManager().readValue(key: PrefConst.CourseId);
+      batchid.value = await PrefManager().readValue(key: PrefConst.batchiid);
+
 
    print("✅ EnrollmentNo in HomeController: ${enrollmentNo.value}");
-    super.onInit();
     allsubject();
+    super.onInit();
+   
   }
 
 Future<void> allsubject() async {
   try {
-    final response = await http.get(Uri.parse("${Adminurl.allsubject}/${schoolid.value}/${studentid.value}"));
+    final response = await http.get(Uri.parse("${Adminurl.allsubject}/${schoolid.value}/${studentid.value}/${courseid.value}/${batchid.value}"));
     print(response);
      print("✅ allsubject Response: ${response.body}");
     

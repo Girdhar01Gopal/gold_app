@@ -1,122 +1,108 @@
 class SubjectResponse {
   String? message;
   Data? data;
-  int? statusCode;
+  int? statuscode;
   int? totalCount;
 
-  SubjectResponse({this.message, this.data, this.statusCode, this.totalCount});
+  SubjectResponse({this.message, this.data, this.statuscode, this.totalCount});
 
   SubjectResponse.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    statusCode = json['statuscode'];
+    statuscode = json['statuscode'];
     totalCount = json['totalCount'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['message'] = this.message;
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    data['statuscode'] = this.statusCode;
-    data['totalCount'] = this.totalCount;
+    final Map<String, dynamic> data = {};
+    data['message'] = message;
+    if (this.data != null) data['data'] = this.data!.toJson();
+    data['statuscode'] = statuscode;
+    data['totalCount'] = totalCount;
     return data;
   }
 }
 
+// ── Top-level data wrapper ─────────────────────────────────────────────────
 class Data {
   AssignmentExam? assignmentExam;
-  bool? isActive;
-  String? createdDate;
-  String? date;
-  String? modifiedDate;
-  int? createdBy;
-  int? updatedBy;
 
-  Data({
-    this.assignmentExam,
-    this.isActive,
-    this.createdDate,
-    this.date,
-    this.modifiedDate,
-    this.createdBy,
-    this.updatedBy,
-  });
+  Data({this.assignmentExam});
 
   Data.fromJson(Map<String, dynamic> json) {
     assignmentExam = json['AssignmentExam'] != null
         ? AssignmentExam.fromJson(json['AssignmentExam'])
         : null;
-    isActive = json['IsActive'];
-    createdDate = json['CreatedDate'];
-    date = json['Date'];
-    modifiedDate = json['ModifiedDate'];
-    createdBy = json['Createdby'];
-    updatedBy = json['Updatedby'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.assignmentExam != null) {
-      data['AssignmentExam'] = this.assignmentExam!.toJson();
-    }
-    data['IsActive'] = this.isActive;
-    data['CreatedDate'] = this.createdDate;
-    data['Date'] = this.date;
-    data['ModifiedDate'] = this.modifiedDate;
-    data['Createdby'] = this.createdBy;
-    data['Updatedby'] = this.updatedBy;
+    final Map<String, dynamic> data = {};
+    if (assignmentExam != null) data['AssignmentExam'] = assignmentExam!.toJson();
     return data;
   }
 }
 
+// ── Exam map: dynamic keys like "CBSE", "JEE Main", etc. ──────────────────
+// Parsed manually in the controller via forEach; stored as
+//   examType -> AssignmentChapterMap
 class AssignmentExam {
-  Map<String, AssignmentChapters>? assignmentChapters;
+  final Map<String, AssignmentChapterMap> exams;
 
-  AssignmentExam({this.assignmentChapters});
+  AssignmentExam({required this.exams});
 
-  AssignmentExam.fromJson(Map<String, dynamic> json) {
-    if (json['JEE Advanced'] != null) {
-      assignmentChapters = <String, AssignmentChapters>{};
-      json['JEE Advanced']['AssignmentChapters'].forEach((key, value) {
-        assignmentChapters![key] = AssignmentChapters.fromJson(value);
+  factory AssignmentExam.fromJson(Map<String, dynamic> json) {
+    final map = <String, AssignmentChapterMap>{};
+    json.forEach((examType, examData) {
+      if (examData is Map<String, dynamic>) {
+        map[examType] = AssignmentChapterMap.fromJson(examData);
+      }
+    });
+    return AssignmentExam(exams: map);
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    exams.forEach((key, val) => data[key] = val.toJson());
+    return data;
+  }
+}
+
+// ── Chapter map: dynamic keys like "Chapter 1", "Chapter 2", etc. ─────────
+class AssignmentChapterMap {
+  final Map<String, List<Assignment>> chapters;
+
+  AssignmentChapterMap({required this.chapters});
+
+  factory AssignmentChapterMap.fromJson(Map<String, dynamic> json) {
+    final map = <String, List<Assignment>>{};
+    final raw = json['AssignmentChapters'];
+    if (raw is Map<String, dynamic>) {
+      raw.forEach((chapterName, chapterData) {
+        if (chapterData is List) {
+          map[chapterName] = chapterData
+              .whereType<Map<String, dynamic>>()
+              .map((item) => Assignment.fromJson(item))
+              .toList();
+        }
       });
     }
+    return AssignmentChapterMap(chapters: map);
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.assignmentChapters != null) {
-      data['AssignmentChapters'] =
-          this.assignmentChapters!.map((key, value) => MapEntry(key, value.toJson()));
-    }
-    return data;
+    final Map<String, dynamic> data = {};
+    chapters.forEach((key, val) => data[key] = val.map((a) => a.toJson()).toList());
+    return {'AssignmentChapters': data};
   }
 }
 
-class AssignmentChapters {
-  List<Assignment>? assignments;
-
-  AssignmentChapters({this.assignments});
-
-  AssignmentChapters.fromJson(List<dynamic> json) {
-    assignments = json.map((v) => Assignment.fromJson(v as Map<String, dynamic>)).toList();
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.assignments != null) {
-      data['assignments'] = this.assignments!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
-}
-
+// ── Unified assignment leaf node (same fields for CBSE, JEE Main, etc.) ───
 class Assignment {
   String? assignmentTopic;
+  String? assignmentExam;
   String? testId;
   String? testName;
+  String? assExamRound;
   String? status;
   String? aStatus;
   String? testTotalMarks;
@@ -124,14 +110,16 @@ class Assignment {
   int? assigtChapterId;
   int? assigtTopicId;
   int? subjectId;
+  int? questionTestId;
   String? assignmentChapter;
   String? subjectName;
-  int? QuestionTestId;
 
   Assignment({
     this.assignmentTopic,
+    this.assignmentExam,
     this.testId,
     this.testName,
+    this.assExamRound,
     this.status,
     this.aStatus,
     this.testTotalMarks,
@@ -139,42 +127,51 @@ class Assignment {
     this.assigtChapterId,
     this.assigtTopicId,
     this.subjectId,
+    this.questionTestId,
     this.assignmentChapter,
     this.subjectName,
-    this.QuestionTestId,
   });
 
   Assignment.fromJson(Map<String, dynamic> json) {
     assignmentTopic = json['AssignmentTopic'];
-    testId = json['TestId'];
-    testName = json['TestName'];
-    status = json['Status'];
-    aStatus = json['AStatus'];
-    testTotalMarks = json['TestTotalMarks'];
-    totalMinutes = json['TotalMinutes'];
+    assignmentExam  = json['AssignmentExam'];
+    testId          = json['TestId'];
+    testName        = json['TestName'];
+    assExamRound    = json['AssExamRound'];
+    status          = json['Status'];
+    aStatus         = json['AStatus'];
+    testTotalMarks  = json['TestTotalMarks'];
+    totalMinutes    = json['TotalMinutes'];
     assigtChapterId = json['AssigtChapterId'];
-    assigtTopicId = json['AssigtTopicId'];
-    subjectId = json['SubjectId'];
+    assigtTopicId   = json['AssigtTopicId'];
+    subjectId       = json['SubjectId'];
+    questionTestId  = json['QuestionTestId'];
     assignmentChapter = json['AssignmentChapter'];
-    subjectName = json['SubjectName'];
-    QuestionTestId = json['QuestionTestId'];
+    subjectName     = json['SubjectName'];
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['AssignmentTopic'] = this.assignmentTopic;
-    data['TestId'] = this.testId;
-    data['TestName'] = this.testName;
-    data['Status'] = this.status;
-    data['AStatus'] = this.aStatus;
-    data['TestTotalMarks'] = this.testTotalMarks;
-    data['TotalMinutes'] = this.totalMinutes;
-    data['AssigtChapterId'] = this.assigtChapterId;
-    data['AssigtTopicId'] = this.assigtTopicId;
-    data['SubjectId'] = this.subjectId;
-    data['AssignmentChapter'] = this.assignmentChapter;
-    data['SubjectName'] = this.subjectName;
-    data['QuestionTestId'] = this.QuestionTestId;
-    return data;
-  }
+  Map<String, dynamic> toJson() => {
+    'AssignmentTopic':  assignmentTopic,
+    'AssignmentExam':   assignmentExam,
+    'TestId':           testId,
+    'TestName':         testName,
+    'AssExamRound':     assExamRound,
+    'Status':           status,
+    'AStatus':          aStatus,
+    'TestTotalMarks':   testTotalMarks,
+    'TotalMinutes':     totalMinutes,
+    'AssigtChapterId':  assigtChapterId,
+    'AssigtTopicId':    assigtTopicId,
+    'SubjectId':        subjectId,
+    'QuestionTestId':   questionTestId,
+    'AssignmentChapter': assignmentChapter,
+    'SubjectName':      subjectName,
+  };
+}
+
+// ── Legacy wrapper kept for backward compat with AssignmentChapters refs ───
+class AssignmentChapters {
+  List<Assignment>? assignments;
+
+  AssignmentChapters({this.assignments});
 }
