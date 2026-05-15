@@ -17,13 +17,17 @@ class Instructioncontroller extends GetxController {
   RxBool isLoading = false.obs;
   RxList<Data> instructions = <Data>[].obs;
   
-  RxString courseId = ''.obs;  // Rx<String> for reactive
-  RxString schoolId = ''.obs;  // Rx<String> for reactive
-  RxString studentid = ''.obs; // Rx<String> for reactive
-  RxString testId = ''.obs;    // Rx<String> for reactive
-  RxString passcode = ''.obs;  // Rx<String> for reactive
+  RxString courseId = ''.obs;
+  RxString schoolId = ''.obs;
+  RxString studentid = ''.obs;
+  RxString testId = ''.obs;
+  RxString passcode = ''.obs;
   RxString batchid = ''.obs;
-  var testid = "".obs;  // Rx<String> for reactive
+  RxString assigtTopicId = ''.obs;
+  RxString assigtChapterId = ''.obs;
+  RxString subjectId = ''.obs;
+  RxString assExamRound = ''.obs;
+  var testid = "".obs;
 
 
   @override
@@ -36,9 +40,12 @@ class Instructioncontroller extends GetxController {
     studentid.value  = await PrefManager().readValue(key: PrefConst.StudentId) ?? '';
     batchid.value  = await PrefManager().readValue(key: PrefConst.batchiid) ?? '';
 
-    testId.value     = Get.arguments['testId'] ?? ''; // Ensure this is reactive
-    passcode.value   = Get.arguments['passcode'] ?? '';
-    testid.value = Get.arguments['type'] ?? '';
+    testId.value        = Get.arguments['testId'] ?? '';
+    testid.value        = Get.arguments['type'] ?? '';
+    assigtTopicId.value   = Get.arguments['AssigtTopicId']?.toString() ?? '';
+    assigtChapterId.value = Get.arguments['AssigtChapterId']?.toString() ?? '';
+    subjectId.value       = Get.arguments['SubjectId']?.toString() ?? '';
+    assExamRound.value    = Get.arguments['AssExamRound']?.toString() ?? '';
   fetchInstructions();
    
   }
@@ -133,9 +140,18 @@ class Instructioncontroller extends GetxController {
     Get.offAllNamed(
       AdminRoutes.testscreen,
       arguments: {
-        'testId': testId.value,
+        'SchoolId': schoolId.value,
+        'CourseId': courseId.value,
+        'AssigtTopicId': assigtTopicId.value,
+        'AssigtChapterId': assigtChapterId.value,
+        'TestId': testId.value,
+        'SubjectId': subjectId.value,
+        'AssExamRound': assExamRound.value,
+        'BatchId': batchid.value,
         'passcode': passcode.value,
       },
     );
+          print("Navigating to Test Screen with args: SchoolId=${schoolId.value}, CourseId=${courseId.value}, AssigtTopicId=${assigtTopicId.value}, AssigtChapterId=${assigtChapterId.value}, TestId=${testId.value}, SubjectId=${subjectId.value}, AssExamRound=${assExamRound.value}, BatchId=${batchid.value}");
+
   }
 }

@@ -238,6 +238,10 @@ class Testscreencontroller extends GetxController {
   var passcode = ''.obs;
   var batchid = ''.obs;
   var batchiid = ''.obs;
+  var assExamRoundd = ''.obs;
+  var AssigtChapterId = ''.obs;
+  var AssigtTopicId = ''.obs;
+  var subjectId = ''.obs;
 
   // ------------ TIMER ------------
   RxInt viewsecond = 0.obs; // total minutes from API
@@ -495,7 +499,18 @@ class Testscreencontroller extends GetxController {
 
     // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
     testId.value = Get.arguments['testId'] ?? '';
-    passcode.value = Get.arguments['passcode'] ?? '';
+    assExamRoundd.value = Get.arguments['AssExamRound']?.toString() ?? '';
+    AssigtChapterId.value = Get.arguments['AssigtChapterId']?.toString()
+        ?? '';
+    AssigtTopicId.value = Get.arguments['AssigtTopicId']?.toString()
+        ?? '';
+    subjectId.value = Get.arguments['SubjectId']?.toString() ?? '';
+      passcode.value = Get.arguments['passcode'] ?? '';
+  
+      print("✅ TestScreenController initialized with testId: ${testId.value}");
+      print("✅ Additional args - AssExamRound: ${assExamRoundd.value}, ChapterId: ${AssigtChapterId.value}, TopicId: ${AssigtTopicId.value}, SubjectId: ${subjectId.value}");
+   
+    
 
     // ✅🔥 NOW DELETE THE CORRUPTED BOX (AFTER testId EXISTS)
     try {
@@ -685,13 +700,13 @@ class Testscreencontroller extends GetxController {
 
   Future<void> _loadQuestions() async {
     final url =
-        '${Adminurl.testurl}/${schoolId.value}/${studentid.value}/${testId.value}/${passcode.value}/${studentidd.value}/${batchiid.value}';
+        '${Adminurl.questions}/${schoolId.value}/${studentid.value}/$AssigtTopicId/$AssigtChapterId/${testId.value}/$subjectId/$assExamRoundd/${batchiid.value}';
     print("🔗 Fetching questions from: $url");
 
     try {
       final response = await http.get(
         Uri.parse(url),
-        headers: {'MobAppQuestionKey': 'bdui93Y-HLwxe8-11fehc-AyuK63-96yjc736'},
+        headers: {'MobAppAssignmentKey': 'bdty93Y-HSFxe8-133fec-yDgK63-5gsHNs6'},
       );
 
       if (response.statusCode != 200) {

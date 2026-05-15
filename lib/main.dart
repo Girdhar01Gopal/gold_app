@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:gold_app/utils/landscape_only_gate.dart';
-import 'package:hive/hive.dart';
+import 'package:gold_app/oflinerepo/questionhivemodel.dart';
+import 'package:gold_app/utils/localStorage/hivemodel.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'infrastructure/routes/admin_routes.dart';
 
 
@@ -21,7 +23,9 @@ void main() async {
     overlays: [],
   );
 
- 
+  await Hive.initFlutter();
+  Hive.registerAdapter(HivemodelAdapter());
+  Hive.registerAdapter(hivequestionAdapter());
 
   await GetStorage.init();
 

@@ -29,7 +29,7 @@ class examinstructionview extends GetView<examinstructioncontroller> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Get.back(result: option.value),
+                      onPressed: () => controller.voidtest(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: option.color ?? ColorPainter.primaryColor,
                         foregroundColor: Colors.white,

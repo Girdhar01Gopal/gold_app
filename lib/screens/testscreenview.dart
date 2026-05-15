@@ -911,6 +911,10 @@ class _TestscreenviewState extends State<Testscreenview> {
                           'testId': controller.testId.value,
                           'passcode': controller.passcode.value,
                           'type': "Test Instructions",
+                          'AssigtTopicId': controller.AssigtTopicId.value,
+                          'AssigtChapterId': controller.AssigtChapterId.value,
+                          'SubjectId': controller.subjectId.value,
+                          'AssExamRound': controller.assExamRoundd.value,
                         },
                       );
                     },

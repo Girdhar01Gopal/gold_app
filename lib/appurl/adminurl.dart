@@ -15,6 +15,8 @@ class Adminurl {
       "$baseurl/MobApp/AppStdAssignment";
   static const String analysis =
       "$baseurl/MobApp/AppStdResultReports/";
+      static const String questions =
+      "$baseurl/MobApp/ViewAssigmentQuestions";
   static const String instructionUrl =
       "$baseurl/MobApp/MobAppAssignmentnstruction";
        static const String result =

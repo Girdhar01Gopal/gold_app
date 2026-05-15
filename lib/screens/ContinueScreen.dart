@@ -152,11 +152,14 @@ class ContinueScreen extends StatelessWidget {
             final assignment = assignments[index];
             Get.offAllNamed(AdminRoutes.examinstruction,
               arguments: {
-                'testId':       assignment.testId ?? '',
-                'passcode':     assignment.testId ?? '',
-            
-
+                'testId':          assignment.testId ?? '',
+                'passcode':        assignment.testId ?? '',
+                'AssigtTopicId':   assignment.assigtTopicId?.toString() ?? '',
+                'AssigtChapterId': assignment.assigtChapterId?.toString() ?? '',
+                'SubjectId':       assignment.subjectId?.toString() ?? '',
+                'AssExamRound':    assignment.assExamRound ?? '',
               });
+              print("Tapped on assignment bubble with args: testId=${assignment.testId}, AssigtTopicId=${assignment.assigtTopicId}, AssigtChapterId=${assignment.assigtChapterId}, SubjectId=${assignment.subjectId}, AssExamRound=${assignment.assExamRound}");
           },
           fillColor: hasAssignment
               ? bubbleFill
