@@ -288,7 +288,7 @@ class _TestscreenviewState extends State<Testscreenview> {
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: selected
-                  ? (isDarkMode ? Colors.green[600]! : const Color(0xFF8B2D28))
+                  ? (isDarkMode ? Colors.green[600]! : const Color(0xFFA10D52))
                   : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
               width: 1.1,
             ),
@@ -317,7 +317,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                   onChanged: (_) => controller.selectOption(qid, optionKey),
                   activeColor: isDarkMode
                       ? Colors.grey[400]
-                      : const Color(0xFF8B2D28),
+                      : const Color(0xFFA10D52),
                 ),
               SizedBox(width: 8.w),
               Expanded(
@@ -836,19 +836,49 @@ class _TestscreenviewState extends State<Testscreenview> {
         child: Scaffold(
           backgroundColor: isDarkMode
               ? Colors.grey[900]
-              : const Color(0xFFF5F6FA),
+              : const Color(0xFFF4F6FA),
           appBar: AppBar(
-            backgroundColor: isDarkMode
-                ? Colors.grey[850]
-                : const Color(0xFF8B2D28),
-            elevation: 3,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
             centerTitle: true,
-            title: const Text(
-              "Meritova",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: isDarkMode
+                    ? null
+                    : const LinearGradient(
+                        colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                color: isDarkMode ? Colors.grey[850] : null,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                ),
               ),
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Assignment",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                Obx(() => Text(
+                  controller.selectedSubject.value.isNotEmpty
+                      ? controller.selectedSubject.value
+                      : '',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
+                )),
+              ],
             ),
             actions: [
               Padding(
@@ -885,9 +915,11 @@ class _TestscreenviewState extends State<Testscreenview> {
                       () => Text(
                         controller.formattedTime,
                         style: TextStyle(
-                          color: controller.remainingSeconds.value < 600
-                              ? const Color.fromARGB(255, 249, 20, 20)
-                              : Colors.white,
+                          color: !controller.hasTimeLimit.value
+                              ? Colors.greenAccent
+                              : controller.remainingSeconds.value < 600
+                                  ? const Color.fromARGB(255, 249, 20, 20)
+                                  : Colors.white,
                           fontSize: 9.sp,
                           fontWeight: FontWeight.bold,
                         ),
@@ -985,13 +1017,13 @@ class _TestscreenviewState extends State<Testscreenview> {
                                           ),
                                         ),
                                         selected: isSelected,
-                                        selectedColor: isDarkMode ? Colors.grey[700] : const Color(0xFF8B2D28),
+                                        selectedColor: isDarkMode ? Colors.grey[700] : const Color(0xFFA10D52),
                                         backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
                                         elevation: 2,
                                         pressElevation: 4,
                                         side: BorderSide(
                                           color: isSelected
-                                              ? (isDarkMode ? Colors.grey[600]! : const Color(0xFF8B2D28))
+                                              ? (isDarkMode ? Colors.grey[600]! : const Color(0xFFA10D52))
                                               : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
                                         ),
                                         onSelected: (selected) {
@@ -1342,7 +1374,7 @@ class _TestscreenviewState extends State<Testscreenview> {
                                                       ),
                                                   activeColor: isDarkMode
                                                       ? Colors.grey[400]
-                                                      : const Color(0xFF8B2D28),
+                                                      : const Color(0xFFA10D52),
                                                 ),
                                                 title: Container(
                                                   width: double.infinity,
@@ -1812,171 +1844,135 @@ class _TestscreenviewState extends State<Testscreenview> {
                     ),
                     // Fixed action buttons at the bottom
                     Container(
-                      width: 260.w,
                       padding: EdgeInsets.symmetric(
-                        vertical: 10.h,
-                        horizontal: 8.w,
+                        vertical: 8.h,
+                        horizontal: 6.w,
                       ),
-                      color: isDarkMode ? Colors.grey[900] : Colors.white,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.grey[900] : Colors.white,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, -3),
+                          ),
+                        ],
+                      ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Row 1: Previous | Save & Next | Clear
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               ElevatedButton.icon(
-                                icon: const Icon(
-                                  Icons.arrow_back_ios_new,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                                label: Text(
-                                  "Previous",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 4.sp,
-                                  ),
-                                ),
+                                icon: const Icon(Icons.arrow_back_ios_new, size: 12, color: Colors.white),
+                                label: Text("Previous", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode
-                                      ? Colors.grey[800]
-                                      : Colors.grey.shade600,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(7.r),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 10.h,
-                                  ),
+                                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey.shade600,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
+                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 onPressed: controller.previousQuestion,
                               ),
                               ElevatedButton.icon(
-                                icon: const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                                label: Text(
-                                  "Save & Next",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 4.sp,
-                                  ),
-                                ),
+                                icon: const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white),
+                                label: Text("Save & Next", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green.shade500,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(7.r),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w,
-                                    vertical: 10.h,
-                                  ),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
+                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                onPressed: () =>
-                                    controller.nextQuestion(context),
+                                onPressed: () => controller.nextQuestion(context),
                               ),
-                              // --- Clear Button ---
                               ElevatedButton.icon(
-                                icon: const Icon(
-                                  Icons.clear,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                                label: Text(
-                                  "Clear",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 4.sp,
-                                  ),
-                                ),
+                                icon: const Icon(Icons.clear, size: 12, color: Colors.white),
+                                label: Text("Clear", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red.shade400,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(7.r),
-                                  ),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 10.h,
-                                  ),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
+                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                onPressed: () => controller
-                                    .clearQuestionWithWarning(question['id']),
+                                onPressed: () => controller.clearQuestionWithWarning(question['id']),
                               ),
+                            ],
+                          ),
+                          SizedBox(height: 6.h),
+                          // Row 2: Mark for Review | Submit Assignment
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
                               Obx(() {
-                                final marked = controller.markedForReview
-                                    .contains(question['id']);
+                                final marked = controller.markedForReview.contains(question['id']);
                                 return ElevatedButton.icon(
                                   icon: Icon(
                                     marked ? Icons.flag : Icons.outlined_flag,
-                                    size: 15,
-                                    color: marked
-                                        ? Colors.white
-                                        : (isDarkMode
-                                              ? Colors.grey[300]
-                                              : Colors.grey.shade800),
+                                    size: 12,
+                                    color: marked ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey.shade800),
                                   ),
                                   label: Text(
-                                    marked ? "Unmark" : "Save & Mark Review",
+                                    marked ? "Unmark" : "Mark Review",
                                     style: TextStyle(
                                       fontSize: 4.sp,
-                                      color: marked
-                                          ? Colors.white
-                                          : Colors.black87,
+                                      color: marked ? Colors.white : Colors.black87,
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: marked
-                                        ? Colors.purple
-                                        : Colors.yellow,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(7.r),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 10.h,
-                                    ),
+                                    backgroundColor: marked ? Colors.purple : Colors.yellow,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
+                                    padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
                                     elevation: 0,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  onPressed:
-                                      controller.markForReviewWithWarning,
+                                  onPressed: controller.markForReviewWithWarning,
                                 );
                               }),
                               Obx(() {
-                                final isTimeOver =
-                                    controller.remainingSeconds.value <= 0;
-                                return ElevatedButton(
-                                  onPressed: () => controller
-                                      .showSubmitWarningLikeJeeMain(context),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10.w,
-                                      vertical: 10.h,
-                                    ),
-                                    backgroundColor: Colors.red,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                    elevation: 4,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.check_circle_outline,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 6.w),
-                                      Text(
-                                        isTimeOver ? "Time Up!" : "Submit Test",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 4.sp,
+                                final isTimeOver = controller.hasTimeLimit.value && controller.remainingSeconds.value <= 0;
+                                return GestureDetector(
+                                  onTap: () => controller.showSubmitWarningLikeJeeMain(context),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+                                    decoration: BoxDecoration(
+                                      gradient: isTimeOver
+                                          ? null
+                                          : const LinearGradient(
+                                              colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                      color: isTimeOver ? Colors.red : null,
+                                      borderRadius: BorderRadius.circular(7.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFA10D52).withValues(alpha: 0.35),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.assignment_turned_in_outlined, color: Colors.white, size: 13),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          isTimeOver ? "Time Up!" : "Submit",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 4.sp,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               }),
@@ -1992,6 +1988,17 @@ class _TestscreenviewState extends State<Testscreenview> {
               Container(
                 width: 100.w,
                 padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[900] : const Color(0xFFF8F0F4),
+                  border: Border(
+                    left: BorderSide(
+                      color: isDarkMode
+                          ? Colors.grey[700]!
+                          : const Color(0xFFA10D52).withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2001,15 +2008,26 @@ class _TestscreenviewState extends State<Testscreenview> {
                       fs: fs,
                     ),
                     SizedBox(height: 16.h),
-                    const Divider(thickness: 1.2),
-                    Text(
-                      "Question Palette",
-                      style: TextStyle(
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode
-                            ? Colors.grey[300]
-                            : const Color(0xFF8B2D28),
+                    Container(
+                      height: 1,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                      ).createShader(bounds),
+                      child: Text(
+                        "Question Palette",
+                        style: TextStyle(
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.grey[300] : Colors.white,
+                        ),
                       ),
                     ),
                     SizedBox(height: 10.h),

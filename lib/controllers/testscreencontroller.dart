@@ -248,6 +248,8 @@ class Testscreencontroller extends GetxController {
   RxInt totalSeconds = 0.obs; // total seconds
   RxInt remainingSeconds = 0.obs; // remaining seconds
   RxBool isTimerRunning = false.obs;
+  RxBool hasTimeLimit = true.obs; // false when "No Time limit" is selected
+  var timeLimitMode = 'average'.obs; // 'average'=2min, 'medium'=3min, 'hard'=5min, 'no_limit'
   final RxDouble fontScale = 1.0.obs;
 
   Timer? quizTimer;
@@ -500,17 +502,14 @@ class Testscreencontroller extends GetxController {
     // BatchId.value    = await PrefManager().readValue(key: PrefConst.CourseId) ?? '';
     testId.value = Get.arguments['testId'] ?? '';
     assExamRoundd.value = Get.arguments['AssExamRound']?.toString() ?? '';
-    AssigtChapterId.value = Get.arguments['AssigtChapterId']?.toString()
-        ?? '';
-    AssigtTopicId.value = Get.arguments['AssigtTopicId']?.toString()
-        ?? '';
+    AssigtChapterId.value = Get.arguments['AssigtChapterId']?.toString() ?? '';
+    AssigtTopicId.value = Get.arguments['AssigtTopicId']?.toString() ?? '';
     subjectId.value = Get.arguments['SubjectId']?.toString() ?? '';
-      passcode.value = Get.arguments['passcode'] ?? '';
-  
-      print("✅ TestScreenController initialized with testId: ${testId.value}");
-      print("✅ Additional args - AssExamRound: ${assExamRoundd.value}, ChapterId: ${AssigtChapterId.value}, TopicId: ${AssigtTopicId.value}, SubjectId: ${subjectId.value}");
-   
-    
+    passcode.value = Get.arguments['passcode'] ?? '';
+    timeLimitMode.value = Get.arguments['timeLimitMode']?.toString() ?? 'average';
+
+    print("✅ TestScreenController initialized with testId: ${testId.value}");
+    print("✅ Additional args - AssExamRound: ${assExamRoundd.value}, ChapterId: ${AssigtChapterId.value}, TopicId: ${AssigtTopicId.value}, SubjectId: ${subjectId.value}, timeLimitMode: ${timeLimitMode.value}");
 
     // ✅🔥 NOW DELETE THE CORRUPTED BOX (AFTER testId EXISTS)
     try {
@@ -525,11 +524,20 @@ class Testscreencontroller extends GetxController {
     await _loadFromOffline();
 
     if (allQuestions.isNotEmpty) {
-      final firstSubjectList = allQuestions.values.first;
-      if (firstSubjectList.isNotEmpty) {
-        // Force fixed exam duration: 180 minutes.
-        viewsecond.value = 180;
+      final mode = timeLimitMode.value;
+      if (mode == 'no_limit') {
+        hasTimeLimit.value = false;
+        timerStarted.value = true; // prevent view from starting a timer
+        print("⏱ No time limit selected");
+      } else {
+        hasTimeLimit.value = true;
+        final totalQuestions = allQuestions.values
+            .fold<int>(0, (sum, list) => sum + list.length);
+        final minutesPerQuestion = mode == 'medium' ? 3 : (mode == 'hard' ? 5 : 2);
+        viewsecond.value = totalQuestions * minutesPerQuestion;
+        print("⏱ Timer set: $totalQuestions questions × $minutesPerQuestion min = ${viewsecond.value} min");
         startTimer(viewsecond.value);
+        timerStarted.value = true; // prevent view from restarting the timer
       }
     }
 
@@ -640,6 +648,7 @@ class Testscreencontroller extends GetxController {
   // ===================================================
 
   String get formattedTime {
+    if (!hasTimeLimit.value) return 'No Limit';
     final s = remainingSeconds.value;
     final h = (s ~/ 3600).toString().padLeft(2, '0');
     final m = ((s % 3600) ~/ 60).toString().padLeft(2, '0');
@@ -943,7 +952,7 @@ class Testscreencontroller extends GetxController {
 
   void showCustomSubmitDialog(BuildContext context) {
     final TextEditingController submitController = TextEditingController();
-    final isTimeOver = remainingSeconds.value <= 0;
+    final isTimeOver = hasTimeLimit.value && remainingSeconds.value <= 0;
     if (isTimeOver) {
       submitTest(context);
       return;
@@ -953,123 +962,143 @@ class Testscreencontroller extends GetxController {
       barrierDismissible: false,
       builder: (ctx) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          backgroundColor: Colors.white,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.red.shade400,
-                        size: 32,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        "Submit Test?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.red.shade400,
-                        ),
-                      ),
-                    ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Gradient header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
-                const SizedBox(height: 18),
-                const Text(
-                  "To confirm submission, please type 'submit' below.",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: submitController,
-                  decoration: InputDecoration(
-                    labelText: "Type 'submit' to confirm",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    prefixIcon: const Icon(Icons.edit),
-                  ),
-                  minLines: 1,
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: const Row(
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey.shade700,
-                        textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    Icon(Icons.assignment_turned_in_outlined, color: Colors.white, size: 26),
+                    SizedBox(width: 10),
+                    Text(
+                      'Submit Assignment',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 17,
                       ),
-                      child: const Text("Cancel"),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      onPressed: () {
-                        if (submitController.text.trim().toLowerCase() !=
-                            'submit') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Please type 'submit' to confirm."),
-                            ),
-                          );
-                          return;
-                        }
-
-                        submitTest(context);
-                      },
-                      label: const Text("Submit"),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              // Body
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Column(
+                  children: [
+                    const Text(
+                      "To confirm submission, please type 'submit' below.",
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.4),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 18),
+                    TextField(
+                      controller: submitController,
+                      decoration: InputDecoration(
+                        labelText: "Type 'submit' to confirm",
+                        labelStyle: const TextStyle(color: Color(0xFFA10D52)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFA10D52), width: 2),
+                        ),
+                        prefixIcon: const Icon(Icons.edit_outlined, color: Color(0xFFA10D52)),
+                      ),
+                      minLines: 1,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+              // Actions
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF4CA1AF)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Color(0xFF4CA1AF),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (submitController.text.trim().toLowerCase() != 'submit') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text("Please type 'submit' to confirm."),
+                                backgroundColor: const Color(0xFFA10D52),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          submitTest(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'Submit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -1187,7 +1216,7 @@ class Testscreencontroller extends GetxController {
   }
 
   void showSubmitWarningLikeJeeMain(BuildContext context) {
-    final isTimeOver = remainingSeconds.value <= 0;
+    final isTimeOver = hasTimeLimit.value && remainingSeconds.value <= 0;
     if (isTimeOver) {
       showCustomSubmitDialog(context);
       return;
@@ -1227,25 +1256,142 @@ class Testscreencontroller extends GetxController {
     }
 
     Get.dialog(
-      AlertDialog(
-        title: const Text('Warning Before Submit'),
-        content: Text(
-          'You have not attempted any question in:\n\n${unattemptedTypes.join('\n')}\n\nDo you still want to submit?',
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Go Back')),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              showCustomSubmitDialog(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(
-              'Submit Anyway',
-              style: TextStyle(color: Colors.white),
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Gradient header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.white, size: 26),
+                  SizedBox(width: 10),
+                  Text(
+                    'Warning Before Submit',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            // Body
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'You have not attempted any question in:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 10),
+                  ...unattemptedTypes.map(
+                    (type) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFA10D52),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              type,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFA10D52),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Do you still want to submit?',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            // Actions
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFA10D52)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text(
+                        'Go Back',
+                        style: TextStyle(
+                          color: Color(0xFFA10D52),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Get.back();
+                        showCustomSubmitDialog(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Submit Anyway',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       barrierDismissible: false,
     );
@@ -1648,6 +1794,8 @@ class Testscreencontroller extends GetxController {
             questionId ?? rawKey,
             batchIdValue.toString(),
             examtestidd.toString(),
+            AssigtChapterId.value,
+            AssigtTopicId.value,
             choiceA,
             correctA,
             statusA,
@@ -1864,7 +2012,7 @@ class Testscreencontroller extends GetxController {
       final response = await http.post(
         Uri.parse(Adminurl.submitquestion),
         headers: {
-          'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
+          'MobAppStdAssign': 'Mg97kdw-jm47r0t-lxn2mg-jdrtcs3-jk22me',
           'Content-Type': 'application/json',
         },
         body: jsonEncode(body),
@@ -1891,6 +2039,8 @@ class Testscreencontroller extends GetxController {
     var QuestionId,
     var BatchId,
     var ExamTestId,
+    var AssigtChapterId,
+    var AssigtTopicId,
     var ChoiceOptionA,
     var OptionCorrectA,
     var OptionStatusA,
@@ -1915,6 +2065,8 @@ class Testscreencontroller extends GetxController {
         "QuestionId": QuestionId,
         "BatchId": BatchId,
         "ExamTestId": ExamTestId,
+        "AssigtChapterId": AssigtChapterId,
+        "AssigtTopicId": AssigtTopicId,
 
         "ChoiceOptionA": ChoiceOptionA,
         "OptionCorrectA": OptionCorrectA,
@@ -1939,9 +2091,9 @@ class Testscreencontroller extends GetxController {
       };
 
       final response = await http.post(
-        Uri.parse(Adminurl.submitquestion),
+        Uri.parse(Adminurl.msubmitquestion),
         headers: {
-          'MobAppStdExm': 'as97kdw-jmzq60t-lxh135g-jdbq83-jk56nxs',
+          'MobAppStdAssign': 'Mg97kdw-jm47r0t-lxn2mg-jdrtcs3-jk22mer',
           'Content-Type': 'application/json',
         },
         body: jsonEncode(body),

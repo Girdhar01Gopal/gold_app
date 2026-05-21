@@ -96,7 +96,7 @@ class examinstructioncontroller extends GetxController {
   }
 
   // voidtest function for validation and navigation
-  void voidtest() async {
+  void voidtest(String timeLimitMode) async {
     if (testId.value.isEmpty || passcode.value.isEmpty) {
       Get.snackbar(
         "Missing Fields",
@@ -147,6 +147,7 @@ class examinstructioncontroller extends GetxController {
         'AssigtChapterId': assigtChapterId.value,
         'SubjectId': subjectId.value,
         'AssExamRound': assExamRound.value,
+        'timeLimitMode': timeLimitMode,
       },
     );
           print("Navigating to Test Screen with args: testId=${testId.value}, passcode=${passcode.value}, AssigtTopicId=${assigtTopicId.value}, AssigtChapterId=${assigtChapterId.value}, SubjectId=${subjectId.value}, AssExamRound=${assExamRound.value}");
