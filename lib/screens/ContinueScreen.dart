@@ -99,6 +99,13 @@ class ContinueScreen extends StatelessWidget {
     return (filled * 100) / total;
   }
 
+  /// Convert a percentage (0-100) to a GPA on a 4.0 scale.
+  /// Defaults to a linear mapping where 100% -> 4.0.
+  double _percentToGpa(double percent, {double maxGpa = 4.0}) {
+    final p = percent.clamp(0, 100);
+    return (p / 100.0) * maxGpa;
+  }
+
   // ── Widgets ──────────────────────────────────────────────────
   Widget _buildRoundBubble({
     required String text,
@@ -271,7 +278,7 @@ class ContinueScreen extends StatelessWidget {
                   border: Border.all(color: tone.withValues(alpha: 0.35), width: 1),
                 ),
                 child: Text(
-                  '${averagePercent.toStringAsFixed(1)}%',
+                  '${_percentToGpa(averagePercent).toStringAsFixed(2)}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : tone,
@@ -316,7 +323,7 @@ class ContinueScreen extends StatelessWidget {
                     fontSize: 8.sp, fontWeight: FontWeight.w600))),
               _divider(dividerColor),
               _cell(width: 54.w,
-                  child: Text('Exam', style: TextStyle(
+                  child: Text('Target Exam', style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.black54,
                     fontSize: 8.sp, fontWeight: FontWeight.w600))),
               _divider(dividerColor),
@@ -336,7 +343,7 @@ class ContinueScreen extends StatelessWidget {
                     fontSize: 6.sp, fontWeight: FontWeight.w600))),
               _divider(dividerColor),
               _cell(width: 54.w,
-                  child: Text('Average', style: TextStyle(
+                  child: Text('GPA', style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.black54,
                     fontSize: 6.sp, fontWeight: FontWeight.w600))),
             ]),

@@ -20,7 +20,7 @@ class examinstructionview extends GetView<examinstructioncontroller> {
       final selectedMode = await Get.dialog<String>(
         AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Set time limit to solve assignment'),
+          title: const Text('Set the time limit to solve this assignment'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: ContinueScreenController.questionModeOptions

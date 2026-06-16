@@ -868,16 +868,18 @@ class _TestscreenviewState extends State<Testscreenview> {
                     fontSize: 16,
                   ),
                 ),
-                Obx(() => Text(
-                  controller.selectedSubject.value.isNotEmpty
-                      ? controller.selectedSubject.value
-                      : '',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
+                Obx(
+                  () => Text(
+                    controller.selectedSubject.value.isNotEmpty
+                        ? controller.selectedSubject.value
+                        : '',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
             actions: [
@@ -918,8 +920,8 @@ class _TestscreenviewState extends State<Testscreenview> {
                           color: !controller.hasTimeLimit.value
                               ? Colors.greenAccent
                               : controller.remainingSeconds.value < 600
-                                  ? const Color.fromARGB(255, 249, 20, 20)
-                                  : Colors.white,
+                              ? const Color.fromARGB(255, 249, 20, 20)
+                              : Colors.white,
                           fontSize: 9.sp,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1004,32 +1006,50 @@ class _TestscreenviewState extends State<Testscreenview> {
                                     spacing: 5.w,
                                     runSpacing: 3.h,
                                     alignment: WrapAlignment.center,
-                                    children: controller.subjects.map((subject) {
-                                      final isSelected = controller.selectedSubject.value == subject;
+                                    children: controller.subjects.map((
+                                      subject,
+                                    ) {
+                                      final isSelected =
+                                          controller.selectedSubject.value ==
+                                          subject;
                                       return ChoiceChip(
                                         checkmarkColor: Colors.white,
                                         label: Text(
                                           subject,
                                           style: TextStyle(
-                                            color: isSelected ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey.shade800),
+                                            color: isSelected
+                                                ? Colors.white
+                                                : (isDarkMode
+                                                      ? Colors.grey[300]
+                                                      : Colors.grey.shade800),
                                             fontWeight: FontWeight.w600,
                                             fontSize: 4.sp,
                                           ),
                                         ),
                                         selected: isSelected,
-                                        selectedColor: isDarkMode ? Colors.grey[700] : const Color(0xFFA10D52),
-                                        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+                                        selectedColor: isDarkMode
+                                            ? Colors.grey[700]
+                                            : const Color(0xFFA10D52),
+                                        backgroundColor: isDarkMode
+                                            ? Colors.grey[850]
+                                            : Colors.white,
                                         elevation: 2,
                                         pressElevation: 4,
                                         side: BorderSide(
                                           color: isSelected
-                                              ? (isDarkMode ? Colors.grey[600]! : const Color(0xFFA10D52))
-                                              : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
+                                              ? (isDarkMode
+                                                    ? Colors.grey[600]!
+                                                    : const Color(0xFFA10D52))
+                                              : (isDarkMode
+                                                    ? Colors.grey[700]!
+                                                    : Colors.grey.shade300),
                                         ),
                                         onSelected: (selected) {
                                           if (selected) {
-                                            controller.discardUnsavedSelectionForCurrentQuestion();
-                                            controller.selectedSubject.value = subject;
+                                            controller
+                                                .discardUnsavedSelectionForCurrentQuestion();
+                                            controller.selectedSubject.value =
+                                                subject;
                                             controller.currentIndex.value = 0;
                                             controller.resetNumericController();
                                           }
@@ -1044,32 +1064,54 @@ class _TestscreenviewState extends State<Testscreenview> {
                                     spacing: 5.w,
                                     runSpacing: 3.h,
                                     alignment: WrapAlignment.center,
-                                    children: controller.questionTypes.map((type) {
-                                      final isSelected = controller.selectedQuestionType.value == type;
+                                    children: controller.questionTypes.map((
+                                      type,
+                                    ) {
+                                      final isSelected =
+                                          controller
+                                              .selectedQuestionType
+                                              .value ==
+                                          type;
                                       return ChoiceChip(
                                         checkmarkColor: Colors.white,
                                         label: Text(
                                           type.isNotEmpty ? type : 'No Type',
                                           style: TextStyle(
-                                            color: isSelected ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey.shade800),
+                                            color: isSelected
+                                                ? Colors.white
+                                                : (isDarkMode
+                                                      ? Colors.grey[300]
+                                                      : Colors.grey.shade800),
                                             fontWeight: FontWeight.w600,
                                             fontSize: 4.sp,
                                           ),
                                         ),
                                         selected: isSelected,
-                                        selectedColor: isDarkMode ? Colors.amber[800] : Colors.deepPurple,
-                                        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+                                        selectedColor: isDarkMode
+                                            ? Colors.amber[800]
+                                            : Colors.deepPurple,
+                                        backgroundColor: isDarkMode
+                                            ? Colors.grey[850]
+                                            : Colors.white,
                                         elevation: 2,
                                         pressElevation: 4,
                                         side: BorderSide(
                                           color: isSelected
-                                              ? (isDarkMode ? Colors.amber[700]! : Colors.deepPurple)
-                                              : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300),
+                                              ? (isDarkMode
+                                                    ? Colors.amber[700]!
+                                                    : Colors.deepPurple)
+                                              : (isDarkMode
+                                                    ? Colors.grey[700]!
+                                                    : Colors.grey.shade300),
                                         ),
                                         onSelected: (selected) {
                                           if (selected) {
-                                            controller.discardUnsavedSelectionForCurrentQuestion();
-                                            controller.selectedQuestionType.value = type;
+                                            controller
+                                                .discardUnsavedSelectionForCurrentQuestion();
+                                            controller
+                                                    .selectedQuestionType
+                                                    .value =
+                                                type;
                                             controller.currentIndex.value = 0;
                                             controller.resetNumericController();
                                           }
@@ -1090,14 +1132,18 @@ class _TestscreenviewState extends State<Testscreenview> {
                                 style: TextStyle(
                                   fontSize: 6.sp * fs,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.grey[300] : Colors.black87,
+                                  color: isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.black87,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 3),
                           Divider(
-                            color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                            color: isDarkMode
+                                ? Colors.grey[700]
+                                : Colors.grey.shade300,
                           ),
                         ],
                       ),
@@ -1114,732 +1160,683 @@ class _TestscreenviewState extends State<Testscreenview> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                    Container(
-                                      width: double.infinity,
-                                      child: Card(
-                                        color: isDarkMode
-                                            ? Colors.grey[850]
-                                            : Colors.white,
-                                        elevation: 2,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                        ),
-                                        child: Padding(
-                                          padding: EdgeInsets.all(6.w),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(height: 7.h),
-                                              if (iscomprehnsion) ...[
-                                                if (controller.hasValidImage(
-                                                  question['questionImg'],
-                                                ))
-                                                  Padding(
-                                                    padding: EdgeInsets.only(
-                                                      bottom: 8.h,
+                              Container(
+                                width: double.infinity,
+                                child: Card(
+                                  color: isDarkMode
+                                      ? Colors.grey[850]
+                                      : Colors.white,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(6.w),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(height: 7.h),
+                                        if (iscomprehnsion) ...[
+                                          if (controller.hasValidImage(
+                                            question['questionImg'],
+                                          ))
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: 8.h,
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                                child: GestureDetector(
+                                                  onTap: () => _openImagePreview(
+                                                    controller.imgUrl(
+                                                      question['questionImg']
+                                                          .toString(),
                                                     ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8.r,
-                                                          ),
-                                                      child: GestureDetector(
-                                                        onTap: () =>
-                                                            _openImagePreview(
-                                                              controller.imgUrl(
-                                                                question['questionImg']
-                                                                    .toString(),
-                                                              ),
-                                                            ),
-                                                        child: Image.network(
-                                                          controller.imgUrl(
-                                                            question['questionImg']
-                                                                .toString(),
-                                                          ),
-                                                          width:
-                                                              double.infinity,
-                                                          fit: BoxFit.fitWidth,
-                                                          errorBuilder:
-                                                              (
-                                                                _,
-                                                                __,
-                                                                ___,
-                                                              ) => const Icon(
-                                                                Icons
-                                                                    .broken_image,
-                                                              ),
+                                                  ),
+                                                  child: Image.network(
+                                                    controller.imgUrl(
+                                                      question['questionImg']
+                                                          .toString(),
+                                                    ),
+                                                    width: double.infinity,
+                                                    fit: BoxFit.fitWidth,
+                                                    errorBuilder:
+                                                        (
+                                                          _,
+                                                          __,
+                                                          ___,
+                                                        ) => const Icon(
+                                                          Icons.broken_image,
                                                         ),
-                                                      ),
-                                                    ),
                                                   ),
-                                                _buildQuestionText(
-                                                  (question['question'] ?? '')
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                    fontSize: 7.sp * fs,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: isDarkMode
-                                                        ? Colors.grey[300]
-                                                        : Colors.black87,
-                                                    height: 1.1,
-                                                    fontFamily:
-                                                        null, // Use default font
-                                                  ),
-                                                  isDarkMode: isDarkMode,
-                                                  scope: question,
                                                 ),
-                                              ] else ...[
-                                                if (controller.hasValidImage(
-                                                  question['questionImg'],
-                                                ))
-                                                  Padding(
-                                                    padding: EdgeInsets.only(
-                                                      bottom: 8.h,
-                                                    ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8.r,
-                                                          ),
-                                                      child: GestureDetector(
-                                                        onTap: () =>
-                                                            _openImagePreview(
-                                                              controller.imgUrl(
-                                                                question['questionImg']
-                                                                    .toString(),
-                                                              ),
-                                                            ),
-                                                        child: Image.network(
-                                                          controller.imgUrl(
-                                                            question['questionImg']
-                                                                .toString(),
-                                                          ),
-                                                          width:
-                                                              double.infinity,
-                                                          fit: BoxFit.fitWidth,
-                                                          errorBuilder:
-                                                              (
-                                                                _,
-                                                                __,
-                                                                ___,
-                                                              ) => const Icon(
-                                                                Icons
-                                                                    .broken_image,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                _buildQuestionText(
-                                                  (question['question'] ?? '')
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                    fontSize: 7.sp * fs,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: isDarkMode
-                                                        ? Colors.grey[300]
-                                                        : Colors.black87,
-                                                    height: 1.1,
-                                                    fontFamily:
-                                                        null, // Use default font
-                                                  ),
-                                                  isDarkMode: isDarkMode,
-                                                  scope: question,
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    if (isNumeric)
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 8.h,
-                                          horizontal: 4.w,
-                                        ),
-                                        child: TextField(
-                                          key: ValueKey(
-                                            'numeric_${controller.selectedSubject.value}_${controller.selectedQuestionType.value}_${question['id']}',
-                                          ),
-                                          controller: controller.controllerText,
-                                          keyboardType: TextInputType
-                                              .text, // Γ£à full keyboard
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter.allow(
-                                              RegExp(r'[0-9+\-*/().]'),
+                                              ),
                                             ),
-                                            LengthLimitingTextInputFormatter(
-                                              10,
+                                          _buildQuestionText(
+                                            (question['question'] ?? '')
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontSize: 7.sp * fs,
+                                              fontWeight: FontWeight.w500,
+                                              color: isDarkMode
+                                                  ? Colors.grey[300]
+                                                  : Colors.black87,
+                                              height: 1.1,
+                                              fontFamily:
+                                                  null, // Use default font
+                                            ),
+                                            isDarkMode: isDarkMode,
+                                            scope: question,
+                                          ),
+                                        ] else ...[
+                                          if (controller.hasValidImage(
+                                            question['questionImg'],
+                                          ))
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: 8.h,
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                                child: GestureDetector(
+                                                  onTap: () => _openImagePreview(
+                                                    controller.imgUrl(
+                                                      question['questionImg']
+                                                          .toString(),
+                                                    ),
+                                                  ),
+                                                  child: Image.network(
+                                                    controller.imgUrl(
+                                                      question['questionImg']
+                                                          .toString(),
+                                                    ),
+                                                    width: double.infinity,
+                                                    fit: BoxFit.fitWidth,
+                                                    errorBuilder:
+                                                        (
+                                                          _,
+                                                          __,
+                                                          ___,
+                                                        ) => const Icon(
+                                                          Icons.broken_image,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          _buildQuestionText(
+                                            (question['question'] ?? '')
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontSize: 7.sp * fs,
+                                              fontWeight: FontWeight.w500,
+                                              color: isDarkMode
+                                                  ? Colors.grey[300]
+                                                  : Colors.black87,
+                                              height: 1.1,
+                                              fontFamily:
+                                                  null, // Use default font
+                                            ),
+                                            isDarkMode: isDarkMode,
+                                            scope: question,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              if (isNumeric)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 8.h,
+                                    horizontal: 4.w,
+                                  ),
+                                  child: TextField(
+                                    key: ValueKey(
+                                      'numeric_${controller.selectedSubject.value}_${controller.selectedQuestionType.value}_${question['id']}',
+                                    ),
+                                    controller: controller.controllerText,
+                                    keyboardType:
+                                        TextInputType.text, // Γ£à full keyboard
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9+\-*/().]'),
+                                      ),
+                                      LengthLimitingTextInputFormatter(10),
+                                    ],
+                                    decoration: const InputDecoration(
+                                      labelText: 'Enter your answer',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    onChanged: (val) {
+                                      controller.setNumericAnswer(
+                                        question['id'],
+                                        val,
+                                      );
+                                    },
+                                  ),
+                                )
+                              else if (isinteger)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 8.h,
+                                    horizontal: 4.w,
+                                  ),
+                                  child: Obx(() {
+                                    final selected =
+                                        controller
+                                            .selectedIntegerAnswers[question['id']] ??
+                                        -1;
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: List.generate(10, (index) {
+                                        return Row(
+                                          children: [
+                                            Radio<int>(
+                                              value: index,
+                                              groupValue: selected,
+                                              onChanged: (val) {
+                                                if (val != null) {
+                                                  controller.setIntegerAnswer(
+                                                    question['id'],
+                                                    val,
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                            Text(
+                                              index.toString(),
+                                              style: TextStyle(fontSize: 7.sp),
                                             ),
                                           ],
-                                          decoration: const InputDecoration(
-                                            labelText: 'Enter your answer',
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          onChanged: (val) {
-                                            controller.setNumericAnswer(
-                                              question['id'],
-                                              val,
-                                            );
-                                          },
-                                        ),
-                                      )
-                                    else if (isinteger)
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 8.h,
-                                          horizontal: 4.w,
-                                        ),
-                                        child: Obx(() {
-                                          final selected =
-                                              controller
-                                                  .selectedIntegerAnswers[question['id']] ??
-                                              -1;
-                                          return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: List.generate(10, (
-                                              index,
-                                            ) {
-                                              return Row(
-                                                children: [
-                                                  Radio<int>(
-                                                    value: index,
-                                                    groupValue: selected,
-                                                    onChanged: (val) {
-                                                      if (val != null) {
-                                                        controller
-                                                            .setIntegerAnswer(
-                                                              question['id'],
-                                                              val,
-                                                            );
-                                                      }
-                                                    },
-                                                  ),
-                                                  Text(
-                                                    index.toString(),
-                                                    style: TextStyle(
-                                                      fontSize: 7.sp,
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-                                            }),
-                                          );
-                                        }),
-                                      ),
-                                    // Unified single choice for single correct, comprehension, and match
-                                    if (questionType.toLowerCase().contains(
-                                          's.c.q',
-                                        ) ||
-                                        iscomprehnsion ||
-                                        ismatch)
-                                      Column(
-                                        children: [
-                                          for (final option
-                                              in question['options'] ?? [])
-                                            Obx(() {
-                                              final qid = question['id'];
-                                              final selectedSet =
-                                                  controller
-                                                      .selectedAnswers[qid] ??
-                                                  <String>{};
-                                              final isSelected = selectedSet
-                                                  .contains(option['key']);
-                                              final rawImg = option['img'];
-                                              final optionImg =
-                                                  controller.hasValidImage(
-                                                    rawImg,
-                                                  )
-                                                  ? controller.buildImgUrl(
-                                                      rawImg,
-                                                    )
-                                                  : '';
-                                              return ListTile(
-                                                leading: Radio<String>(
-                                                  value: option['key'],
-                                                  groupValue:
-                                                      selectedSet.isNotEmpty
-                                                      ? selectedSet.first
-                                                      : null,
-                                                  onChanged: (_) =>
-                                                      controller.selectOption(
-                                                        qid,
-                                                        option['key'],
-                                                      ),
-                                                  activeColor: isDarkMode
-                                                      ? Colors.grey[400]
-                                                      : const Color(0xFFA10D52),
+                                        );
+                                      }),
+                                    );
+                                  }),
+                                ),
+                              // Unified single choice for single correct, comprehension, and match
+                              if (questionType.toLowerCase().contains(
+                                    's.c.q',
+                                  ) ||
+                                  iscomprehnsion ||
+                                  ismatch)
+                                Column(
+                                  children: [
+                                    for (final option
+                                        in question['options'] ?? [])
+                                      Obx(() {
+                                        final qid = question['id'];
+                                        final selectedSet =
+                                            controller.selectedAnswers[qid] ??
+                                            <String>{};
+                                        final isSelected = selectedSet.contains(
+                                          option['key'],
+                                        );
+                                        final rawImg = option['img'];
+                                        final optionImg =
+                                            controller.hasValidImage(rawImg)
+                                            ? controller.buildImgUrl(rawImg)
+                                            : '';
+                                        return ListTile(
+                                          leading: Radio<String>(
+                                            value: option['key'],
+                                            groupValue: selectedSet.isNotEmpty
+                                                ? selectedSet.first
+                                                : null,
+                                            onChanged: (_) =>
+                                                controller.selectOption(
+                                                  qid,
+                                                  option['key'],
                                                 ),
-                                                title: Container(
-                                                  width: double.infinity,
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 6.w,
-                                                    vertical: 6.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: isDarkMode
-                                                        ? Colors.grey[800]
-                                                        : Colors.white,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8.r,
-                                                        ),
-                                                  ),
-                                                  child: Builder(
-                                                    builder: (_) {
-                                                      final keyStr =
-                                                          (option['key'] ?? '')
-                                                              .toString()
-                                                              .trim();
-                                                      final valueStr =
-                                                          (option['value'] ??
-                                                                  '')
-                                                              .toString()
-                                                              .trim();
-                                                      final hasText =
-                                                          valueStr.isNotEmpty &&
-                                                          valueStr.toLowerCase() !=
-                                                              'null';
-                                                      final hasImg =
-                                                          optionImg.isNotEmpty;
+                                            activeColor: isDarkMode
+                                                ? Colors.grey[400]
+                                                : const Color(0xFFA10D52),
+                                          ),
+                                          title: Container(
+                                            width: double.infinity,
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 6.w,
+                                              vertical: 6.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isDarkMode
+                                                  ? Colors.grey[800]
+                                                  : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                            child: Builder(
+                                              builder: (_) {
+                                                final keyStr =
+                                                    (option['key'] ?? '')
+                                                        .toString()
+                                                        .trim();
+                                                final valueStr =
+                                                    (option['value'] ?? '')
+                                                        .toString()
+                                                        .trim();
+                                                final hasText =
+                                                    valueStr.isNotEmpty &&
+                                                    valueStr.toLowerCase() !=
+                                                        'null';
+                                                final hasImg =
+                                                    optionImg.isNotEmpty;
 
-                                                      // Case 1: Text exists, Column layout (image first, then text)
-                                                      if (hasText) {
-                                                        return Column(
+                                                // Case 1: Text exists, Column layout (image first, then text)
+                                                if (hasText) {
+                                                  return Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      if (hasImg) ...[
+                                                        ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8.r,
+                                                              ),
+                                                          child: ConstrainedBox(
+                                                            constraints:
+                                                                BoxConstraints(
+                                                                  maxHeight:
+                                                                      110.h,
+                                                                ),
+                                                            child: GestureDetector(
+                                                              behavior:
+                                                                  HitTestBehavior
+                                                                      .opaque,
+                                                              child: Image.network(
+                                                                optionImg,
+                                                                width: double
+                                                                    .infinity,
+                                                                fit: BoxFit
+                                                                    .contain,
+                                                                errorBuilder:
+                                                                    (
+                                                                      _,
+                                                                      __,
+                                                                      ___,
+                                                                    ) =>
+                                                                        const SizedBox.shrink(),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 8.h),
+                                                      ],
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: 15.0,
+                                                            ),
+                                                        child: Row(
                                                           crossAxisAlignment:
                                                               CrossAxisAlignment
                                                                   .start,
                                                           children: [
-                                                            if (hasImg) ...[
-                                                              ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      8.r,
-                                                                    ),
-                                                                child: ConstrainedBox(
-                                                                  constraints:
-                                                                      BoxConstraints(
-                                                                        maxHeight:
-                                                                            110.h,
-                                                                      ),
-                                                                  child: GestureDetector(
-                                                                    behavior:
-                                                                        HitTestBehavior
-                                                                            .opaque,
-                                                                    child: Image.network(
-                                                                      optionImg,
-                                                                      width: double
-                                                                          .infinity,
-                                                                      fit: BoxFit
-                                                                          .contain,
-                                                                      errorBuilder:
-                                                                          (
-                                                                            _,
-                                                                            __,
-                                                                            ___,
-                                                                          ) =>
-                                                                              const SizedBox.shrink(),
-                                                                    ),
-                                                                  ),
+                                                            Text(
+                                                              "$keyStr. ",
+                                                              style: TextStyle(
+                                                                color:
+                                                                    isDarkMode
+                                                                    ? Colors
+                                                                          .grey[300]
+                                                                    : Colors
+                                                                          .black87,
+                                                                fontSize:
+                                                                    6.sp * fs,
+                                                                fontWeight:
+                                                                    isSelected
+                                                                    ? FontWeight
+                                                                          .bold
+                                                                    : FontWeight
+                                                                          .w500,
+                                                                height: 1.2,
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: _buildQuestionText(
+                                                                valueStr,
+                                                                style: TextStyle(
+                                                                  color:
+                                                                      isDarkMode
+                                                                      ? Colors
+                                                                            .grey[300]
+                                                                      : Colors
+                                                                            .black87,
+                                                                  fontSize:
+                                                                      6.sp * fs,
+                                                                  fontWeight:
+                                                                      isSelected
+                                                                      ? FontWeight
+                                                                            .bold
+                                                                      : FontWeight
+                                                                            .w500,
+                                                                  height: 1.2,
                                                                 ),
-                                                              ),
-                                                              SizedBox(
-                                                                height: 8.h,
-                                                              ),
-                                                            ],
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets.only(
-                                                                    top: 15.0,
-                                                                  ),
-                                                              child: Row(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
+                                                                isDarkMode:
+                                                                    isDarkMode,
+                                                                textAlign:
+                                                                    TextAlign
                                                                         .start,
-                                                                children: [
-                                                                  Text(
-                                                                    "$keyStr. ",
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          isDarkMode
-                                                                          ? Colors.grey[300]
-                                                                          : Colors.black87,
-                                                                      fontSize:
-                                                                          6.sp *
-                                                                          fs,
-                                                                      fontWeight:
-                                                                          isSelected
-                                                                          ? FontWeight.bold
-                                                                          : FontWeight.w500,
-                                                                      height:
-                                                                          1.2,
-                                                                    ),
-                                                                  ),
-                                                                  Expanded(
-                                                                    child: _buildQuestionText(
-                                                                      valueStr,
-                                                                      style: TextStyle(
-                                                                        color:
-                                                                            isDarkMode
-                                                                            ? Colors.grey[300]
-                                                                            : Colors.black87,
-                                                                        fontSize:
-                                                                            6.sp *
-                                                                            fs,
-                                                                        fontWeight:
-                                                                            isSelected
-                                                                            ? FontWeight.bold
-                                                                            : FontWeight.w500,
-                                                                        height:
-                                                                            1.2,
-                                                                      ),
-                                                                      isDarkMode:
-                                                                          isDarkMode,
-                                                                      textAlign:
-                                                                          TextAlign
-                                                                              .start,
-                                                                      scope:
-                                                                          option,
-                                                                    ),
-                                                                  ),
-                                                                ],
+                                                                scope: option,
                                                               ),
                                                             ),
                                                           ],
-                                                        );
-                                                      }
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
 
-                                                      // Case 2: No text, Column layout (image on top, then key)
-                                                      return Column(
+                                                // Case 2: No text, Column layout (image on top, then key)
+                                                return Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (hasImg)
+                                                      Expanded(
+                                                        child: ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8.r,
+                                                              ),
+                                                          child: ConstrainedBox(
+                                                            constraints:
+                                                                BoxConstraints(
+                                                                  maxHeight:
+                                                                      90.h,
+                                                                ),
+                                                            child: GestureDetector(
+                                                              behavior:
+                                                                  HitTestBehavior
+                                                                      .opaque,
+                                                              child: Image.network(
+                                                                optionImg,
+                                                                fit: BoxFit
+                                                                    .contain,
+                                                                width: double
+                                                                    .infinity,
+                                                                errorBuilder:
+                                                                    (
+                                                                      _,
+                                                                      __,
+                                                                      ___,
+                                                                    ) =>
+                                                                        const SizedBox.shrink(),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    if (hasImg)
+                                                      SizedBox(height: 8.h),
+                                                    Text(
+                                                      "$keyStr.",
+                                                      style: TextStyle(
+                                                        fontSize: 7.sp * fs,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: isDarkMode
+                                                            ? Colors.grey[300]
+                                                            : Colors.black87,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          onTap: () => controller.selectOption(
+                                            qid,
+                                            option['key'],
+                                          ),
+                                        );
+                                      }),
+                                  ],
+                                )
+                              else
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: question['options'] != null
+                                      ? question['options'].length
+                                      : 0,
+                                  itemBuilder: (context, index) {
+                                    final option = question['options'][index];
+                                    return Obx(() {
+                                      final qid = question['id'];
+                                      final selectedSet =
+                                          controller.selectedAnswers[qid] ??
+                                          <String>{};
+                                      final isSelected = selectedSet.contains(
+                                        option['key'],
+                                      );
+                                      final rawImg = option['img'];
+                                      final optionImg =
+                                          controller.hasValidImage(rawImg)
+                                          ? controller.buildImgUrl(rawImg)
+                                          : '';
+                                      return ListTile(
+                                        leading: Checkbox(
+                                          value: isSelected,
+                                          onChanged: (_) => controller
+                                              .selectOption(qid, option['key']),
+                                          activeColor: isDarkMode
+                                              ? Colors.green[400]
+                                              : Colors.green,
+                                        ),
+                                        title: Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6.w,
+                                            vertical: 6.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isDarkMode
+                                                ? Colors.grey[800]
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
+                                          ),
+                                          child: Builder(
+                                            builder: (_) {
+                                              final keyStr =
+                                                  (option['key'] ?? '')
+                                                      .toString()
+                                                      .trim();
+                                              final valueStr =
+                                                  (option['value'] ?? '')
+                                                      .toString()
+                                                      .trim();
+                                              final hasText =
+                                                  valueStr.isNotEmpty &&
+                                                  valueStr.toLowerCase() !=
+                                                      'null';
+                                              final hasImg =
+                                                  optionImg.isNotEmpty;
+
+                                              // Case 1: Text exists, Column layout (image first, then text)
+                                              if (hasText) {
+                                                return Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    if (hasImg) ...[
+                                                      ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                                maxHeight:
+                                                                    110.h,
+                                                              ),
+                                                          child: GestureDetector(
+                                                            behavior:
+                                                                HitTestBehavior
+                                                                    .opaque,
+                                                            child: Image.network(
+                                                              optionImg,
+                                                              width: double
+                                                                  .infinity,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                              errorBuilder:
+                                                                  (
+                                                                    _,
+                                                                    __,
+                                                                    ___,
+                                                                  ) =>
+                                                                      const SizedBox.shrink(),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 8.h),
+                                                    ],
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: 15.0,
+                                                          ),
+                                                      child: Row(
                                                         crossAxisAlignment:
                                                             CrossAxisAlignment
                                                                 .start,
                                                         children: [
-                                                          if (hasImg)
-                                                            Expanded(
-                                                              child: ClipRRect(
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      8.r,
-                                                                    ),
-                                                                child: ConstrainedBox(
-                                                                  constraints:
-                                                                      BoxConstraints(
-                                                                        maxHeight:
-                                                                            90.h,
-                                                                      ),
-                                                                  child: GestureDetector(
-                                                                    behavior:
-                                                                        HitTestBehavior
-                                                                            .opaque,
-                                                                    child: Image.network(
-                                                                      optionImg,
-                                                                      fit: BoxFit
-                                                                          .contain,
-                                                                      width: double
-                                                                          .infinity,
-                                                                      errorBuilder:
-                                                                          (
-                                                                            _,
-                                                                            __,
-                                                                            ___,
-                                                                          ) =>
-                                                                              const SizedBox.shrink(),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          if (hasImg)
-                                                            SizedBox(
-                                                              height: 8.h,
-                                                            ),
                                                           Text(
-                                                            "$keyStr.",
+                                                            "$keyStr. ",
                                                             style: TextStyle(
-                                                              fontSize:
-                                                                  7.sp * fs,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
                                                               color: isDarkMode
                                                                   ? Colors
                                                                         .grey[300]
                                                                   : Colors
                                                                         .black87,
+                                                              fontSize:
+                                                                  7.sp * fs,
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .bold
+                                                                  : FontWeight
+                                                                        .w500,
+                                                              height: 1.2,
                                                             ),
                                                           ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  ),
-                                                ),
-                                                onTap: () =>
-                                                    controller.selectOption(
-                                                      qid,
-                                                      option['key'],
-                                                    ),
-                                              );
-                                            }),
-                                        ],
-                                      )
-                                    else
-                                      ListView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        itemCount: question['options'] != null
-                                            ? question['options'].length
-                                            : 0,
-                                        itemBuilder: (context, index) {
-                                          final option =
-                                              question['options'][index];
-                                          return Obx(() {
-                                            final qid = question['id'];
-                                            final selectedSet =
-                                                controller
-                                                    .selectedAnswers[qid] ??
-                                                <String>{};
-                                            final isSelected = selectedSet
-                                                .contains(option['key']);
-                                            final rawImg = option['img'];
-                                            final optionImg =
-                                                controller.hasValidImage(rawImg)
-                                                ? controller.buildImgUrl(rawImg)
-                                                : '';
-                                            return ListTile(
-                                              leading: Checkbox(
-                                                value: isSelected,
-                                                onChanged: (_) =>
-                                                    controller.selectOption(
-                                                      qid,
-                                                      option['key'],
-                                                    ),
-                                                activeColor: isDarkMode
-                                                    ? Colors.green[400]
-                                                    : Colors.green,
-                                              ),
-                                              title: Container(
-                                                width: double.infinity,
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 6.w,
-                                                  vertical: 6.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: isDarkMode
-                                                      ? Colors.grey[800]
-                                                      : Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        8.r,
-                                                      ),
-                                                ),
-                                                child: Builder(
-                                                  builder: (_) {
-                                                    final keyStr =
-                                                        (option['key'] ?? '')
-                                                            .toString()
-                                                            .trim();
-                                                    final valueStr =
-                                                        (option['value'] ?? '')
-                                                            .toString()
-                                                            .trim();
-                                                    final hasText =
-                                                        valueStr.isNotEmpty &&
-                                                        valueStr.toLowerCase() !=
-                                                            'null';
-                                                    final hasImg =
-                                                        optionImg.isNotEmpty;
-
-                                                    // Case 1: Text exists, Column layout (image first, then text)
-                                                    if (hasText) {
-                                                      return Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          if (hasImg) ...[
-                                                            ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    8.r,
-                                                                  ),
-                                                              child: ConstrainedBox(
-                                                                constraints:
-                                                                    BoxConstraints(
-                                                                      maxHeight:
-                                                                          110.h,
-                                                                    ),
-                                                                child: GestureDetector(
-                                                                  behavior:
-                                                                      HitTestBehavior
-                                                                          .opaque,
-                                                                  child: Image.network(
-                                                                    optionImg,
-                                                                    width: double
-                                                                        .infinity,
-                                                                    fit: BoxFit
-                                                                        .contain,
-                                                                    errorBuilder:
-                                                                        (
-                                                                          _,
-                                                                          __,
-                                                                          ___,
-                                                                        ) =>
-                                                                            const SizedBox.shrink(),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            SizedBox(
-                                                              height: 8.h,
-                                                            ),
-                                                          ],
-                                                          Padding(
-                                                            padding:
-                                                                const EdgeInsets.only(
-                                                                  top: 15.0,
-                                                                ),
-                                                            child: Row(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Text(
-                                                                  "$keyStr. ",
-                                                                  style: TextStyle(
-                                                                    color:
-                                                                        isDarkMode
-                                                                        ? Colors
-                                                                              .grey[300]
-                                                                        : Colors
-                                                                              .black87,
-                                                                    fontSize:
-                                                                        7.sp *
-                                                                        fs,
-                                                                    fontWeight:
-                                                                        isSelected
-                                                                        ? FontWeight
-                                                                              .bold
-                                                                        : FontWeight
-                                                                              .w500,
-                                                                    height: 1.2,
-                                                                  ),
-                                                                ),
-                                                                Expanded(
-                                                                  child: _buildQuestionText(
-                                                                    valueStr,
-                                                                    style: TextStyle(
-                                                                      color:
-                                                                          isDarkMode
-                                                                          ? Colors.grey[300]
-                                                                          : Colors.black87,
-                                                                      fontSize:
-                                                                          7.sp *
-                                                                          fs,
-                                                                      fontWeight:
-                                                                          isSelected
-                                                                          ? FontWeight.bold
-                                                                          : FontWeight.w500,
-                                                                      height:
-                                                                          1.2,
-                                                                    ),
-                                                                    isDarkMode:
-                                                                        isDarkMode,
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .start,
-                                                                    scope:
-                                                                        option,
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    }
-
-                                                    // Case 2: No text, Column layout (image on top, then key)
-                                                    return Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        if (hasImg)
                                                           Expanded(
-                                                            child: ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    8.r,
-                                                                  ),
-                                                              child: ConstrainedBox(
-                                                                constraints:
-                                                                    BoxConstraints(
-                                                                      maxHeight:
-                                                                          90.h,
-                                                                    ),
-                                                                child: GestureDetector(
-                                                                  behavior:
-                                                                      HitTestBehavior
-                                                                          .opaque,
-                                                                  child: Image.network(
-                                                                    optionImg,
-                                                                    fit: BoxFit
-                                                                        .contain,
-                                                                    width: double
-                                                                        .infinity,
-                                                                    errorBuilder:
-                                                                        (
-                                                                          _,
-                                                                          __,
-                                                                          ___,
-                                                                        ) =>
-                                                                            const SizedBox.shrink(),
-                                                                  ),
-                                                                ),
+                                                            child: _buildQuestionText(
+                                                              valueStr,
+                                                              style: TextStyle(
+                                                                color:
+                                                                    isDarkMode
+                                                                    ? Colors
+                                                                          .grey[300]
+                                                                    : Colors
+                                                                          .black87,
+                                                                fontSize:
+                                                                    7.sp * fs,
+                                                                fontWeight:
+                                                                    isSelected
+                                                                    ? FontWeight
+                                                                          .bold
+                                                                    : FontWeight
+                                                                          .w500,
+                                                                height: 1.2,
                                                               ),
+                                                              isDarkMode:
+                                                                  isDarkMode,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                              scope: option,
                                                             ),
                                                           ),
-                                                        if (hasImg)
-                                                          SizedBox(height: 8.h),
-                                                        Text(
-                                                          "$keyStr.",
-                                                          style: TextStyle(
-                                                            fontSize: 7.sp * fs,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: isDarkMode
-                                                                ? Colors
-                                                                      .grey[300]
-                                                                : Colors
-                                                                      .black87,
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              }
+
+                                              // Case 2: No text, Column layout (image on top, then key)
+                                              return Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  if (hasImg)
+                                                    Expanded(
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8.r,
+                                                            ),
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                                maxHeight: 90.h,
+                                                              ),
+                                                          child: GestureDetector(
+                                                            behavior:
+                                                                HitTestBehavior
+                                                                    .opaque,
+                                                            child: Image.network(
+                                                              optionImg,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                              width: double
+                                                                  .infinity,
+                                                              errorBuilder:
+                                                                  (
+                                                                    _,
+                                                                    __,
+                                                                    ___,
+                                                                  ) =>
+                                                                      const SizedBox.shrink(),
+                                                            ),
                                                           ),
                                                         ),
-                                                      ],
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              onTap: () =>
-                                                  controller.selectOption(
-                                                    qid,
-                                                    option['key'],
+                                                      ),
+                                                    ),
+                                                  if (hasImg)
+                                                    SizedBox(height: 8.h),
+                                                  Text(
+                                                    "$keyStr.",
+                                                    style: TextStyle(
+                                                      fontSize: 7.sp * fs,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDarkMode
+                                                          ? Colors.grey[300]
+                                                          : Colors.black87,
+                                                    ),
                                                   ),
-                                            );
-                                          });
-                                        },
-                                      ),
-                                    SizedBox(height: 10.h),
-                                  ],
+                                                ],
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        onTap: () => controller.selectOption(
+                                          qid,
+                                          option['key'],
+                                        ),
+                                      );
+                                    });
+                                  },
                                 ),
-                              ),
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     // Fixed action buttons at the bottom
@@ -1856,7 +1853,9 @@ class _TestscreenviewState extends State<Testscreenview> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.08),
+                            color: Colors.black.withValues(
+                              alpha: isDarkMode ? 0.3 : 0.08,
+                            ),
                             blurRadius: 10,
                             offset: const Offset(0, -3),
                           ),
@@ -1865,118 +1864,222 @@ class _TestscreenviewState extends State<Testscreenview> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Row 1: Previous | Save & Next | Clear
+                          // Single row: Previous | Save & Next | Clear | Mark Review
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.arrow_back_ios_new, size: 12, color: Colors.white),
-                                label: Text("Previous", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey.shade600,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
-                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                onPressed: controller.previousQuestion,
-                              ),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.white),
-                                label: Text("Save & Next", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade500,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
-                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                onPressed: () => controller.nextQuestion(context),
-                              ),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.clear, size: 12, color: Colors.white),
-                                label: Text("Clear", style: TextStyle(color: Colors.white, fontSize: 4.sp)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red.shade400,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
-                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 7.h),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                onPressed: () => controller.clearQuestionWithWarning(question['id']),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 6.h),
-                          // Row 2: Mark for Review | Submit Assignment
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Obx(() {
-                                final marked = controller.markedForReview.contains(question['id']);
-                                return ElevatedButton.icon(
-                                  icon: Icon(
-                                    marked ? Icons.flag : Icons.outlined_flag,
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios_new,
                                     size: 12,
-                                    color: marked ? Colors.white : (isDarkMode ? Colors.grey[300] : Colors.grey.shade800),
+                                    color: Colors.white,
                                   ),
-                                  label: Text(
-                                    marked ? "Unmark" : "Mark Review",
-                                    style: TextStyle(
-                                      fontSize: 4.sp,
-                                      color: marked ? Colors.white : Colors.black87,
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Previous",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 4.sp,
+                                      ),
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: marked ? Colors.purple : Colors.yellow,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.r)),
-                                    padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
-                                    elevation: 0,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  onPressed: controller.markForReviewWithWarning,
-                                );
-                              }),
-                              Obx(() {
-                                final isTimeOver = controller.hasTimeLimit.value && controller.remainingSeconds.value <= 0;
-                                return GestureDetector(
-                                  onTap: () => controller.showSubmitWarningLikeJeeMain(context),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
-                                    decoration: BoxDecoration(
-                                      gradient: isTimeOver
-                                          ? null
-                                          : const LinearGradient(
-                                              colors: [Color(0xFFA10D52), Color(0xFF4CA1AF)],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ),
-                                      color: isTimeOver ? Colors.red : null,
+                                    backgroundColor: isDarkMode
+                                        ? Colors.grey[800]
+                                        : Colors.grey.shade600,
+                                    shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(7.r),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFA10D52).withValues(alpha: 0.35),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.assignment_turned_in_outlined, color: Colors.white, size: 13),
-                                        SizedBox(width: 4.w),
-                                        Text(
-                                          isTimeOver ? "Time Up!" : "Submit",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 4.sp,
-                                          ),
-                                        ),
-                                      ],
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 7.h,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: controller.previousQuestion,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Save & Next",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 4.sp,
+                                      ),
                                     ),
                                   ),
-                                );
-                              }),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade500,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(7.r),
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 7.h,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () =>
+                                      controller.nextQuestion(context),
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      "Clear",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 4.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red.shade400,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(7.r),
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 7.h,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () => controller
+                                      .clearQuestionWithWarning(question['id']),
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Obx(() {
+                                  final marked = controller.markedForReview
+                                      .contains(question['id']);
+                                  return ElevatedButton.icon(
+                                    icon: Icon(
+                                      marked ? Icons.flag : Icons.outlined_flag,
+                                      size: 12,
+                                      color: marked
+                                          ? Colors.white
+                                          : (isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.grey.shade800),
+                                    ),
+                                    label: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        marked ? "Unmark" : "Mark Review",
+                                        style: TextStyle(
+                                          fontSize: 4.sp,
+                                          color: marked
+                                              ? Colors.white
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: marked
+                                          ? Colors.purple
+                                          : Colors.yellow,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          7.r,
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w,
+                                        vertical: 7.h,
+                                      ),
+                                      elevation: 0,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    onPressed:
+                                        controller.markForReviewWithWarning,
+                                  );
+                                }),
+                              ),
                             ],
+                          ),
+                          SizedBox(height: 8.h),
+                          Align(
+                            alignment: Alignment.center,
+                            child: Obx(() {
+                              final isTimeOver =
+                                  controller.hasTimeLimit.value &&
+                                  controller.remainingSeconds.value <= 0;
+                              return GestureDetector(
+                                onTap: () => controller
+                                    .showSubmitWarningLikeJeeMain(context),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 7.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: isTimeOver
+                                        ? null
+                                        : const LinearGradient(
+                                            colors: [
+                                              Color(0xFFA10D52),
+                                              Color(0xFF4CA1AF),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                    color: isTimeOver ? Colors.red : null,
+                                    borderRadius: BorderRadius.circular(7.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFFA10D52,
+                                        ).withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.assignment_turned_in_outlined,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        isTimeOver ? "Time Up!" : "Submit",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 4.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
                         ],
                       ),
@@ -1989,7 +2092,9 @@ class _TestscreenviewState extends State<Testscreenview> {
                 width: 100.w,
                 padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey[900] : const Color(0xFFF8F0F4),
+                  color: isDarkMode
+                      ? Colors.grey[900]
+                      : const Color(0xFFF8F0F4),
                   border: Border(
                     left: BorderSide(
                       color: isDarkMode

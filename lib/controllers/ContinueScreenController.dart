@@ -27,9 +27,9 @@ class ContinueScreenController extends GetxController {
   static const List<String> examOrder = ['CBSE', 'JEE M', 'JEE A'];
 
   static const List<_QuestionModeOption> questionModeOptions = [
-    _QuestionModeOption(label: 'Set average time per Question 2 min', value: 'average'),
-    _QuestionModeOption(label: 'Set average time per Question 3 min', value: 'medium'),
-    _QuestionModeOption(label: 'Set average time per Question 5 min', value: 'hard', color: Color(0xFFFFA000)),
+    _QuestionModeOption(label: 'The average time : 2 min per question ', value: 'average',color: Colors.green),
+    _QuestionModeOption(label: 'The average time:  3 min per question ', value: 'medium',color: Colors.amber),
+    _QuestionModeOption(label: 'The average time: 5 min per question', value: 'hard', color: Color.fromARGB(255, 255, 68, 0)),
     _QuestionModeOption(label: 'No Time limit', value: 'no_limit'),
   ];
 

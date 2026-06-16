@@ -80,8 +80,8 @@ class LoginScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          height: 70.h,
-                          width: 86.h,
+                          height: 150.h,
+                          width: 140.h,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white,
@@ -113,15 +113,15 @@ class LoginScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          "Your digital learning companion",
+                          "The Ultimate Assignment Solving App for the Students of MGE.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 6.sp,
+                            fontSize: 3.sp,
                             color: Colors.white70,
                             letterSpacing: 0.3,
                           ),
                         ),
-                        SizedBox(height: 26.h),
+                        SizedBox(height: 16.h),
                         Container(
                           padding: EdgeInsets.symmetric(
                               horizontal: 14.w, vertical: 7.h),

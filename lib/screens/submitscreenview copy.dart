@@ -44,6 +44,7 @@ class ResultScreen extends StatelessWidget {
     final wrong   = total - correct - skipped;
 
     final double pct = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+    final double scaledScore = totalMarks > 0 ? (obtainedMarks * 10) / totalMarks : 0;
 
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF0F1117) : const Color(0xFFF4F6FA),
@@ -162,7 +163,7 @@ class ResultScreen extends StatelessWidget {
                           _scoreDivider(isDarkMode),
                           _scoreTile('Total', totalMarks.toString(), _accent, isDarkMode),
                           _scoreDivider(isDarkMode),
-                          _scoreTile('Score', '${pct.toStringAsFixed(1)}%',
+                          _scoreTile('GPA', scaledScore.toStringAsFixed(2),
                               pct >= 60 ? Colors.green.shade600 : Colors.orange.shade700, isDarkMode),
                         ],
                       ),
